@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Proyectos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-2xl font-bold text-blue-600">Control de Iniciativas</h1>
+                <p class="text-slate-500 text-sm">Monitoreo en tiempo real</p>
+            </div>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                + Nueva Iniciativa
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-4 text-slate-700">Iniciativas por Estado</h2>
+                <canvas id="graficaEstados"></canvas>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-lg font-semibold mb-4 text-slate-700">Proyectos por Tema</h2>
+                <canvas id="graficaTemas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gráfica de Estados (Barras)
+        const ctxEstados = document.getElementById('graficaEstados');
+        new Chart(ctxEstados, {
+            type: 'bar',
+            data: {
+                labels: ['Backlog', 'En Progreso', 'Bloqueado', 'Finalizado'],
+                datasets: [{
+                    label: 'Cantidad',
+                    data: [4, 6, 2, 8],
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 4
+                }]
+            }
+        });
+
+        // Gráfica de Temas (Dona)
+        const ctxTemas = document.getElementById('graficaTemas');
+        new Chart(ctxTemas, {
+            type: 'doughnut',
+            data: {
+                labels: ['Marketing', 'Tecnología', 'Operaciones', 'RRHH'],
+                datasets: [{
+                    data: [5, 8, 4, 3],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                }]
+            }
+        });
+    </script>
+</body>
+</html>
