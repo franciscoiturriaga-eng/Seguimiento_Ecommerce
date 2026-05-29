@@ -80,7 +80,7 @@ const firebaseConfig = {
             if (user) {
                 // REGLA DE SEGURIDAD PARA TU EMPRESA
                 // Reemplaza 'tuempresa.com' por el dominio de tu negocio
-                if (user.email.endsWith('@tuempresa.com') || user.email === 'tu-correo-personal@gmail.com') {
+                if (user.email.endsWith('@hites.cl') || user.email === 'francisco.iturriaga@hites.cl') {
                     domLogin.classList.add('hidden');
                     domPlataforma.classList.remove('hidden');
                     txtUsuario.innerText = `Conectado como: ${user.displayName} (${user.email})`;
