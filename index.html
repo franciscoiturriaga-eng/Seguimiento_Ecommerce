@@ -37,71 +37,90 @@
             </div>
             
             <div class="flex gap-3 items-center">
-                <select id="filtroEstadoGlobal" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-                    <option value="TODOS">Todos los Estados</option>
-                    <option value="Backlog">Backlog</option>
-                    <option value="En Progreso">En Progreso</option>
-                    <option value="Pausado">Pausado</option>
-                    <option value="Bloqueado">Bloqueado</option>
-                    <option value="Finalizado">Finalizado</option>
-                </select>
-                <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>
-                    ✕ Limpiar Filtros
+                <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-100 transition text-sm font-bold shadow-sm">
+                    👁️ Historial de Cambios
                 </button>
-                <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cerrar Sesión</button>
-                <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Actividad</button>
+                <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-bold shadow-sm">
+                    ← Volver al Tablero
+                </button>
+                
+                <div id="controlesFiltro" class="flex gap-3 items-center">
+                    <select id="filtroEstadoGlobal" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+                        <option value="TODOS">Todos los Estados</option>
+                        <option value="Backlog">Backlog</option>
+                        <option value="En Progreso">En Progreso</option>
+                        <option value="Pausado">Pausado</option>
+                        <option value="Bloqueado">Bloqueado</option>
+                        <option value="Finalizado">Finalizado</option>
+                    </select>
+                    <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>✕ Limpiar</button>
+                    <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Actividad</button>
+                </div>
+                <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium ml-2">Cerrar Sesión</button>
             </div>
         </header>
 
         <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Conectando con la Base de Datos...</div>
 
-        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Estados (Clic para Filtrar)</h2>
-                <div class="h-60"><canvas id="graficaEstados"></canvas></div>
+        <div id="vistaAuditoria" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+            <div class="p-5 border-b border-slate-100 bg-indigo-50/50">
+                <h3 class="font-bold text-indigo-800 text-base">Registro de Auditoría (Solo Admin)</h3>
+                <p class="text-xs text-indigo-500">Últimos movimientos en la plataforma.</p>
             </div>
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tareas por Área</h2>
-                <div class="h-60"><canvas id="graficaTemas"></canvas></div>
-            </div>
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Carga por Responsable</h2>
-                <div class="h-60"><canvas id="graficaResponsables"></canvas></div>
-            </div>
-        </div>
-
-        <div id="contenedorGraficasSalud" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Salud de Iniciativas (Entregas)</h2>
-                <div class="h-48 relative w-full flex-grow"><canvas id="graficaIniciativasSalud"></canvas></div>
-            </div>
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Salud de Tareas (Entregas)</h2>
-                <div class="h-48 relative w-full flex-grow"><canvas id="graficaTareasSalud"></canvas></div>
-            </div>
-        </div>
-
-        <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-            <div class="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
-                <h3 class="font-bold text-slate-700 text-base">Estructura General: Iniciativas y Tareas</h3>
-                <span class="text-xs text-slate-400 font-mono">Amarillo &lt;= 30 días | Rojo &lt;= 15 días o Atrasado</span>
-            </div>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
-                            <th class="p-3 pl-6 w-1/3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('jerarquia')">Jerarquía / Actividad <span id="icon-sort-jerarquia" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-center">Acción</th>
+                    <thead class="sticky top-0 bg-slate-100/90 backdrop-blur">
+                        <tr class="text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200">
+                            <th class="p-3 pl-6">Fecha y Hora</th>
+                            <th class="p-3">Usuario</th>
+                            <th class="p-3">Acción</th>
+                            <th class="p-3">Detalle del Cambio</th>
                         </tr>
                     </thead>
-                    <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
-                    </tbody>
+                    <tbody id="cuerpoTablaAuditoria" class="text-sm divide-y divide-slate-200 bg-white">
+                        </tbody>
                 </table>
+            </div>
+        </div>
+
+        <div id="vistaTablero">
+            <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Estados (Clic para Filtrar)</h2>
+                    <div class="h-60"><canvas id="graficaEstados"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tareas por Área</h2>
+                    <div class="h-60"><canvas id="graficaTemas"></canvas></div>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Carga por Responsable</h2>
+                    <div class="h-60"><canvas id="graficaResponsables"></canvas></div>
+                </div>
+            </div>
+
+            <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-700 text-base">Estructura General: Iniciativas y Tareas</h3>
+                    <span class="text-xs text-slate-400 font-mono">Amarillo &lt;= 30 días | Rojo &lt;= 15 días o Atrasado</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
+                                <th class="p-3 pl-6 w-1/3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('jerarquia')">Jerarquía / Actividad <span id="icon-sort-jerarquia" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                                <th class="p-3 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -117,9 +136,7 @@
 
             <form id="formIniciativa" class="space-y-4">
                 <input type="hidden" id="inputIdRegistro" value="">
-                <input type="hidden" id="inputFlujoActual" value="INICIATIVA">
-
-                <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
+                <input type="hidden" id="inputModoEdicion" value="NUEVO"> <input type="hidden" id="inputOldIniciativaNombre" value=""> <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-amber-700">Seleccionar Iniciativa Padre</label>
                     <select id="selectIniciativaPadre" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-amber-500">
                     </select>
@@ -129,25 +146,36 @@
                     <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600">Datos de la Iniciativa</h3>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Iniciativa</label>
-                        <input type="text" id="inputIniciativa" required placeholder="Ej: Rediseño Carro de Compras" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <input type="text" id="inputIniciativa" placeholder="Ej: Rediseño Carro de Compras" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Responsable Iniciativa</label>
-                            <input type="text" id="inputRespIniciativa" required placeholder="Ej: Francisco Iturriaga" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <input type="text" id="inputRespIniciativa" placeholder="Ej: Francisco Iturriaga" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Área Iniciativa</label>
+                            <select id="selectAreaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="Tecnología">Tecnología</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Operaciones">Operaciones</option>
+                                <option value="Comercial">Comercial</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-600 mb-1">Impacto (Negocio)</label>
                             <select id="selectImpacto" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                                 <option value="Alto">Alto</option>
-                                <option value="Medio">Medio</option>
+                                <option value="Medio" selected>Medio</option>
                                 <option value="Bajo">Bajo</option>
                             </select>
                         </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Iniciativa</label>
-                        <input type="date" id="inputFechaEntregaIniciativa" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Meta</label>
+                            <input type="date" id="inputFechaEntregaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        </div>
                     </div>
                 </div>
 
@@ -169,7 +197,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
@@ -191,38 +219,31 @@
         let columnaOrdenActual = null;
         let ordenAscendente = true;
         let contadorTareasUi = 0;
+        let currentUserEmail = "";
 
         let chartEstados = null, chartTemas = null, chartResponsables = null;
-        let chartIniSalud = null, chartTareasSalud = null;
 
-        const pieTooltipOptions = {
-            callbacks: {
-                label: function(context) {
-                    let label = context.label || '';
-                    if (label) label += ': ';
-                    let total = context.chart._metasets[context.datasetIndex].total;
-                    let value = context.parsed;
-                    let percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-                    return label + value + ' (' + percentage + '%)';
-                }
-            }
-        };
-
-        // ENLAZAR BOTONES DE AUTENTICACIÓN INMEDIATAMENTE
+        // AUTENTICACIÓN
         document.getElementById('btnLogin').addEventListener('click', () => {
             signInWithPopup(auth, provider).catch(err => {
-                document.getElementById('errorLogin').innerText = "Error en login: " + err.message;
+                document.getElementById('errorLogin').innerText = "Error: " + err.message;
                 document.getElementById('errorLogin').classList.remove('hidden');
             });
         });
         document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
 
-        // OBSERVAR ESTADO DE AUTENTICACIÓN
         onAuthStateChanged(auth, (user) => {
             if (user && user.email.endsWith('@hites.cl')) {
+                currentUserEmail = user.email;
                 document.getElementById('pantallaLogin').classList.add('hidden');
                 document.getElementById('plataforma').classList.remove('hidden');
-                document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${user.email})`;
+                document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${currentUserEmail})`;
+                
+                // Mostrar módulo de auditoría solo al admin
+                if(currentUserEmail === 'francisco.iturriaga@hites.cl') {
+                    document.getElementById('btnVerAuditoria').classList.remove('hidden');
+                }
+
                 iniciarEscuchaFirestore(); 
             } else if (user) {
                 signOut(auth);
@@ -234,129 +255,241 @@
             }
         });
 
-        // ESCUCHA OPTIMIZADA DE FIRESTORE
+        // AUDITORÍA
+        async function registrarAuditoria(accion, detalle) {
+            try {
+                await addDoc(collection(db, "auditoria"), {
+                    fecha: new Date().toISOString(),
+                    usuario: currentUserEmail,
+                    accion: accion,
+                    detalle: detalle
+                });
+            } catch (e) { console.error("Error registrando auditoría:", e); }
+        }
+
+        document.getElementById('btnVerAuditoria').addEventListener('click', () => {
+            document.getElementById('vistaTablero').classList.add('hidden');
+            document.getElementById('controlesFiltro').classList.add('hidden');
+            document.getElementById('btnVerAuditoria').classList.add('hidden');
+            
+            document.getElementById('vistaAuditoria').classList.remove('hidden');
+            document.getElementById('btnVolverTablero').classList.remove('hidden');
+
+            const q = query(collection(db, "auditoria"), orderBy("fecha", "desc"));
+            onSnapshot(q, (snapshot) => {
+                const tbody = document.getElementById('cuerpoTablaAuditoria');
+                tbody.innerHTML = "";
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const fechaFormat = new Date(data.fecha).toLocaleString('es-CL');
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-3 text-xs font-mono text-slate-500">${fechaFormat}</td>
+                            <td class="p-3 text-sm font-semibold text-slate-700">${data.usuario}</td>
+                            <td class="p-3"><span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold">${data.accion}</span></td>
+                            <td class="p-3 text-sm text-slate-600">${data.detalle}</td>
+                        </tr>
+                    `;
+                });
+            });
+        });
+
+        document.getElementById('btnVolverTablero').addEventListener('click', () => {
+            document.getElementById('vistaAuditoria').classList.add('hidden');
+            document.getElementById('btnVolverTablero').classList.add('hidden');
+            
+            document.getElementById('vistaTablero').classList.remove('hidden');
+            document.getElementById('controlesFiltro').classList.remove('hidden');
+            document.getElementById('btnVerAuditoria').classList.remove('hidden');
+        });
+
+        // ESCUCHA PRINCIPAL
         function iniciarEscuchaFirestore() {
             const proyectosRef = collection(db, "actividades");
-
             onSnapshot(proyectosRef, (snapshot) => {
                 cacheDatosRaw = [];
-                snapshot.forEach((doc) => {
-                    cacheDatosRaw.push({ id: doc.id, ...doc.data() });
-                });
+                snapshot.forEach((doc) => { cacheDatosRaw.push({ id: doc.id, ...doc.data() }); });
 
                 document.getElementById('txtCargando').classList.add('hidden');
                 document.getElementById('contenedorGraficas').classList.remove('hidden');
-                document.getElementById('contenedorGraficasSalud').classList.remove('hidden');
                 document.getElementById('contenedorTabla').classList.remove('hidden');
                 
-                // Intentar renderizar de forma segura atrapando cualquier error gráfico aislado
                 try {
                     renderizarTodo();
                     actualizarSelectorIniciativasPadre();
-                } catch (error) {
-                    console.error("Error en renderizado general:", error);
-                }
-            }, (error) => {
-                console.error("Error de conexión a Firestore (Posible cuota excedida):", error);
-                document.getElementById('txtCargando').innerText = "⚠️ Error al conectar con la base de datos o cuota diaria excedida en Firebase.";
+                } catch (error) { console.error("Error UI:", error); }
             });
         }
 
         function actualizarSelectorIniciativasPadre() {
             const select = document.getElementById('selectIniciativaPadre');
-            if(!select) return;
-            
             const iniciativasUnicas = [...new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean))].sort();
             
             select.innerHTML = iniciativasUnicas.map(ini => {
                 const datosPadre = cacheDatosRaw.find(p => p.iniciativa === ini);
-                return `<option value="${ini}" data-resp="${datosPadre.respiniciativa || ''}" data-impacto="${datosPadre.impacto || 'Medio'}" data-fecha="${datosPadre.fechaentregainiciativa || ''}">${ini}</option>`;
+                return `<option value="${ini}" data-resp="${datosPadre.respiniciativa || ''}" data-area="${datosPadre.areainiciativa || 'Tecnología'}" data-impacto="${datosPadre.impacto || 'Medio'}" data-fecha="${datosPadre.fechaentregainiciativa || ''}">${ini}</option>`;
             }).join('');
         }
 
-        // CONTROL DE FLUJOS DINÁMICOS EN MODAL
-        function cambiarFlujoModal(flujo) {
-            document.getElementById('inputFlujoActual').value = flujo;
+        // CONTROL UI DE FORMULARIO DESACOPLADO
+        function aplicarRestriccionesBloques(modo) {
             const btnIni = document.getElementById('btnFlujoIniciativa');
             const btnTar = document.getElementById('btnFlujoTarea');
             const bloqueIni = document.getElementById('bloqueDatosIniciativa');
             const bloqueAsociar = document.getElementById('bloqueAsociarIniciativa');
             const btnAddFila = document.getElementById('btnAgregarFilaTarea');
+            const selectorFlujo = document.getElementById('selectorTipoFlujo');
+            const contTareas = document.getElementById('contenedorListaTareas');
+            
+            document.getElementById('inputModoEdicion').value = modo;
 
-            if (flujo === 'INICIATIVA') {
+            if (modo === 'NUEVO_INICIATIVA') {
+                selectorFlujo.classList.remove('hidden');
                 btnIni.className = "py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
                 btnTar.className = "py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition";
                 bloqueIni.classList.remove('hidden');
                 bloqueAsociar.classList.add('hidden');
                 btnAddFila.classList.remove('hidden');
+                contTareas.classList.remove('hidden');
                 
                 document.getElementById('inputIniciativa').required = true;
                 document.getElementById('inputRespIniciativa').required = true;
                 document.getElementById('inputFechaEntregaIniciativa').required = true;
-            } else {
+            } 
+            else if (modo === 'NUEVO_TAREA') {
+                selectorFlujo.classList.remove('hidden');
                 btnTar.className = "py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
                 btnIni.className = "py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition";
                 bloqueIni.classList.add('hidden');
                 bloqueAsociar.classList.remove('hidden');
                 btnAddFila.classList.add('hidden');
+                contTareas.classList.remove('hidden');
 
                 document.getElementById('inputIniciativa').required = false;
                 document.getElementById('inputRespIniciativa').required = false;
                 document.getElementById('inputFechaEntregaIniciativa').required = false;
+            }
+            else if (modo === 'EDITAR_INICIATIVA') {
+                selectorFlujo.classList.add('hidden');
+                bloqueIni.classList.remove('hidden');
+                bloqueAsociar.classList.add('hidden');
+                btnAddFila.classList.add('hidden');
+                contTareas.classList.add('hidden'); // Ocultar tareas
                 
-                const contenedor = document.getElementById('contenedorListaTareas');
-                if(contenedor.children.length === 0) agregarFilaTareaEstructura();
+                document.getElementById('inputIniciativa').required = true;
+                document.getElementById('inputRespIniciativa').required = true;
+                document.getElementById('inputFechaEntregaIniciativa').required = true;
+            }
+            else if (modo === 'EDITAR_TAREA') {
+                selectorFlujo.classList.add('hidden');
+                bloqueIni.classList.add('hidden'); // Ocultar iniciativa
+                bloqueAsociar.classList.add('hidden');
+                btnAddFila.classList.add('hidden');
+                contTareas.classList.remove('hidden');
+                
+                document.getElementById('inputIniciativa').required = false;
+                document.getElementById('inputRespIniciativa').required = false;
+                document.getElementById('inputFechaEntregaIniciativa').required = false;
             }
         }
 
+        document.getElementById('btnFlujoIniciativa').addEventListener('click', () => {
+            aplicarRestriccionesBloques('NUEVO_INICIATIVA');
+            if(document.getElementById('contenedorListaTareas').children.length === 0) agregarFilaTareaEstructura();
+        });
+        document.getElementById('btnFlujoTarea').addEventListener('click', () => {
+            aplicarRestriccionesBloques('NUEVO_TAREA');
+            if(document.getElementById('contenedorListaTareas').children.length === 0) agregarFilaTareaEstructura();
+        });
+
+        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('inputIdRegistro').value = "";
+            document.getElementById('inputOldIniciativaNombre').value = "";
+            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
+            document.getElementById('contenedorListaTareas').innerHTML = "";
+            
+            aplicarRestriccionesBloques('NUEVO_INICIATIVA');
+            agregarFilaTareaEstructura();
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        });
+
+        document.getElementById('btnCerrarModal').addEventListener('click', () => {
+            document.getElementById('modalFormulario').classList.add('hidden');
+        });
+
+        // EDICIÓN CONTEXTUAL
+        window.abrirModalEdicion = function(idFila, tipo) {
+            const item = cacheDatosRaw.find(p => p.id === idFila);
+            if(!item) return;
+
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('inputIdRegistro').value = item.id;
+            document.getElementById('contenedorListaTareas').innerHTML = "";
+            
+            if (tipo === 'INICIATIVA') {
+                document.getElementById('tituloModal').innerText = "Editar Iniciativa Padre";
+                document.getElementById('inputOldIniciativaNombre').value = item.iniciativa;
+                
+                document.getElementById('inputIniciativa').value = item.iniciativa || '';
+                document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
+                document.getElementById('selectAreaIniciativa').value = item.areainiciativa || 'Tecnología';
+                document.getElementById('selectImpacto').value = item.impacto || 'Medio';
+                if(item.fechaentregainiciativa) {
+                    const d = new Date(item.fechaentregainiciativa);
+                    if(!isNaN(d)) document.getElementById('inputFechaEntregaIniciativa').value = d.toISOString().split('T')[0];
+                }
+                aplicarRestriccionesBloques('EDITAR_INICIATIVA');
+            } else {
+                document.getElementById('tituloModal').innerText = "Editar Tarea";
+                agregarFilaTareaEstructura(item);
+                // Quitar el botón de eliminar porque en edición estricta de 1 tarea no se puede quitar
+                document.querySelector('.btn-quitar-tarea').classList.add('hidden');
+                aplicarRestriccionesBloques('EDITAR_TAREA');
+            }
+
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        };
+
+        // LÓGICA DE FILAS DINÁMICAS
         function agregarFilaTareaEstructura(valoresPredefinidos = null) {
             contadorTareasUi++;
             const idFila = `tarea_row_${contadorTareasUi}`;
             const contenedor = document.getElementById('contenedorListaTareas');
-
             const div = document.createElement('div');
             div.id = idFila;
             div.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative group";
             
             div.innerHTML = `
-                <button type="button" onclick="window.eliminarFilaTareaUi('${idFila}')" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 text-xs font-semibold">
-                    ✕ Quitar Tarea
-                </button>
+                <button type="button" onclick="window.eliminarFilaTareaUi('${idFila}')" class="btn-quitar-tarea absolute top-3 right-3 text-slate-400 hover:text-red-500 text-xs font-semibold">✕ Quitar Tarea</button>
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos de la Tarea</h4>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Tarea</label>
-                    <input type="text" class="input-tarea-nombre w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required placeholder="Ej: Integrar nueva pasarela de pago">
+                    <input type="text" class="input-tarea-nombre w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required placeholder="Ej: Integrar pasarela">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Estado Tarea</label>
                         <select class="input-tarea-estado w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="Backlog">Backlog</option>
-                            <option value="En Progreso">En Progreso</option>
-                            <option value="Pausado">Pausado</option>
-                            <option value="Bloqueado">Bloqueado</option>
-                            <option value="Finalizado">Finalizado</option>
+                            <option value="Backlog">Backlog</option><option value="En Progreso">En Progreso</option>
+                            <option value="Pausado">Pausado</option><option value="Bloqueado">Bloqueado</option><option value="Finalizado">Finalizado</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Área / Tema</label>
                         <select class="input-tarea-tema w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="Marketing">Marketing</option>
-                            <option value="Tecnología" selected>Tecnología</option>
-                            <option value="Operaciones">Operaciones</option>
-                            <option value="Comercial">Comercial</option>
+                            <option value="Marketing">Marketing</option><option value="Tecnología" selected>Tecnología</option>
+                            <option value="Operaciones">Operaciones</option><option value="Comercial">Comercial</option>
                         </select>
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Responsable Tarea</label>
                     <select class="input-tarea-resp-select w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" onchange="window.handleSelectResponsableDinamico('${idFila}', this.value)">
-                        <option value="Francisco Iturriaga">Francisco Iturriaga</option>
-                        <option value="Carlos Mendoza">Carlos Mendoza</option>
-                        <option value="Ana María">Ana María</option>
-                        <option value="OTRO">Otro (Ingresar manualmente)...</option>
+                        <option value="Francisco Iturriaga">Francisco Iturriaga</option><option value="Carlos Mendoza">Carlos Mendoza</option>
+                        <option value="Ana María">Ana María</option><option value="OTRO">Otro...</option>
                     </select>
-                    <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Escribe el nombre del nuevo responsable">
+                    <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
@@ -364,12 +497,9 @@
                         <input type="date" class="input-tarea-fecha w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Configuración Alertas</label>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Alertas</label>
                         <select class="input-tarea-alertas w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="Sin alertas">Sin alertas</option>
-                            <option value="Notificar al responsable al vencer">Notificar al responsable al vencer</option>
-                            <option value="Notificar cambios de estado al Admin">Notificar cambios de estado al Admin</option>
-                            <option value="Alerta diaria hasta finalizar">Alerta diaria hasta finalizar</option>
+                            <option value="Sin alertas">Sin alertas</option><option value="Notificar al responsable">Notificar al responsable</option>
                         </select>
                     </div>
                 </div>
@@ -381,228 +511,141 @@
                 div.querySelector('.input-tarea-estado').value = valoresPredefinidos.estado || 'Backlog';
                 div.querySelector('.input-tarea-tema').value = valoresPredefinidos.tema || 'Tecnología';
                 div.querySelector('.input-tarea-alertas').value = valoresPredefinidos.alertas || 'Sin alertas';
-                
                 let resp = valoresPredefinidos.responsable || '';
                 let selectResp = div.querySelector('.input-tarea-resp-select');
-                let opt = Array.from(selectResp.options).find(o => o.value === resp);
-                if(opt) {
-                    selectResp.value = resp;
-                } else if (resp) {
-                    selectResp.value = 'OTRO';
-                    let inputOtro = div.querySelector('.input-tarea-resp-otro');
-                    inputOtro.value = resp;
-                    inputOtro.classList.remove('hidden');
-                }
-
+                if(Array.from(selectResp.options).find(o => o.value === resp)) { selectResp.value = resp; } 
+                else if (resp) { selectResp.value = 'OTRO'; div.querySelector('.input-tarea-resp-otro').value = resp; div.querySelector('.input-tarea-resp-otro').classList.remove('hidden'); }
                 if(valoresPredefinidos.fechaentregatarea) {
-                    const dateObj = new Date(valoresPredefinidos.fechaentregatarea);
-                    if(!isNaN(dateObj)) div.querySelector('.input-tarea-fecha').value = dateObj.toISOString().split('T')[0];
+                    const d = new Date(valoresPredefinidos.fechaentregatarea);
+                    if(!isNaN(d)) div.querySelector('.input-tarea-fecha').value = d.toISOString().split('T')[0];
                 }
             }
         }
-
         window.eliminarFilaTareaUi = function(idFila) {
-            const container = document.getElementById('contenedorListaTareas');
-            if(container.children.length > 1) {
-                const fila = document.getElementById(idFila);
-                if(fila) fila.remove();
-            } else {
-                alert("Debes dejar al menos una tarea asignada.");
-            }
+            if(document.getElementById('contenedorListaTareas').children.length > 1) document.getElementById(idFila).remove();
+            else alert("Debes dejar al menos una tarea.");
         };
-
         window.handleSelectResponsableDinamico = function(idFila, valor) {
-            const fila = document.getElementById(idFila);
-            const inputOtro = fila.querySelector('.input-tarea-resp-otro');
-            if(valor === "OTRO") {
-                inputOtro.classList.remove('hidden');
-                inputOtro.required = true;
-            } else {
-                inputOtro.classList.add('hidden');
-                inputOtro.required = false;
-            }
+            const inputOtro = document.getElementById(idFila).querySelector('.input-tarea-resp-otro');
+            if(valor === "OTRO") { inputOtro.classList.remove('hidden'); inputOtro.required = true; } 
+            else { inputOtro.classList.add('hidden'); inputOtro.required = false; }
         };
-
-        document.getElementById('btnFlujoIniciativa').addEventListener('click', () => cambiarFlujoModal('INICIATIVA'));
-        document.getElementById('btnFlujoTarea').addEventListener('click', () => cambiarFlujoModal('TAREA'));
         document.getElementById('btnAgregarFilaTarea').addEventListener('click', () => agregarFilaTareaEstructura());
 
-        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
-            document.getElementById('formIniciativa').reset();
-            document.getElementById('inputIdRegistro').value = "";
-            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
-            document.getElementById('selectorTipoFlujo').classList.remove('hidden');
-            document.getElementById('contenedorListaTareas').innerHTML = "";
-            
-            cambiarFlujoModal('INICIATIVA');
-            agregarFilaTareaEstructura();
-            document.getElementById('modalFormulario').classList.remove('hidden');
-        });
-
-        document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
-
-        window.abrirModalEdicion = function(idFila) {
-            const item = cacheDatosRaw.find(p => p.id === idFila);
-            if(!item) return;
-
-            document.getElementById('formIniciativa').reset();
-            document.getElementById('tituloModal').innerText = "Editar Actividad";
-            document.getElementById('inputIdRegistro').value = item.id;
-            
-            document.getElementById('selectorTipoFlujo').classList.add('hidden');
-            document.getElementById('bloqueAsociarIniciativa').classList.add('hidden');
-            document.getElementById('btnAgregarFilaTarea').classList.add('hidden');
-            document.getElementById('bloqueDatosIniciativa').classList.remove('hidden');
-
-            document.getElementById('inputIniciativa').value = item.iniciativa || '';
-            document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
-            document.getElementById('selectImpacto').value = item.impacto || 'Medio';
-            
-            if(item.fechaentregainiciativa) {
-                const dateObj = new Date(item.fechaentregainiciativa);
-                if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
-            }
-
-            document.getElementById('contenedorListaTareas').innerHTML = "";
-            agregarFilaTareaEstructura(item);
-
-            document.getElementById('inputIniciativa').required = true;
-            document.getElementById('inputRespIniciativa').required = true;
-            document.getElementById('inputFechaEntregaIniciativa').required = true;
-
-            document.getElementById('modalFormulario').classList.remove('hidden');
-        };
-
-        // SUBMIT DEL FORMULARIO CON INTERFAZ ASÍNCRONA CORREGIDA
+        // PROCESADOR DE GUARDADO BLINDADO
         document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
             btnGuardar.innerText = "Guardando...";
             btnGuardar.disabled = true;
 
-            const idRegistro = document.getElementById('inputIdRegistro').value;
-            const flujoActual = document.getElementById('inputFlujoActual').value;
-
-            let infoIniciativa = {};
-
-            if (flujoActual === 'INICIATIVA' || idRegistro) {
-                infoIniciativa = {
-                    iniciativa: document.getElementById('inputIniciativa').value,
-                    impacto: document.getElementById('selectImpacto').value,
-                    respiniciativa: document.getElementById('inputRespIniciativa').value,
-                    fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
-                };
-            } else {
-                const selectPadre = document.getElementById('selectIniciativaPadre');
-                if(!selectPadre.value) {
-                    alert("Por favor selecciona o crea primero una iniciativa válida.");
-                    btnGuardar.innerText = "Guardar Todo";
-                    btnGuardar.disabled = false;
-                    return;
-                }
-                const optSeleccionada = selectPadre.options[selectPadre.selectedIndex];
-                infoIniciativa = {
-                    iniciativa: selectPadre.value,
-                    impacto: optSeleccionada.getAttribute('data-impacto') || 'Medio',
-                    respiniciativa: optSeleccionada.getAttribute('data-resp') || '',
-                    fechaentregainiciativa: optSeleccionada.getAttribute('data-fecha') || ''
-                };
-            }
-
-            const filasTareasUi = document.getElementById('contenedorListaTareas').children;
-            const loteTareas = [];
-
-            for (let fila of filasTareasUi) {
-                let inputRespSel = fila.querySelector('.input-tarea-resp-select').value;
-                if(inputRespSel === "OTRO") inputRespSel = fila.querySelector('.input-tarea-resp-otro').value;
-
-                loteTareas.push({
-                    tarea: fila.querySelector('.input-tarea-nombre').value,
-                    estado: fila.querySelector('.input-tarea-estado').value,
-                    tema: fila.querySelector('.input-tarea-tema').value,
-                    responsable: inputRespSel,
-                    fechaentregatarea: fila.querySelector('.input-tarea-fecha').value,
-                    alertas: fila.querySelector('.input-tarea-alertas').value
-                });
-            }
-
             try {
-                if (idRegistro) {
-                    const docRef = doc(db, "actividades", idRegistro);
-                    const itemTareaUnica = loteTareas[0] || { tarea: "" };
-                    await updateDoc(docRef, { ...infoIniciativa, ...itemTareaUnica });
-                } else {
-                    const actividadesRef = collection(db, "actividades");
-                    const timestampCreacion = new Date().toISOString();
+                const modo = document.getElementById('inputModoEdicion').value;
+                const idRegistro = document.getElementById('inputIdRegistro').value;
+                const ts = new Date().toISOString();
 
-                    if(loteTareas.length === 0) {
-                        await addDoc(actividadesRef, { ...infoIniciativa, tarea: "", estado: "Backlog", tema: "Tecnología", responsable: infoIniciativa.respiniciativa, fechaentregatarea: infoIniciativa.fechaentregainiciativa, alertas: "Sin alertas", fechacreacion: timestampCreacion });
-                    } else {
-                        for (let datosTarea of loteTareas) {
-                            await addDoc(actividadesRef, { ...infoIniciativa, ...datosTarea, fechacreacion: timestampCreacion });
-                        }
+                // Caso 1: Editar una Iniciativa Existente (Propaga a todos sus hijos)
+                if (modo === 'EDITAR_INICIATIVA') {
+                    const infoIniciativa = {
+                        iniciativa: document.getElementById('inputIniciativa').value,
+                        respiniciativa: document.getElementById('inputRespIniciativa').value,
+                        areainiciativa: document.getElementById('selectAreaIniciativa').value,
+                        impacto: document.getElementById('selectImpacto').value,
+                        fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
+                    };
+                    const oldName = document.getElementById('inputOldIniciativaNombre').value;
+                    const docsToUpdate = cacheDatosRaw.filter(p => p.iniciativa === oldName);
+                    
+                    for(let d of docsToUpdate) {
+                        await updateDoc(doc(db, "actividades", d.id), infoIniciativa);
                     }
+                    await registrarAuditoria("Actualización Masiva", `Editó la iniciativa padre: ${infoIniciativa.iniciativa} (${docsToUpdate.length} tareas actualizadas).`);
                 }
+                
+                // Caso 2: Editar una Tarea Específica
+                else if (modo === 'EDITAR_TAREA') {
+                    const filaUi = document.getElementById('contenedorListaTareas').children[0];
+                    let r = filaUi.querySelector('.input-tarea-resp-select').value;
+                    if(r === "OTRO") r = filaUi.querySelector('.input-tarea-resp-otro').value;
+                    
+                    const updateData = {
+                        tarea: filaUi.querySelector('.input-tarea-nombre').value,
+                        estado: filaUi.querySelector('.input-tarea-estado').value,
+                        tema: filaUi.querySelector('.input-tarea-tema').value,
+                        responsable: r,
+                        fechaentregatarea: filaUi.querySelector('.input-tarea-fecha').value,
+                        alertas: filaUi.querySelector('.input-tarea-alertas').value
+                    };
+                    await updateDoc(doc(db, "actividades", idRegistro), updateData);
+                    await registrarAuditoria("Actualización", `Editó la tarea: ${updateData.tarea}`);
+                }
+                
+                // Caso 3: Crear Nuevo (Iniciativa o Tareas bajo iniciativa existente)
+                else {
+                    const actRef = collection(db, "actividades");
+                    let baseData = {};
+                    
+                    if (modo === 'NUEVO_INICIATIVA') {
+                        baseData = {
+                            iniciativa: document.getElementById('inputIniciativa').value,
+                            respiniciativa: document.getElementById('inputRespIniciativa').value,
+                            areainiciativa: document.getElementById('selectAreaIniciativa').value,
+                            impacto: document.getElementById('selectImpacto').value,
+                            fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
+                        };
+                    } else {
+                        const s = document.getElementById('selectIniciativaPadre');
+                        if(!s.value) throw new Error("Debes seleccionar una iniciativa válida.");
+                        const opt = s.options[s.selectedIndex];
+                        baseData = {
+                            iniciativa: s.value,
+                            respiniciativa: opt.getAttribute('data-resp'),
+                            areainiciativa: opt.getAttribute('data-area'),
+                            impacto: opt.getAttribute('data-impacto'),
+                            fechaentregainiciativa: opt.getAttribute('data-fecha')
+                        };
+                    }
+
+                    const filas = document.getElementById('contenedorListaTareas').children;
+                    let numNuevas = 0;
+                    for (let f of filas) {
+                        let r = f.querySelector('.input-tarea-resp-select').value;
+                        if(r === "OTRO") r = f.querySelector('.input-tarea-resp-otro').value;
+                        
+                        await addDoc(actRef, {
+                            ...baseData, fechacreacion: ts,
+                            tarea: f.querySelector('.input-tarea-nombre').value,
+                            estado: f.querySelector('.input-tarea-estado').value,
+                            tema: f.querySelector('.input-tarea-tema').value,
+                            responsable: r,
+                            fechaentregatarea: f.querySelector('.input-tarea-fecha').value,
+                            alertas: f.querySelector('.input-tarea-alertas').value
+                        });
+                        numNuevas++;
+                    }
+                    await registrarAuditoria("Creación", `Agregó ${numNuevas} tarea(s) a la iniciativa: ${baseData.iniciativa}`);
+                }
+
+                // Cierre Seguro de Modal
                 document.getElementById('modalFormulario').classList.add('hidden');
             } catch (error) {
-                console.error("Error guardando en Firestore:", error);
-                alert("Ocurrió un error al guardar en la base de datos.");
+                console.error("Error guardando:", error);
+                alert("Hubo un error al guardar. Revisa la consola.");
             } finally {
                 btnGuardar.innerText = "Guardar Todo";
                 btnGuardar.disabled = false;
             }
         });
 
-        // FUNCIONES DE RENDERIZADO Y GRÁFICOS (CORREGIDO ERROR CRÍTICO)
+        // RENDERIZADO VISUAL
         function renderizarTodo() {
             const btnFiltro = document.getElementById('btnLimpiarFiltros');
-            if(estadoFiltroActual === "TODOS") {
-                btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition";
-                btnFiltro.disabled = true;
-            } else {
-                btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm";
-                btnFiltro.disabled = false;
-            }
+            if(estadoFiltroActual === "TODOS") { btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition"; btnFiltro.disabled = true; } 
+            else { btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm"; btnFiltro.disabled = false; }
 
             const datosFiltrados = estadoFiltroActual === "TODOS" ? cacheDatosRaw : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
             renderizarGraficasPrincipales(datosFiltrados);
-            renderizarGraficasSalud(cacheDatosRaw);
             renderizarTablaJerarquica(datosFiltrados);
-        }
-
-        // CORREGIDA LA LÍNEA CRÍTICA AQUÍ ABAJO (chartTareasSalud en vez de chartTareasSalul)
-        function renderizarGraficasSalud(proyectos) {
-            const hoy = new Date(); hoy.setHours(0,0,0,0);
-            let iniOnTime = 0, iniAtraso = 0, tarOnTime = 0, tarAtraso = 0;
-
-            proyectos.forEach(p => {
-                if(!p.tarea || p.estado === "Finalizado") return;
-                let fEntrega = p.fechaentregatarea ? new Date(p.fechaentregatarea) : null;
-                if(fEntrega && fEntrega < hoy) tarAtraso++; else tarOnTime++;
-            });
-
-            const iniciativasUnicas = {};
-            proyectos.forEach(p => { if(!iniciativasUnicas[p.iniciativa]) iniciativasUnicas[p.iniciativa] = p; });
-
-            Object.values(iniciativasUnicas).forEach(ini => {
-                let fEntregaIni = ini.fechaentregainiciativa ? new Date(ini.fechaentregainiciativa) : null;
-                if (fEntregaIni && fEntregaIni < hoy) iniAtraso++; else iniOnTime++;
-            });
-
-            if(chartIniSalud) chartIniSalud.destroy();
-            chartIniSalud = new Chart(document.getElementById('graficaIniciativasSalud'), {
-                type: 'pie',
-                data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [iniAtraso, iniOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
-                options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
-            });
-
-            // ✨ CORRECCIÓN: Variable corregida correctamente para evitar romper la app
-            if(chartTareasSalud) chartTareasSalud.destroy();
-            chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
-                type: 'pie',
-                data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
-                options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
-            });
         }
 
         function renderizarGraficasPrincipales(proyectos) {
@@ -618,46 +661,24 @@
             });
 
             if(chartEstados) chartEstados.destroy();
-            chartEstados = new Chart(document.getElementById('graficaEstados'), {
-                type: 'bar',
-                data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 4 }] },
-                options: { maintainAspectRatio: false, onClick: (e, els) => {
-                    if (els.length > 0) {
-                        const est = chartEstados.data.labels[els[0].index];
-                        estadoFiltroActual = (estadoFiltroActual === est) ? "TODOS" : est;
-                        document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual;
-                        renderizarTodo();
-                    }
-                }}
-            });
-
+            chartEstados = new Chart(document.getElementById('graficaEstados'), { type: 'bar', data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 4 }] }, options: { maintainAspectRatio: false, onClick: (e, els) => { if (els.length > 0) { estadoFiltroActual = (estadoFiltroActual === chartEstados.data.labels[els[0].index]) ? "TODOS" : chartEstados.data.labels[els[0].index]; document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual; renderizarTodo(); }}}});
             if(chartTemas) chartTemas.destroy();
             chartTemas = new Chart(document.getElementById('graficaTemas'), { type: 'doughnut', data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false }});
-
             if(chartResponsables) chartResponsables.destroy();
             chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
         }
 
         window.cambiarOrden = function(columna) {
-            if(columnaOrdenActual === columna) {
-                ordenAscendente = !ordenAscendente;
-            } else {
-                columnaOrdenActual = columna;
-                ordenAscendente = true;
-            }
-            ['jerarquia','responsable','estado','tema','fechaentrega','fechacreacion'].forEach(c => {
-                document.getElementById('icon-sort-' + c).innerText = '↕';
-                document.getElementById('icon-sort-' + c).className = 'text-slate-400 text-[10px] ml-1';
-            });
-            document.getElementById('icon-sort-' + columna).innerText = ordenAscendente ? '↑' : '↓';
-            document.getElementById('icon-sort-' + columna).className = 'text-blue-600 font-bold text-[10px] ml-1';
-            
+            if(columnaOrdenActual === columna) ordenAscendente = !ordenAscendente; else { columnaOrdenActual = columna; ordenAscendente = true; }
+            ['jerarquia','responsable','estado','tema','fechaentrega','fechacreacion'].forEach(c => { document.getElementById('icon-sort-'+c).innerText='↕'; document.getElementById('icon-sort-'+c).className='text-slate-400 text-[10px] ml-1'; });
+            document.getElementById('icon-sort-'+columna).innerText = ordenAscendente ? '↑' : '↓';
+            document.getElementById('icon-sort-'+columna).className = 'text-blue-600 font-bold text-[10px] ml-1';
             renderizarTodo();
         }
 
         function obtenerValorParaOrden(item, col, esPadre) {
             if(col === 'jerarquia') return esPadre ? (item.iniciativa || '').toLowerCase() : (item.tarea || '').toLowerCase();
-            if(col === 'responsable') return esPadre ? (item.respiniciativa || item.responsableiniciativa || '').toLowerCase() : (item.responsable || item.responsabletarea || '').toLowerCase();
+            if(col === 'responsable') return esPadre ? (item.respiniciativa || '').toLowerCase() : (item.responsable || '').toLowerCase();
             if(col === 'estado') return esPadre ? 'z' : (item.estado || '').toLowerCase();
             if(col === 'tema') return esPadre ? 'z' : (item.tema || '').toLowerCase();
             if(col === 'fechaentrega') return esPadre ? new Date(item.fechaentregainiciativa || '2099') : new Date(item.fechaentregatarea || '2099');
@@ -671,102 +692,73 @@
             const deasglose = {};
             proyectos.forEach(p => { if (p.iniciativa) { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); } });
 
-            let grupos = Object.keys(deasglose).map(iniciativa => {
-                return { nombre: iniciativa, padre: deasglose[iniciativa][0], hijos: deasglose[iniciativa] }
-            });
+            let grupos = Object.keys(deasglose).map(iniciativa => ({ nombre: iniciativa, padre: deasglose[iniciativa][0], hijos: deasglose[iniciativa] }));
 
             if(columnaOrdenActual) {
-                grupos.sort((a, b) => {
-                    let valA = obtenerValorParaOrden(a.padre, columnaOrdenActual, true);
-                    let valB = obtenerValorParaOrden(b.padre, columnaOrdenActual, true);
-                    if(valA < valB) return ordenAscendente ? -1 : 1;
-                    if(valA > valB) return ordenAscendente ? 1 : -1;
-                    return 0;
-                });
-                grupos.forEach(g => {
-                    g.hijos.sort((a, b) => {
-                        let valA = obtenerValorParaOrden(a, columnaOrdenActual, false);
-                        let valB = obtenerValorParaOrden(b, columnaOrdenActual, false);
-                        if(valA < valB) return ordenAscendente ? -1 : 1;
-                        if(valA > valB) return ordenAscendente ? 1 : -1;
-                        return 0;
-                    });
-                });
+                grupos.sort((a, b) => { let valA = obtenerValorParaOrden(a.padre, columnaOrdenActual, true); let valB = obtenerValorParaOrden(b.padre, columnaOrdenActual, true); if(valA < valB) return ordenAscendente ? -1 : 1; if(valA > valB) return ordenAscendente ? 1 : -1; return 0; });
+                grupos.forEach(g => { g.hijos.sort((a, b) => { let valA = obtenerValorParaOrden(a, columnaOrdenActual, false); let valB = obtenerValorParaOrden(b, columnaOrdenActual, false); if(valA < valB) return ordenAscendente ? -1 : 1; if(valA > valB) return ordenAscendente ? 1 : -1; return 0; }); });
             }
 
             grupos.forEach(grupo => {
                 const iniciativa = grupo.nombre;
-                const primerasMetas = grupo.padre;
-                const estaColapsado = iniciativasColapsadas.has(iniciativa);
+                const pMetas = grupo.padre;
+                const colapso = iniciativasColapsadas.has(iniciativa);
                 
-                let badgeImpacto = '';
-                if(primerasMetas.impacto === 'Alto') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase">Impacto Alto</span>`;
-                if(primerasMetas.impacto === 'Medio') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 uppercase">Impacto Medio</span>`;
-                if(primerasMetas.impacto === 'Bajo') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase">Impacto Bajo</span>`;
+                let bImpacto = '';
+                if(pMetas.impacto === 'Alto') bImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase">Alto</span>`;
+                if(pMetas.impacto === 'Medio') bImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 uppercase">Medio</span>`;
+                if(pMetas.impacto === 'Bajo') bImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase">Bajo</span>`;
 
-                const fEntregaIniRaw = primerasMetas.fechaentregainiciativa;
-                const fEntregaIniFormateada = fEntregaIniRaw ? new Date(fEntregaIniRaw).toLocaleDateString('es-CL') : '-';
-                const fCreacionIniFormateada = (primerasMetas.fechacreacion || primerasMetas.fecha) ? new Date((primerasMetas.fechacreacion || primerasMetas.fecha)).toLocaleDateString('es-CL') : '-';
+                const fEntregaIni = pMetas.fechaentregainiciativa ? new Date(pMetas.fechaentregainiciativa).toLocaleDateString('es-CL') : '-';
+                const fCreacionIni = pMetas.fechacreacion ? new Date(pMetas.fechacreacion).toLocaleDateString('es-CL') : '-';
 
                 const filaPadre = document.createElement('tr');
                 filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
-                
                 filaPadre.innerHTML = `
-                    <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa}')">
-                        <span class="text-xs text-slate-400 w-4">${estaColapsado ? '▶' : '▼'}</span>
-                        📂 ${iniciativa} ${badgeImpacto}
-                    </td>
-                    <td class="p-3 text-slate-700 text-xs">${primerasMetas.respiniciativa || primerasMetas.responsableiniciativa || '-'}</td>
+                    <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa}')"><span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>📂 ${iniciativa} ${bImpacto}</td>
+                    <td class="p-3 text-slate-700 text-xs">${pMetas.respiniciativa || '-'}</td>
                     <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">Iniciativa</span></td>
-                    <td class="p-3">-</td>
-                    <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIniFormateada}</td>
-                    <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIniFormateada}</td>
-                    <td class="p-3 text-center">
-                        <button onclick="window.abrirModalEdicion('${primerasMetas.id}')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
-                    </td>
+                    <td class="p-3 text-slate-500 text-xs">${pMetas.areainiciativa || '-'}</td>
+                    <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIni}</td>
+                    <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIni}</td>
+                    <td class="p-3 text-center"><button onclick="window.abrirModalEdicion('${pMetas.id}', 'INICIATIVA')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button></td>
                 `;
                 cuerpo.appendChild(filaPadre);
 
-                if (!estaColapsado) {
+                if (!colapso) {
                     grupo.hijos.forEach(t => {
                         if(!t.tarea) return;
-                        const hoy = new Date(); hoy.setHours(0,0,0,0);
-                        const fEntregaTarea = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
-                        const fEntregaIni = fEntregaIniRaw ? new Date(fEntregaIniRaw) : null;
-                        
-                        let celdaFechaClase = "text-slate-600 font-mono";
-                        let filaFondoClase = "hover:bg-slate-50/80 transition group";
+                        const fET = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
+                        const fEI = pMetas.fechaentregainiciativa ? new Date(pMetas.fechaentregainiciativa) : null;
+                        let cFecha = "text-slate-600 font-mono", cFondo = "hover:bg-slate-50/80 transition group";
 
-                        if(fEntregaTarea) {
-                            fEntregaTarea.setHours(0,0,0,0);
-                            if (fEntregaIni && fEntregaTarea > fEntregaIni) celdaFechaClase = "text-red-600 font-bold underline";
-                            const diffDias = Math.ceil((fEntregaTarea - hoy) / (1000 * 60 * 60 * 24));
+                        if(fET) {
+                            fET.setHours(0,0,0,0);
+                            if (fEI && fET > fEI) cFecha = "text-red-600 font-bold underline";
+                            const dDias = Math.ceil((fET - new Date().setHours(0,0,0,0)) / 86400000);
                             if(t.estado !== "Finalizado") {
-                                if (diffDias < 0) filaFondoClase = "bg-red-50/80 text-red-900 hover:bg-red-100/70 transition group";
-                                else if (diffDias <= 15) filaFondoClase = "bg-red-50 text-red-900 hover:bg-red-100/70 transition group";
-                                else if (diffDias <= 30) filaFondoClase = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition group";
+                                if (dDias < 0) cFondo = "bg-red-50/80 text-red-900 hover:bg-red-100/70 transition group";
+                                else if (dDias <= 15) cFondo = "bg-red-50 text-red-900 hover:bg-red-100/70 transition group";
+                                else if (dDias <= 30) cFondo = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition group";
                             }
                         }
 
-                        let badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
-                        if(t.estado === "En Progreso") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
-                        if(t.estado === "Pausado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
-                        if(t.estado === "Bloqueado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
-                        if(t.estado === "Finalizado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Finalizado</span>`;
+                        let bEst = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
+                        if(t.estado === "En Progreso") bEst = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
+                        if(t.estado === "Pausado") bEst = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
+                        if(t.estado === "Bloqueado") bEst = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
+                        if(t.estado === "Finalizado") bEst = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Finalizado</span>`;
 
                         const filaHijo = document.createElement('tr');
-                        filaHijo.className = filaFondoClase;
-                        
+                        filaHijo.className = cFondo;
                         filaHijo.innerHTML = `
                             <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
-                            <td class="p-2 text-slate-600 text-xs">${t.responsable || t.responsabletarea || '-'}</td>
-                            <td class="p-2">${badgeEstado}</td>
+                            <td class="p-2 text-slate-600 text-xs">${t.responsable || '-'}</td>
+                            <td class="p-2">${bEst}</td>
                             <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
-                            <td class="p-2 ${celdaFechaClase} text-xs">${fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 ${cFecha} text-xs">${fET ? fET.toLocaleDateString('es-CL') : '-'}</td>
                             <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
-                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="window.abrirModalEdicion('${t.id}')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
-                            </td>
+                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.abrirModalEdicion('${t.id}', 'TAREA')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button></td>
                         `;
                         cuerpo.appendChild(filaHijo);
                     });
@@ -775,10 +767,13 @@
         }
 
         window.toggleColapso = function(iniciativa) {
-            if(iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa);
-            else iniciativasColapsadas.add(iniciativa);
+            if(iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa); else iniciativasColapsadas.add(iniciativa);
             renderizarTodo();
         }
+
+        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
+        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
+
     </script>
 </body>
 </html>
