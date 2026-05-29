@@ -90,24 +90,33 @@
     <!-- VISTA TABLERO -->
     <div id="vistaTablero">
 
-        <!-- PANEL FILTROS MULTI -->
-        <div id="panelFiltros" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
-                    <div id="chipsEstado" class="flex flex-wrap gap-1.5"></div>
+        <!-- PANEL FILTROS MULTI (colapsable) -->
+        <div id="panelFiltros" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm mb-4 overflow-hidden">
+            <button id="btnToggleFiltros" onclick="window.togglePanelFiltros()" class="w-full flex justify-between items-center px-4 py-3 hover:bg-slate-50 transition text-left">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-700">🎯 Filtros</span>
+                    <span id="badgeFiltrosActivos" class="hidden bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
                 </div>
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Impacto</p>
-                    <div id="chipsImpacto" class="flex flex-wrap gap-1.5"></div>
-                </div>
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Responsable</p>
-                    <div id="chipsResponsable" class="flex flex-wrap gap-1.5"></div>
-                </div>
-                <div>
-                    <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativa</p>
-                    <div id="chipsIniciativa" class="flex flex-wrap gap-1.5"></div>
+                <span id="iconToggleFiltros" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
+            </button>
+            <div id="cuerpoPanelFiltros" class="hidden border-t border-slate-100 p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
+                        <div id="chipsEstado" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Impacto</p>
+                        <div id="chipsImpacto" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Responsable</p>
+                        <div id="chipsResponsable" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativa</p>
+                        <div id="chipsIniciativa" class="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1" style="scrollbar-width:thin;"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -115,7 +124,7 @@
         <!-- GRÁFICAS -->
         <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Impacto <span class="text-slate-300 font-normal">(clic para filtrar)</span></h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Impacto</h2>
                 <div class="h-44"><canvas id="graficaImpacto"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -123,7 +132,7 @@
                 <div class="h-44"><canvas id="graficaTemas"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados <span class="text-slate-300 font-normal">(clic para filtrar)</span></h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
                 <div class="h-44"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -227,6 +236,15 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Meta</label>
                         <input type="date" id="inputFechaEntregaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha de Inicio</label>
+                        <input type="date" id="inputFechaInicioIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div class="flex items-end pb-0.5">
+                        <p class="text-[11px] text-slate-400 leading-tight">Desde cuándo aparece la iniciativa en la línea de tiempo.</p>
                     </div>
                 </div>
             </div>
@@ -501,6 +519,21 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     renderizarTodo();
 });
 
+window.togglePanelFiltros = function() {
+    const cuerpo = document.getElementById('cuerpoPanelFiltros');
+    const icon = document.getElementById('iconToggleFiltros');
+    const abierto = !cuerpo.classList.contains('hidden');
+    cuerpo.classList.toggle('hidden', abierto);
+    icon.style.transform = abierto ? '' : 'rotate(180deg)';
+};
+
+function actualizarBadgeFiltros() {
+    const total = Object.values(filtrosActivos).reduce((a,s) => a+s.size, 0);
+    const badge = document.getElementById('badgeFiltrosActivos');
+    if (total > 0) { badge.textContent = total + ' activo' + (total > 1 ? 's' : ''); badge.classList.remove('hidden'); }
+    else { badge.classList.add('hidden'); }
+}
+
 // CÁLCULO ESTADO Y AVANCE INICIATIVA
 function calcularEstadoIniciativa(hijos) {
     const tareas = hijos.filter(h => h.tarea);
@@ -533,6 +566,7 @@ function renderizarTodo() {
         btnFiltro.innerText = `✕ Limpiar (${total})`;
         btnFiltro.disabled = false;
     }
+    actualizarBadgeFiltros();
 
     let datosFiltrados = cacheDatosRaw;
     if (filtrosActivos.estado.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.estado.has(p.estado));
@@ -541,7 +575,7 @@ function renderizarTodo() {
     if (filtrosActivos.iniciativa.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.iniciativa.has(p.iniciativa));
 
     renderizarGraficasPrincipales(datosFiltrados);
-    renderizarGantt(cacheDatosRaw);
+    renderizarGantt(datosFiltrados);
     renderizarTablaJerarquica(datosFiltrados);
 }
 
@@ -687,10 +721,10 @@ function renderizarGraficasPrincipales(proyectos) {
     });
 }
 
-// GANTT
-function renderizarGantt(proyectos) {
+// GANTT — usa datos filtrados, fecha inicio explícita, máx 7 filas con scroll
+function renderizarGantt(proyectosFiltrados) {
     const desglose = {};
-    proyectos.forEach(p => {
+    proyectosFiltrados.forEach(p => {
         if (p.iniciativa) {
             if (!desglose[p.iniciativa]) desglose[p.iniciativa] = [];
             desglose[p.iniciativa].push(p);
@@ -700,10 +734,9 @@ function renderizarGantt(proyectos) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const fin = new Date(hoy); fin.setMonth(fin.getMonth() + 6);
     const totalDias = Math.ceil((fin - hoy) / 86400000);
-
     const coloresImpacto = { 'Crítico': ['#7c3aed','#ddd6fe'], 'Alto': ['#dc2626','#fee2e2'], 'Medio': ['#d97706','#fef3c7'], 'Bajo': ['#059669','#d1fae5'] };
 
-    // Generar meses para header
+    // Meses header
     const meses = [];
     let cur = new Date(hoy); cur.setDate(1);
     while (cur <= fin) {
@@ -713,69 +746,93 @@ function renderizarGantt(proyectos) {
         cur.setMonth(cur.getMonth() + 1);
     }
 
-    let html = `<div style="position:relative; min-width:700px;">`;
+    const headerHTML = `
+        <div style="position:sticky; top:0; z-index:2; background:#fff; padding-bottom:6px;">
+            <div style="display:flex; position:relative; height:22px; margin-left:210px; border-bottom:1px solid #e2e8f0;">
+                ${meses.map(m => `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`).join('')}
+            </div>
+        </div>`;
 
-    // Header meses
-    html += `<div style="display:flex; position:relative; height:22px; margin-left:200px; border-bottom:1px solid #e2e8f0; margin-bottom:8px;">`;
-    meses.forEach(m => {
-        html += `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`;
-    });
-    html += `</div>`;
+    // Filas
+    const iniciativas = Object.keys(desglose);
+    const ROW_H = 42;
+    const MAX_VISIBLE = 7;
+    const scrollable = iniciativas.length > MAX_VISIBLE;
+    const containerH = scrollable ? MAX_VISIBLE * ROW_H + 30 : 'auto';
 
-    // Línea de hoy
-    const lineaHoy = `<div style="position:absolute; left:calc(200px + 0%); top:22px; bottom:0; width:2px; background:#3b82f6; opacity:0.4; pointer-events:none; z-index:1;"></div>`;
-
-    // Filas por iniciativa
-    Object.keys(desglose).forEach((iniciativa, idx) => {
+    let filasHTML = '';
+    iniciativas.forEach(iniciativa => {
         const hijos = desglose[iniciativa];
         const padre = hijos[0];
-        const fechaIni = padre.fechaentregainiciativa ? new Date(padre.fechaentregainiciativa) : null;
-        const fechasInicio = hijos.filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
-        const fechaStart = fechasInicio.length > 0 ? new Date(Math.min(...fechasInicio)) : hoy;
+        const fechaMeta = padre.fechaentregainiciativa ? new Date(padre.fechaentregainiciativa) : null;
+        if (!fechaMeta) return;
+
+        // Fecha inicio: usar fechainicioiniciativa si existe, sino la más temprana de tareas, sino hoy
+        let fechaStart;
+        if (padre.fechainicioiniciativa) {
+            fechaStart = new Date(padre.fechainicioiniciativa);
+        } else {
+            const fechasTareas = hijos.filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
+            fechaStart = fechasTareas.length > 0 ? new Date(Math.min(...fechasTareas)) : new Date(hoy);
+        }
+        fechaStart.setHours(0,0,0,0); fechaMeta.setHours(0,0,0,0);
+
         const avance = calcularAvanceIniciativa(hijos);
         const estadoIni = calcularEstadoIniciativa(hijos);
-
         const colors = coloresImpacto[padre.impacto] || coloresImpacto['Medio'];
+        const vencida = fechaMeta < hoy && estadoIni !== 'Finalizado';
 
-        if (!fechaIni) return;
+        // Calcular posición relativa a ventana de 6 meses
+        const startDias = Math.max(-totalDias * 0.05, Math.ceil((fechaStart - hoy) / 86400000));
+        const endDias = Math.min(totalDias * 1.05, Math.ceil((fechaMeta - hoy) / 86400000));
+        const startPct = Math.max(0, (startDias / totalDias) * 100);
+        const endPct = Math.min(100, (endDias / totalDias) * 100);
+        const widthPct = Math.max(0.8, endPct - startPct);
 
-        const startDias = Math.max(0, Math.ceil((fechaStart - hoy) / 86400000));
-        const endDias = Math.min(totalDias, Math.ceil((fechaIni - hoy) / 86400000));
-        const startPct = (startDias / totalDias) * 100;
-        const widthPct = Math.max(1, ((endDias - startDias) / totalDias) * 100);
-        const vencida = fechaIni < hoy && estadoIni !== 'Finalizado';
+        const fmtInicio = fechaStart.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
+        const fmtMeta = fechaMeta.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
+        const numTareas = hijos.filter(h => h.tarea).length;
 
-        const fmtFecha = fechaIni.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
-
-        html += `
-        <div style="display:flex; align-items:center; margin-bottom:6px; position:relative;">
-            <div style="width:200px; flex-shrink:0; padding-right:12px; overflow:hidden;">
+        filasHTML += `
+        <div style="display:flex; align-items:center; margin-bottom:6px; height:${ROW_H - 8}px;">
+            <div style="width:210px; flex-shrink:0; padding-right:14px; overflow:hidden;">
                 <div style="font-size:11px; font-weight:600; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${iniciativa}">${iniciativa}</div>
-                <div style="font-size:10px; color:#94a3b8;">${avance}% · ${hijos.filter(h=>h.tarea).length} tareas</div>
+                <div style="font-size:10px; color:#94a3b8; margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio} → ${fmtMeta}</div>
             </div>
-            <div style="flex:1; position:relative; height:28px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; overflow:visible;">
-                <div class="gantt-bar" style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:${vencida ? '#ef4444' : colors[0]}; border-radius:6px; display:flex; align-items:center; overflow:hidden; cursor:default;" title="${iniciativa}: ${fmtFecha}">
-                    <div style="height:100%; width:${avance}%; background:rgba(255,255,255,0.25); border-radius:6px; flex-shrink:0;"></div>
+            <div style="flex:1; position:relative; height:26px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; overflow:visible;">
+                <div class="gantt-bar" style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:${vencida?'#ef4444':colors[0]}; border-radius:6px; overflow:hidden; cursor:default;" title="${iniciativa}">
+                    <div style="height:100%; width:${avance}%; background:rgba(255,255,255,0.28); flex-shrink:0;"></div>
                 </div>
-                <div style="position:absolute; left:calc(${startPct + widthPct}% + 6px); top:50%; transform:translateY(-50%); font-size:10px; color:${vencida?'#ef4444':'#64748b'}; font-weight:600; white-space:nowrap;">
-                    ${vencida ? '⚠ ' : ''}${fmtFecha}
+                ${endPct <= 100 ? `<div style="position:absolute; left:calc(${endPct}% + 5px); top:50%; transform:translateY(-50%); font-size:10px; color:${vencida?'#ef4444':'#64748b'}; font-weight:600; white-space:nowrap;">${vencida?'⚠ ':''}${fmtMeta}</div>` : ''}
+                <div style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;">
+                    <div style="position:absolute; left:0%; top:0; bottom:0; width:1.5px; background:#3b82f6; opacity:0.35;"></div>
                 </div>
             </div>
         </div>`;
     });
 
-    html += lineaHoy + `</div>`;
+    if (!filasHTML) {
+        filasHTML = `<div style="text-align:center; padding:24px; font-size:13px; color:#94a3b8;">Sin iniciativas para mostrar con los filtros actuales.</div>`;
+    }
+
+    const ganttHTML = `
+        <div style="min-width:700px;">
+            ${headerHTML}
+            <div style="max-height:${containerH}px; overflow-y:${scrollable?'auto':'visible'}; padding-right:4px; scrollbar-width:thin;">
+                ${filasHTML}
+            </div>
+            ${scrollable ? `<div style="text-align:center; padding-top:8px; font-size:10px; color:#94a3b8;">Scroll para ver las ${iniciativas.length - MAX_VISIBLE} iniciativas restantes</div>` : ''}
+        </div>`;
 
     // Leyenda
-    html += `<div style="display:flex; gap:16px; margin-top:12px; padding-top:10px; border-top:1px solid #f1f5f9; flex-wrap:wrap;">`;
-    Object.entries(coloresImpacto).forEach(([imp, [color]]) => {
-        html += `<div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:12px; height:12px; border-radius:3px; background:${color};"></div>${imp}</div>`;
-    });
-    html += `<div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:2px; height:12px; background:#3b82f6; opacity:0.5;"></div>Hoy</div>`;
-    html += `<div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:12px; height:12px; border-radius:3px; background:#ef4444;"></div>Vencida</div>`;
-    html += `</div>`;
+    const leyendaHTML = `
+        <div style="display:flex; gap:16px; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; flex-wrap:wrap;">
+            ${Object.entries(coloresImpacto).map(([imp,[color]]) => `<div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:12px;height:12px;border-radius:3px;background:${color};"></div>${imp}</div>`).join('')}
+            <div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:2px;height:12px;background:#3b82f6;opacity:0.4;"></div>Hoy</div>
+            <div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:12px;height:12px;border-radius:3px;background:#ef4444;"></div>Vencida</div>
+        </div>`;
 
-    document.getElementById('ganttContenido').innerHTML = html;
+    document.getElementById('ganttContenido').innerHTML = ganttHTML + leyendaHTML;
 }
 
 // TABLA JERÁRQUICA
@@ -1051,6 +1108,11 @@ window.abrirModalEdicion = function(idFila, tipo) {
             const d = new Date(item.fechaentregainiciativa);
             if (!isNaN(d)) document.getElementById('inputFechaEntregaIniciativa').value = d.toISOString().split('T')[0];
         }
+        document.getElementById('inputFechaInicioIniciativa').value = '';
+        if (item.fechainicioiniciativa) {
+            const d2 = new Date(item.fechainicioiniciativa);
+            if (!isNaN(d2)) document.getElementById('inputFechaInicioIniciativa').value = d2.toISOString().split('T')[0];
+        }
         aplicarRestriccionesBloques('EDITAR_INICIATIVA');
     } else {
         document.getElementById('tituloModal').innerText = "Editar Tarea";
@@ -1206,7 +1268,8 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                 respiniciativa: document.getElementById('inputRespIniciativa').value,
                 areainiciativa: document.getElementById('selectAreaIniciativa').value,
                 impacto: document.getElementById('selectImpacto').value,
-                fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
+                fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value,
+                fechainicioiniciativa: document.getElementById('inputFechaInicioIniciativa').value
             };
             const oldName = document.getElementById('inputOldIniciativaNombre').value;
             const docsToUpdate = cacheDatosRaw.filter(p => p.iniciativa === oldName);
@@ -1244,7 +1307,8 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                     respiniciativa: document.getElementById('inputRespIniciativa').value,
                     areainiciativa: document.getElementById('selectAreaIniciativa').value,
                     impacto: document.getElementById('selectImpacto').value,
-                    fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
+                    fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value,
+                    fechainicioiniciativa: document.getElementById('inputFechaInicioIniciativa').value
                 };
             } else {
                 const s = document.getElementById('selectIniciativaPadre');
