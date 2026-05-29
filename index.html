@@ -12,7 +12,7 @@
     <div id="pantallaLogin" class="min-h-screen flex items-center justify-center bg-slate-100">
         <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 max-w-md w-full text-center">
             <h1 class="text-3xl font-extrabold text-blue-600 mb-2">Control de Proyectos</h1>
-            <p class="text-slate-500 mb-8">Inicia sesión con el correo de tu empresa para acceder.</p>
+            <p class="text-slate-500 mb-8">Inicia sesión con tu correo corporativo (@hites.cl) para acceder.</p>
             <button id="btnLogin" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all">
                 <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.133 1 1.18 5.925 1.18 12s4.953 11 11.06 11c6.373 0 10.596-4.414 10.596-10.77 0-.725-.078-1.282-.175-1.945H12.24z"/></svg>
                 Iniciar Sesión con Google
@@ -92,15 +92,15 @@
         // URL DE TU GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXDEBW-nGCiWRzbUTtuXQBMP3wbgluz3ZxMmNpn3RSEksBlr6m7g70Lu2QikBOJS0/exec";
 
-        // ⚠️ COLOCA AQUÍ TUS CREDENCIALES DE FIREBASE
-       const firebaseConfig = {
-  apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
-  authDomain: "control-proyectos-33bfb.firebaseapp.com",
-  projectId: "control-proyectos-33bfb",
-  storageBucket: "control-proyectos-33bfb.firebasestorage.app",
-  messagingSenderId: "614616026781",
-  appId: "1:614616026781:web:caaf274a8afbcb23080e74"
-};
+        // CONFIGURACIÓN DE FIREBASE DE FRANCISCO
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
+            authDomain: "control-proyectos-33bfb.firebaseapp.com",
+            projectId: "control-proyectos-33bfb",
+            storageBucket: "control-proyectos-33bfb.firebasestorage.app",
+            messagingSenderId: "614616026781",
+            appId: "1:614616026781:web:caaf274a8afbcb23080e74"
+        };
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -117,15 +117,15 @@
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // FILTRO DE SEGURIDAD
-                if (user.email.endsWith('@hites.cl') || user.email === 'francisco.iturriaga@hites.cl') {
+                // FILTRO DE SEGURIDAD EXCLUSIVO PARA HITES.CL
+                if (user.email.endsWith('@hites.cl')) {
                     domLogin.classList.add('hidden');
                     domPlataforma.classList.remove('hidden');
                     txtUsuario.innerText = `Conectado como: ${user.displayName} (${user.email})`;
                     cargarDatosDesdeSheets();
                 } else {
                     signOut(auth);
-                    errorLogin.innerText = "Acceso denegado. Solo correos corporativos.";
+                    errorLogin.innerText = "Acceso denegado. Solo se permiten correos corporativos (@hites.cl).";
                     errorLogin.classList.remove('hidden');
                 }
             } else {
@@ -162,7 +162,7 @@
                 if(temas[p.tema] !== undefined) temas[p.tema]++;
             });
 
-            // Si las gráficas ya existían, las destruimos para redibujar con los nuevos datos
+            // Si las gráficas ya existían, las destruimos para redibujar
             if(chartEstados) chartEstados.destroy();
             if(chartTemas) chartTemas.destroy();
 
@@ -206,17 +206,16 @@
             // Enviar datos al Apps Script por POST
             fetch(SCRIPT_URL, {
                 method: "POST",
-                mode: "no-cors", // Requerido para evitar problemas de CORS cruzado con Google Apps Script
+                mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(nuevoProyecto)
             }).then(() => {
-                // Como usamos no-cors, asumimos éxito rápido
                 modalFormulario.classList.add('hidden');
                 document.getElementById('formIniciativa').reset();
                 btnGuardar.innerText = "Guardar Proyecto";
                 btnGuardar.disabled = false;
                 
-                // Recargar el dashboard para ver el impacto inmediatamente
+                // Recargar el dashboard 1.5 seg después para asegurar que el Sheet se guardó
                 setTimeout(cargarDatosDesdeSheets, 1500);
             }).catch(err => {
                 alert("Error al guardar.");
