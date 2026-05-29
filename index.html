@@ -53,7 +53,7 @@
             </div>
         </header>
 
-        <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Cargando datos desde Google Sheets...</div>
+        <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Conectando con la Base de Datos...</div>
 
         <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -100,7 +100,7 @@
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -202,8 +202,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXDEBW-nGCiWRzbUTtuXQBMP3wbgluz3ZxMmNpn3RSEksBlr6m7g70Lu2QikBOJS0/exec";
         const firebaseConfig = {
             apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
             authDomain: "control-proyectos-33bfb.firebaseapp.com",
@@ -216,6 +216,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
+        const db = getFirestore(app);
 
         let cacheDatosRaw = [];
         let estadoFiltroActual = "TODOS";
@@ -226,7 +227,6 @@
         let chartEstados = null, chartTemas = null, chartResponsables = null;
         let chartIniSalud = null, chartTareasSalud = null;
 
-        // Custom tooltip para mostrar porcentajes en las tortas
         const pieTooltipOptions = {
             callbacks: {
                 label: function(context) {
@@ -240,12 +240,14 @@
             }
         };
 
+        // AUTENTICACIÓN
         onAuthStateChanged(auth, (user) => {
             if (user && user.email.endsWith('@hites.cl')) {
                 document.getElementById('pantallaLogin').classList.add('hidden');
                 document.getElementById('plataforma').classList.remove('hidden');
                 document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${user.email})`;
-                cargarDatosDesdeSheets();
+                
+                iniciarEscuchaFirestore(); 
             } else if (user) {
                 signOut(auth);
                 document.getElementById('errorLogin').innerText = "Acceso denegado. Solo cuentas @hites.cl.";
@@ -256,29 +258,31 @@
             }
         });
 
-        function cargarDatosDesdeSheets() {
+        // LECTURA EN TIEMPO REAL DESDE FIRESTORE
+        function iniciarEscuchaFirestore() {
             document.getElementById('txtCargando').classList.remove('hidden');
             document.getElementById('contenedorGraficas').classList.add('hidden');
             document.getElementById('contenedorGraficasSalud').classList.add('hidden');
             document.getElementById('contenedorTabla').classList.add('hidden');
 
-            fetch(SCRIPT_URL).then(res => res.json()).then(data => {
-                cacheDatosRaw = data.map(item => {
-                    let normalizado = {};
-                    for (let key in item) {
-                        normalizado[key.replace(/[\s_]/g, '').toLowerCase()] = item[key];
-                    }
-                    if (normalizado.id) normalizado.id = parseInt(normalizado.id);
-                    return normalizado;
+            const proyectosRef = collection(db, "actividades");
+
+            onSnapshot(proyectosRef, (snapshot) => {
+                cacheDatosRaw = [];
+                snapshot.forEach((doc) => {
+                    cacheDatosRaw.push({ id: doc.id, ...doc.data() });
                 });
+
                 document.getElementById('txtCargando').classList.add('hidden');
                 document.getElementById('contenedorGraficas').classList.remove('hidden');
                 document.getElementById('contenedorGraficasSalud').classList.remove('hidden');
                 document.getElementById('contenedorTabla').classList.remove('hidden');
+                
                 renderizarTodo();
             });
         }
 
+        // RENDERIZADO GENERAL
         function renderizarTodo() {
             const btnFiltro = document.getElementById('btnLimpiarFiltros');
             if(estadoFiltroActual === "TODOS") {
@@ -295,6 +299,7 @@
             renderizarTablaJerarquica(datosFiltrados);
         }
 
+        // GRÁFICAS
         function renderizarGraficasSalud(proyectos) {
             const hoy = new Date(); hoy.setHours(0,0,0,0);
             let iniOnTime = 0, iniAtraso = 0, tarOnTime = 0, tarAtraso = 0;
@@ -315,14 +320,14 @@
 
             if(chartIniSalud) chartIniSalud.destroy();
             chartIniSalud = new Chart(document.getElementById('graficaIniciativasSalud'), {
-                type: 'pie', // Gráfico Torta
+                type: 'pie',
                 data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [iniAtraso, iniOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
                 options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
             });
 
             if(chartTareasSalud) chartTareasSalud.destroy();
             chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
-                type: 'pie', // Gráfico Torta
+                type: 'pie',
                 data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
                 options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
             });
@@ -361,6 +366,7 @@
             chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
         }
 
+        // EDICIÓN Y ORDENAMIENTO
         window.abrirModalEdicion = function(idFila) {
             const item = cacheDatosRaw.find(p => p.id === idFila);
             if(!item) return;
@@ -399,7 +405,6 @@
             document.getElementById('modalFormulario').classList.remove('hidden');
         };
 
-        // LÓGICA DE ORDENAMIENTO
         window.cambiarOrden = function(columna) {
             if(columnaOrdenActual === columna) {
                 ordenAscendente = !ordenAscendente;
@@ -407,12 +412,10 @@
                 columnaOrdenActual = columna;
                 ordenAscendente = true;
             }
-            // Reset iconos
             ['jerarquia','responsable','estado','tema','fechaentrega','fechacreacion'].forEach(c => {
                 document.getElementById('icon-sort-' + c).innerText = '↕';
                 document.getElementById('icon-sort-' + c).className = 'text-slate-400 text-[10px] ml-1';
             });
-            // Set icono activo
             document.getElementById('icon-sort-' + columna).innerText = ordenAscendente ? '↑' : '↓';
             document.getElementById('icon-sort-' + columna).className = 'text-blue-600 font-bold text-[10px] ml-1';
             
@@ -429,18 +432,17 @@
             return '';
         }
 
+        // TABLA JERÁRQUICA
         function renderizarTablaJerarquica(proyectos) {
             const cuerpo = document.getElementById('cuerpoTabla');
             cuerpo.innerHTML = "";
             const deasglose = {};
             proyectos.forEach(p => { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); });
 
-            // Convertir a Array para ordenar
             let grupos = Object.keys(deasglose).map(iniciativa => {
                 return { nombre: iniciativa, padre: deasglose[iniciativa][0], hijos: deasglose[iniciativa] }
             });
 
-            // Aplicar orden si existe
             if(columnaOrdenActual) {
                 grupos.sort((a, b) => {
                     let valA = obtenerValorParaOrden(a.padre, columnaOrdenActual, true);
@@ -477,6 +479,7 @@
                 const filaPadre = document.createElement('tr');
                 filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
                 
+                // IMPORTANTE: Ahora el id va envuelto en comillas simples: '${primerasMetas.id}'
                 filaPadre.innerHTML = `
                     <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa}')">
                         <span class="text-xs text-slate-400 w-4">${estaColapsado ? '▶' : '▼'}</span>
@@ -488,7 +491,7 @@
                     <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIniFormateada}</td>
                     <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIniFormateada}</td>
                     <td class="p-3 text-center">
-                        <button onclick="window.abrirModalEdicion(${primerasMetas.id})" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
+                        <button onclick="window.abrirModalEdicion('${primerasMetas.id}')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
                     </td>
                 `;
                 cuerpo.appendChild(filaPadre);
@@ -522,6 +525,8 @@
 
                         const filaHijo = document.createElement('tr');
                         filaHijo.className = filaFondoClase;
+                        
+                        // IMPORTANTE: Ahora el id va envuelto en comillas simples: '${t.id}'
                         filaHijo.innerHTML = `
                             <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
                             <td class="p-2 text-slate-600 text-xs">${t.responsabletarea || t.responsable || '-'}</td>
@@ -530,7 +535,7 @@
                             <td class="p-2 ${celdaFechaClase} text-xs">${fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-'}</td>
                             <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
                             <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onclick="window.abrirModalEdicion(${t.id})" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
+                                <button onclick="window.abrirModalEdicion('${t.id}')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
                             </td>
                         `;
                         cuerpo.appendChild(filaHijo);
@@ -545,6 +550,7 @@
             renderizarTodo();
         }
 
+        // EVENTOS DOM
         document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
         document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
         
@@ -564,7 +570,8 @@
 
         document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
 
-        document.getElementById('formIniciativa').addEventListener('submit', (e) => {
+        // GUARDAR EN FIRESTORE
+        document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
             btnGuardar.innerText = "Guardando...";
@@ -574,26 +581,38 @@
             if(respFinal === "OTRO") respFinal = document.getElementById('inputResponsableOtro').value;
 
             const payload = {
-                id: document.getElementById('inputIdRegistro').value,
                 iniciativa: document.getElementById('inputIniciativa').value,
                 impacto: document.getElementById('selectImpacto').value,
-                respIniciativa: document.getElementById('inputRespIniciativa').value,
-                fechaEntregaIniciativa: document.getElementById('inputFechaEntregaIniciativa').value,
+                respiniciativa: document.getElementById('inputRespIniciativa').value,
+                fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value,
                 tarea: document.getElementById('inputTarea').value,
                 responsable: respFinal,
                 estado: document.getElementById('selectEstado').value,
                 tema: document.getElementById('selectTema').value,
-                fechaEntregaTarea: document.getElementById('inputFechaEntregaTarea').value,
+                fechaentregatarea: document.getElementById('inputFechaEntregaTarea').value,
                 alertas: document.getElementById('selectAlertas').value
             };
 
-            fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-            .then(() => {
+            const idRegistro = document.getElementById('inputIdRegistro').value;
+
+            try {
+                if (idRegistro) {
+                    const docRef = doc(db, "actividades", idRegistro);
+                    await updateDoc(docRef, payload);
+                } else {
+                    payload.fechacreacion = new Date().toISOString();
+                    const actividadesRef = collection(db, "actividades");
+                    await addDoc(actividadesRef, payload);
+                }
+                
                 document.getElementById('modalFormulario').classList.add('hidden');
+            } catch (error) {
+                console.error("Error de base de datos:", error);
+                alert("Ocurrió un error al guardar. Revisa la consola.");
+            } finally {
                 btnGuardar.innerText = "Guardar Todo";
                 btnGuardar.disabled = false;
-                setTimeout(cargarDatosDesdeSheets, 1500);
-            });
+            }
         });
 
         document.getElementById('btnLogin').addEventListener('click', () => signInWithPopup(auth, provider));
