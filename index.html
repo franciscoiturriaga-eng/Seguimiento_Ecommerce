@@ -37,26 +37,18 @@
             </div>
             
             <div class="flex gap-3 items-center">
-                <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-100 transition text-sm font-bold shadow-sm">
-                    👁️ Historial de Cambios
+                <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition text-xs font-bold shadow-sm">
+                    👁️ Historial
                 </button>
-                <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-bold shadow-sm">
-                    ← Volver al Tablero
+                <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-200 transition text-xs font-bold shadow-sm">
+                    ← Volver
                 </button>
                 
                 <div id="controlesFiltro" class="flex gap-3 items-center">
-                    <select id="filtroEstadoGlobal" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
-                        <option value="TODOS">Todos los Estados</option>
-                        <option value="Backlog">Backlog</option>
-                        <option value="En Progreso">En Progreso</option>
-                        <option value="Pausado">Pausado</option>
-                        <option value="Bloqueado">Bloqueado</option>
-                        <option value="Finalizado">Finalizado</option>
-                    </select>
-                    <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>✕ Limpiar</button>
-                    <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Actividad</button>
+                    <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>✕ Limpiar Filtros</button>
+                    <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm">+ Nueva Actividad</button>
                 </div>
-                <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium ml-2">Cerrar Sesión</button>
+                <button id="btnLogout" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium ml-2">Salir</button>
             </div>
         </header>
 
@@ -65,7 +57,7 @@
         <div id="vistaAuditoria" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8">
             <div class="p-5 border-b border-slate-100 bg-indigo-50/50">
                 <h3 class="font-bold text-indigo-800 text-base">Registro de Auditoría (Solo Admin)</h3>
-                <p class="text-xs text-indigo-500">Últimos movimientos en la plataforma.</p>
+                <p class="text-xs text-indigo-500">Monitoreo detallado a nivel de campos.</p>
             </div>
             <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
                 <table class="w-full text-left border-collapse">
@@ -78,31 +70,35 @@
                         </tr>
                     </thead>
                     <tbody id="cuerpoTablaAuditoria" class="text-sm divide-y divide-slate-200 bg-white">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
 
         <div id="vistaTablero">
-            <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Estados (Clic para Filtrar)</h2>
-                    <div class="h-60"><canvas id="graficaEstados"></canvas></div>
+            <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Impacto</h2>
+                    <div class="h-48"><canvas id="graficaImpacto"></canvas></div>
                 </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Tareas por Área</h2>
-                    <div class="h-60"><canvas id="graficaTemas"></canvas></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
+                    <div class="h-48"><canvas id="graficaTemas"></canvas></div>
                 </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Carga por Responsable</h2>
-                    <div class="h-60"><canvas id="graficaResponsables"></canvas></div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 relative">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados (Ctrl+Clic para Varios)</h2>
+                    <div class="h-48"><canvas id="graficaEstados"></canvas></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Carga por Responsable</h2>
+                    <div class="h-48"><canvas id="graficaResponsables"></canvas></div>
                 </div>
             </div>
 
             <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div class="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
                     <h3 class="font-bold text-slate-700 text-base">Estructura General: Iniciativas y Tareas</h3>
-                    <span class="text-xs text-slate-400 font-mono">Amarillo &lt;= 30 días | Rojo &lt;= 15 días o Atrasado</span>
+                    <span class="text-xs text-slate-400 font-mono">Umbral Tarea: Amarillo (16-30 días a Meta) | Rojo (<= 15 días o Atraso)</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -114,7 +110,7 @@
                                 <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                                 <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                                 <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                                <th class="p-3 text-center">Acción</th>
+                                <th class="p-3 text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
@@ -219,21 +215,20 @@
         const db = getFirestore(app);
 
         let cacheDatosRaw = [];
-        let estadoFiltroActual = "TODOS";
+        let filtrosEstadosSet = new Set(); // Multi-filtro con Ctrl
         let iniciativasColapsadas = new Set(); 
         let columnaOrdenActual = null;
         let ordenAscendente = true;
         let contadorTareasUi = 0;
         let currentUserEmail = "";
 
-        let chartEstados = null, chartTemas = null, chartResponsables = null;
+        let chartEstados = null, chartTemas = null, chartResponsables = null, chartImpacto = null;
 
-        // FUNCIÓN DE TIMEOUT PARA PREVENIR BLOQUEOS INFINITOS
         const promesaConLimite = (promesa, tiempoMs) => {
             let timeout = new Promise((_, reject) => {
                 let id = setTimeout(() => {
                     clearTimeout(id);
-                    reject(new Error("La red corporativa está bloqueando la conexión o está tardando demasiado (Timeout)."));
+                    reject(new Error("Timeout: La red está bloqueando la conexión."));
                 }, tiempoMs);
             });
             return Promise.race([promesa, timeout]);
@@ -252,7 +247,7 @@
                 currentUserEmail = user.email;
                 document.getElementById('pantallaLogin').classList.add('hidden');
                 document.getElementById('plataforma').classList.remove('hidden');
-                document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${currentUserEmail})`;
+                document.getElementById('txtUsuario').innerText = `Conectado: ${user.displayName} (${currentUserEmail})`;
                 
                 if(currentUserEmail === 'francisco.iturriaga@hites.cl') {
                     document.getElementById('btnVerAuditoria').classList.remove('hidden');
@@ -268,7 +263,7 @@
             }
         });
 
-        // AUDITORÍA (CON CONTROL DE ERRORES INTERNO PARA NO BLOQUEAR)
+        // AUDITORÍA
         async function registrarAuditoria(accion, detalle) {
             try {
                 await promesaConLimite(addDoc(collection(db, "auditoria"), {
@@ -277,7 +272,24 @@
                     accion: accion,
                     detalle: detalle
                 }), 5000);
-            } catch (e) { console.warn("La auditoría no se pudo guardar (posible falta de permisos o red)."); }
+            } catch (e) { console.warn("Auditoría no guardada (Posible Timeout)."); }
+        }
+
+        // FUNCIÓN DE DIFFING (Detecta cambios exactos para Auditoría)
+        function generarDetalleCambios(oldData, newData, tipo) {
+            let cambios = [];
+            const mapeo = {
+                tarea: "Nombre Tarea", estado: "Estado", tema: "Área Tarea", responsable: "Responsable",
+                fechaentregatarea: "Fecha Tarea", alertas: "Alertas",
+                iniciativa: "Nombre Iniciativa", impacto: "Impacto", respiniciativa: "Resp. Iniciativa",
+                areainiciativa: "Área Iniciativa", fechaentregainiciativa: "Fecha Meta"
+            };
+            for(let key in newData) {
+                if(oldData[key] !== undefined && String(oldData[key]) !== String(newData[key])) {
+                    cambios.push(`${mapeo[key] || key}: '${oldData[key]}' -> '${newData[key]}'`);
+                }
+            }
+            return cambios.length > 0 ? cambios.join(" | ") : "Se editó sin cambiar valores.";
         }
 
         document.getElementById('btnVerAuditoria').addEventListener('click', () => {
@@ -296,10 +308,10 @@
                     const fechaFormat = new Date(data.fecha).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50">
-                            <td class="p-3 text-xs font-mono text-slate-500">${fechaFormat}</td>
-                            <td class="p-3 text-sm font-semibold text-slate-700">${data.usuario}</td>
-                            <td class="p-3"><span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-bold">${data.accion}</span></td>
-                            <td class="p-3 text-sm text-slate-600">${data.detalle}</td>
+                            <td class="p-3 text-xs font-mono text-slate-500 min-w-[120px]">${fechaFormat}</td>
+                            <td class="p-3 text-xs font-semibold text-slate-700">${data.usuario}</td>
+                            <td class="p-3"><span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold uppercase tracking-wider">${data.accion}</span></td>
+                            <td class="p-3 text-xs text-slate-600">${data.detalle}</td>
                         </tr>
                     `;
                 });
@@ -347,7 +359,7 @@
             const errorDiv = document.getElementById('errorModalTexto');
             
             document.getElementById('inputModoEdicion').value = modo;
-            errorDiv.classList.add('hidden'); // Limpiar errores previos
+            errorDiv.classList.add('hidden');
 
             if (modo === 'NUEVO_INICIATIVA') {
                 selectorFlujo.classList.remove('hidden');
@@ -455,6 +467,11 @@
             document.getElementById('modalFormulario').classList.remove('hidden');
         };
 
+        window.crearAlerta = function(idFila) {
+            // Placeholder para integración futura con Cloud Functions/Emails
+            alert("Módulo de alertas en construcción. Próximamente podrás suscribirte a notificaciones de esta fila.");
+        }
+
         function agregarFilaTareaEstructura(valoresPredefinidos = null) {
             contadorTareasUi++;
             const idFila = `tarea_row_${contadorTareasUi}`;
@@ -524,18 +541,21 @@
                 }
             }
         }
+        
         window.eliminarFilaTareaUi = function(idFila) {
             if(document.getElementById('contenedorListaTareas').children.length > 1) document.getElementById(idFila).remove();
             else alert("Debes dejar al menos una tarea.");
         };
+        
         window.handleSelectResponsableDinamico = function(idFila, valor) {
             const inputOtro = document.getElementById(idFila).querySelector('.input-tarea-resp-otro');
             if(valor === "OTRO") { inputOtro.classList.remove('hidden'); inputOtro.required = true; } 
             else { inputOtro.classList.add('hidden'); inputOtro.required = false; }
         };
+        
         document.getElementById('btnAgregarFilaTarea').addEventListener('click', () => agregarFilaTareaEstructura());
 
-        // EL GUARDADO ESTÁ BLINDADO CON RACE-TIMEOUT PARA NO BLOQUEAR LA PANTALLA
+        // GUARDADO Y AUDITORIA
         document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
@@ -549,9 +569,10 @@
                 const modo = document.getElementById('inputModoEdicion').value;
                 const idRegistro = document.getElementById('inputIdRegistro').value;
                 const ts = new Date().toISOString();
+                const oldDocData = idRegistro ? cacheDatosRaw.find(p => p.id === idRegistro) : null;
 
                 if (modo === 'EDITAR_INICIATIVA') {
-                    const infoIniciativa = {
+                    const updateData = {
                         iniciativa: document.getElementById('inputIniciativa').value,
                         respiniciativa: document.getElementById('inputRespIniciativa').value,
                         areainiciativa: document.getElementById('selectAreaIniciativa').value,
@@ -562,9 +583,10 @@
                     const docsToUpdate = cacheDatosRaw.filter(p => p.iniciativa === oldName);
                     
                     for(let d of docsToUpdate) {
-                        await promesaConLimite(updateDoc(doc(db, "actividades", d.id), infoIniciativa), 8000);
+                        await promesaConLimite(updateDoc(doc(db, "actividades", d.id), updateData), 8000);
                     }
-                    registrarAuditoria("Actualización Masiva", `Editó la iniciativa padre: ${infoIniciativa.iniciativa}`);
+                    const det = generarDetalleCambios(oldDocData, updateData, 'INICIATIVA');
+                    registrarAuditoria("Modificó Padre", `Padre: [${oldName}]. ${det}`);
                 }
                 else if (modo === 'EDITAR_TAREA') {
                     const filaUi = document.getElementById('contenedorListaTareas').children[0];
@@ -580,7 +602,8 @@
                         alertas: filaUi.querySelector('.input-tarea-alertas').value
                     };
                     await promesaConLimite(updateDoc(doc(db, "actividades", idRegistro), updateData), 8000);
-                    registrarAuditoria("Actualización", `Editó la tarea: ${updateData.tarea}`);
+                    const det = generarDetalleCambios(oldDocData, updateData, 'TAREA');
+                    registrarAuditoria("Modificó Tarea", `Tarea: [${oldDocData.tarea}]. ${det}`);
                 }
                 else {
                     const actRef = collection(db, "actividades");
@@ -596,7 +619,7 @@
                         };
                     } else {
                         const s = document.getElementById('selectIniciativaPadre');
-                        if(!s.value) throw new Error("Debes crear al menos una iniciativa antes de asociar una tarea nueva.");
+                        if(!s.value) throw new Error("Selecciona una iniciativa válida.");
                         const opt = s.options[s.selectedIndex];
                         baseData = {
                             iniciativa: s.value,
@@ -624,19 +647,14 @@
                         }), 8000);
                         numNuevas++;
                     }
-                    registrarAuditoria("Creación", `Agregó ${numNuevas} tarea(s) a la iniciativa: ${baseData.iniciativa}`);
+                    registrarAuditoria("Creación", `Agregó ${numNuevas} nueva(s) tarea(s) en: ${baseData.iniciativa}`);
                 }
 
                 document.getElementById('modalFormulario').classList.add('hidden');
             } catch (error) {
                 console.error("Error guardando:", error);
-                
-                // Muestra visualmente por qué falló directamente en el modal
-                if(error.message.includes("permissions") || error.message.includes("permission_denied")) {
-                    errorDiv.innerText = "❌ Denegado: Firebase rechazó el guardado. Ve a tu consola de Firebase > Firestore Database > Rules, y aplica las Reglas de Seguridad.";
-                } else {
-                    errorDiv.innerText = "❌ Fallo crítico: " + error.message;
-                }
+                if(error.message.includes("permission")) errorDiv.innerText = "❌ Denegado por Reglas de Firestore.";
+                else errorDiv.innerText = "❌ Fallo crítico: " + error.message;
                 errorDiv.classList.remove('hidden');
             } finally {
                 btnGuardar.innerText = "Guardar Todo";
@@ -644,13 +662,24 @@
             }
         });
 
-        // RENDERIZADO VISUAL
+        // RENDERIZADO VISUAL CON MULTIFILTRO CTRL+CLIC
+        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { 
+            filtrosEstadosSet.clear(); 
+            renderizarTodo(); 
+        });
+
         function renderizarTodo() {
             const btnFiltro = document.getElementById('btnLimpiarFiltros');
-            if(estadoFiltroActual === "TODOS") { btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition"; btnFiltro.disabled = true; } 
-            else { btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm"; btnFiltro.disabled = false; }
+            if(filtrosEstadosSet.size === 0) { 
+                btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition"; 
+                btnFiltro.disabled = true; 
+            } else { 
+                btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm"; 
+                btnFiltro.innerText = `✕ Limpiar (${filtrosEstadosSet.size})`;
+                btnFiltro.disabled = false; 
+            }
 
-            const datosFiltrados = estadoFiltroActual === "TODOS" ? cacheDatosRaw : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
+            const datosFiltrados = filtrosEstadosSet.size === 0 ? cacheDatosRaw : cacheDatosRaw.filter(p => filtrosEstadosSet.has(p.estado));
             renderizarGraficasPrincipales(datosFiltrados);
             renderizarTablaJerarquica(datosFiltrados);
         }
@@ -659,18 +688,69 @@
             const estados = { 'Backlog': 0, 'En Progreso': 0, 'Pausado': 0, 'Bloqueado': 0, 'Finalizado': 0 };
             const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'Comercial': 0 };
             const responsables = {};
+            const impactos = { 'Alto': 0, 'Medio': 0, 'Bajo': 0 };
+            
+            const iniciativasProcesadas = new Set();
 
             proyectos.forEach(p => {
                 if(estados[p.estado] !== undefined) estados[p.estado]++;
                 if(temas[p.tema] !== undefined) temas[p.tema]++;
                 let resp = p.responsable || p.responsabletarea;
                 if(resp) responsables[resp] = (responsables[resp] || 0) + 1;
+                
+                // Contar impactos solo por iniciativa única
+                if (p.iniciativa && !iniciativasProcesadas.has(p.iniciativa)) {
+                    iniciativasProcesadas.add(p.iniciativa);
+                    if(impactos[p.impacto] !== undefined) impactos[p.impacto]++;
+                }
             });
 
+            // 1. Gráfico Impacto (Nuevo)
+            if(chartImpacto) chartImpacto.destroy();
+            chartImpacto = new Chart(document.getElementById('graficaImpacto'), { 
+                type: 'bar', 
+                data: { labels: Object.keys(impactos), datasets: [{ label: 'Iniciativas', data: Object.values(impactos), backgroundColor: ['#ef4444', '#f59e0b', '#10b981'], borderRadius: 4 }] }, 
+                options: { maintainAspectRatio: false }
+            });
+
+            // 2. Gráfico Estados (Con lógica de Multi-Selección Ctrl+Clic)
             if(chartEstados) chartEstados.destroy();
-            chartEstados = new Chart(document.getElementById('graficaEstados'), { type: 'bar', data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 4 }] }, options: { maintainAspectRatio: false, onClick: (e, els) => { if (els.length > 0) { estadoFiltroActual = (estadoFiltroActual === chartEstados.data.labels[els[0].index]) ? "TODOS" : chartEstados.data.labels[els[0].index]; document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual; renderizarTodo(); }}}});
+            chartEstados = new Chart(document.getElementById('graficaEstados'), { 
+                type: 'bar', 
+                data: { 
+                    labels: Object.keys(estados), 
+                    datasets: [{ 
+                        label: 'Tareas', 
+                        data: Object.values(estados), 
+                        backgroundColor: Object.keys(estados).map(e => filtrosEstadosSet.has(e) || filtrosEstadosSet.size === 0 ? '#004bc0' : '#cbd5e1'), // Pinta gris si no está filtrado
+                        borderRadius: 4 
+                    }] 
+                }, 
+                options: { 
+                    maintainAspectRatio: false, 
+                    onClick: (e, els) => { 
+                        if (els.length > 0) { 
+                            const estClick = chartEstados.data.labels[els[0].index];
+                            if (e.native.ctrlKey || e.native.metaKey) {
+                                // Múltiple: Si ya está, lo quita. Si no, lo agrega.
+                                if(filtrosEstadosSet.has(estClick)) filtrosEstadosSet.delete(estClick);
+                                else filtrosEstadosSet.add(estClick);
+                            } else {
+                                // Simple: Borra los demás y deja solo el clicado (o desmarca si es el mismo)
+                                if(filtrosEstadosSet.has(estClick) && filtrosEstadosSet.size === 1) filtrosEstadosSet.clear();
+                                else { filtrosEstadosSet.clear(); filtrosEstadosSet.add(estClick); }
+                            }
+                            renderizarTodo(); 
+                        }
+                    }
+                }
+            });
+
+            // 3. Gráfico Temas
             if(chartTemas) chartTemas.destroy();
             chartTemas = new Chart(document.getElementById('graficaTemas'), { type: 'doughnut', data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false }});
+            
+            // 4. Gráfico Responsables
             if(chartResponsables) chartResponsables.destroy();
             chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
         }
@@ -728,7 +808,10 @@
                     <td class="p-3 text-slate-500 text-xs">${pMetas.areainiciativa || '-'}</td>
                     <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIni}</td>
                     <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIni}</td>
-                    <td class="p-3 text-center"><button onclick="window.abrirModalEdicion('${pMetas.id}', 'INICIATIVA')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button></td>
+                    <td class="p-3 text-center flex justify-center gap-2">
+                        <button onclick="window.crearAlerta('${pMetas.id}')" class="text-slate-400 hover:text-amber-500 transition" title="Crear Alerta">🔔</button>
+                        <button onclick="window.abrirModalEdicion('${pMetas.id}', 'INICIATIVA')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
+                    </td>
                 `;
                 cuerpo.appendChild(filaPadre);
 
@@ -737,16 +820,23 @@
                         if(!t.tarea) return;
                         const fET = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
                         const fEI = pMetas.fechaentregainiciativa ? new Date(pMetas.fechaentregainiciativa) : null;
-                        let cFecha = "text-slate-600 font-mono", cFondo = "hover:bg-slate-50/80 transition group";
+                        
+                        let cFondo = "hover:bg-slate-50/80 transition group";
+                        let cFecha = "text-slate-600 font-mono";
 
-                        if(fET) {
+                        // Lógica de Colores Semáforo para la Fecha (Calculada vs Fecha Iniciativa)
+                        if(fET && fEI && t.estado !== "Finalizado") {
                             fET.setHours(0,0,0,0);
-                            if (fEI && fET > fEI) cFecha = "text-red-600 font-bold underline";
-                            const dDias = Math.ceil((fET - new Date().setHours(0,0,0,0)) / 86400000);
-                            if(t.estado !== "Finalizado") {
-                                if (dDias < 0) cFondo = "bg-red-50/80 text-red-900 hover:bg-red-100/70 transition group";
-                                else if (dDias <= 15) cFondo = "bg-red-50 text-red-900 hover:bg-red-100/70 transition group";
-                                else if (dDias <= 30) cFondo = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition group";
+                            fEI.setHours(0,0,0,0);
+                            // Fórmula: (Fecha Meta Iniciativa - Fecha Tarea) en Días
+                            const diffDias = Math.ceil((fEI - fET) / (1000 * 60 * 60 * 24));
+                            
+                            if (diffDias <= 15) {
+                                // Rojo: Si la tarea se entrega <= 15 días de la meta, o se entrega después de la meta (negativo)
+                                cFecha = "text-red-700 bg-red-100 font-bold px-2 py-0.5 rounded border border-red-200";
+                            } else if (diffDias >= 16 && diffDias <= 30) {
+                                // Amarillo: Si la tarea se entrega entre 16 y 30 días antes de la meta
+                                cFecha = "text-yellow-700 bg-yellow-100 font-bold px-2 py-0.5 rounded border border-yellow-300";
                             }
                         }
 
@@ -763,9 +853,12 @@
                             <td class="p-2 text-slate-600 text-xs">${t.responsable || '-'}</td>
                             <td class="p-2">${bEst}</td>
                             <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
-                            <td class="p-2 ${cFecha} text-xs">${fET ? fET.toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 text-xs"><span class="${cFecha}">${fET ? fET.toLocaleDateString('es-CL') : '-'}</span></td>
                             <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
-                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="window.abrirModalEdicion('${t.id}', 'TAREA')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button></td>
+                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity flex justify-center gap-2">
+                                <button onclick="window.crearAlerta('${t.id}')" class="text-slate-400 hover:text-amber-500 text-sm font-medium transition" title="Crear Alerta">🔔</button>
+                                <button onclick="window.abrirModalEdicion('${t.id}', 'TAREA')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
+                            </td>
                         `;
                         cuerpo.appendChild(filaHijo);
                     });
@@ -777,10 +870,6 @@
             if(iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa); else iniciativasColapsadas.add(iniciativa);
             renderizarTodo();
         }
-
-        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
-        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
-
     </script>
 </body>
 </html>
