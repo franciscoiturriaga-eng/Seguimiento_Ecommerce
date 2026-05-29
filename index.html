@@ -129,14 +129,19 @@
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 id="tituloModal" class="text-xl font-bold text-slate-800 mb-4">Registrar Nueva Actividad</h2>
             
-            <div id="selectorTipoFlujo" class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+            <div id="selectorTipoFlujo" class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4">
                 <button type="button" id="btnFlujoIniciativa" class="py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition">📂 Nueva Iniciativa</button>
                 <button type="button" id="btnFlujoTarea" class="py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition">↳ Nueva Tarea</button>
             </div>
 
+            <div id="errorModalTexto" class="hidden bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-sm mb-4 font-medium"></div>
+
             <form id="formIniciativa" class="space-y-4">
                 <input type="hidden" id="inputIdRegistro" value="">
-                <input type="hidden" id="inputModoEdicion" value="NUEVO"> <input type="hidden" id="inputOldIniciativaNombre" value=""> <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
+                <input type="hidden" id="inputModoEdicion" value="NUEVO">
+                <input type="hidden" id="inputOldIniciativaNombre" value="">
+
+                <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-amber-700">Seleccionar Iniciativa Padre</label>
                     <select id="selectIniciativaPadre" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-amber-500">
                     </select>
@@ -223,7 +228,17 @@
 
         let chartEstados = null, chartTemas = null, chartResponsables = null;
 
-        // AUTENTICACIÓN
+        // FUNCIÓN DE TIMEOUT PARA PREVENIR BLOQUEOS INFINITOS
+        const promesaConLimite = (promesa, tiempoMs) => {
+            let timeout = new Promise((_, reject) => {
+                let id = setTimeout(() => {
+                    clearTimeout(id);
+                    reject(new Error("La red corporativa está bloqueando la conexión o está tardando demasiado (Timeout)."));
+                }, tiempoMs);
+            });
+            return Promise.race([promesa, timeout]);
+        };
+
         document.getElementById('btnLogin').addEventListener('click', () => {
             signInWithPopup(auth, provider).catch(err => {
                 document.getElementById('errorLogin').innerText = "Error: " + err.message;
@@ -239,11 +254,9 @@
                 document.getElementById('plataforma').classList.remove('hidden');
                 document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${currentUserEmail})`;
                 
-                // Mostrar módulo de auditoría solo al admin
                 if(currentUserEmail === 'francisco.iturriaga@hites.cl') {
                     document.getElementById('btnVerAuditoria').classList.remove('hidden');
                 }
-
                 iniciarEscuchaFirestore(); 
             } else if (user) {
                 signOut(auth);
@@ -255,23 +268,22 @@
             }
         });
 
-        // AUDITORÍA
+        // AUDITORÍA (CON CONTROL DE ERRORES INTERNO PARA NO BLOQUEAR)
         async function registrarAuditoria(accion, detalle) {
             try {
-                await addDoc(collection(db, "auditoria"), {
+                await promesaConLimite(addDoc(collection(db, "auditoria"), {
                     fecha: new Date().toISOString(),
                     usuario: currentUserEmail,
                     accion: accion,
                     detalle: detalle
-                });
-            } catch (e) { console.error("Error registrando auditoría:", e); }
+                }), 5000);
+            } catch (e) { console.warn("La auditoría no se pudo guardar (posible falta de permisos o red)."); }
         }
 
         document.getElementById('btnVerAuditoria').addEventListener('click', () => {
             document.getElementById('vistaTablero').classList.add('hidden');
             document.getElementById('controlesFiltro').classList.add('hidden');
             document.getElementById('btnVerAuditoria').classList.add('hidden');
-            
             document.getElementById('vistaAuditoria').classList.remove('hidden');
             document.getElementById('btnVolverTablero').classList.remove('hidden');
 
@@ -281,7 +293,7 @@
                 tbody.innerHTML = "";
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    const fechaFormat = new Date(data.fecha).toLocaleString('es-CL');
+                    const fechaFormat = new Date(data.fecha).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
                     tbody.innerHTML += `
                         <tr class="hover:bg-slate-50">
                             <td class="p-3 text-xs font-mono text-slate-500">${fechaFormat}</td>
@@ -297,27 +309,20 @@
         document.getElementById('btnVolverTablero').addEventListener('click', () => {
             document.getElementById('vistaAuditoria').classList.add('hidden');
             document.getElementById('btnVolverTablero').classList.add('hidden');
-            
             document.getElementById('vistaTablero').classList.remove('hidden');
             document.getElementById('controlesFiltro').classList.remove('hidden');
             document.getElementById('btnVerAuditoria').classList.remove('hidden');
         });
 
-        // ESCUCHA PRINCIPAL
         function iniciarEscuchaFirestore() {
             const proyectosRef = collection(db, "actividades");
             onSnapshot(proyectosRef, (snapshot) => {
                 cacheDatosRaw = [];
                 snapshot.forEach((doc) => { cacheDatosRaw.push({ id: doc.id, ...doc.data() }); });
-
                 document.getElementById('txtCargando').classList.add('hidden');
                 document.getElementById('contenedorGraficas').classList.remove('hidden');
                 document.getElementById('contenedorTabla').classList.remove('hidden');
-                
-                try {
-                    renderizarTodo();
-                    actualizarSelectorIniciativasPadre();
-                } catch (error) { console.error("Error UI:", error); }
+                try { renderizarTodo(); actualizarSelectorIniciativasPadre(); } catch (error) { console.error("Error UI:", error); }
             });
         }
 
@@ -331,7 +336,6 @@
             }).join('');
         }
 
-        // CONTROL UI DE FORMULARIO DESACOPLADO
         function aplicarRestriccionesBloques(modo) {
             const btnIni = document.getElementById('btnFlujoIniciativa');
             const btnTar = document.getElementById('btnFlujoTarea');
@@ -340,8 +344,10 @@
             const btnAddFila = document.getElementById('btnAgregarFilaTarea');
             const selectorFlujo = document.getElementById('selectorTipoFlujo');
             const contTareas = document.getElementById('contenedorListaTareas');
+            const errorDiv = document.getElementById('errorModalTexto');
             
             document.getElementById('inputModoEdicion').value = modo;
+            errorDiv.classList.add('hidden'); // Limpiar errores previos
 
             if (modo === 'NUEVO_INICIATIVA') {
                 selectorFlujo.classList.remove('hidden');
@@ -374,7 +380,7 @@
                 bloqueIni.classList.remove('hidden');
                 bloqueAsociar.classList.add('hidden');
                 btnAddFila.classList.add('hidden');
-                contTareas.classList.add('hidden'); // Ocultar tareas
+                contTareas.classList.add('hidden');
                 
                 document.getElementById('inputIniciativa').required = true;
                 document.getElementById('inputRespIniciativa').required = true;
@@ -382,7 +388,7 @@
             }
             else if (modo === 'EDITAR_TAREA') {
                 selectorFlujo.classList.add('hidden');
-                bloqueIni.classList.add('hidden'); // Ocultar iniciativa
+                bloqueIni.classList.add('hidden'); 
                 bloqueAsociar.classList.add('hidden');
                 btnAddFila.classList.add('hidden');
                 contTareas.classList.remove('hidden');
@@ -418,7 +424,6 @@
             document.getElementById('modalFormulario').classList.add('hidden');
         });
 
-        // EDICIÓN CONTEXTUAL
         window.abrirModalEdicion = function(idFila, tipo) {
             const item = cacheDatosRaw.find(p => p.id === idFila);
             if(!item) return;
@@ -443,7 +448,6 @@
             } else {
                 document.getElementById('tituloModal').innerText = "Editar Tarea";
                 agregarFilaTareaEstructura(item);
-                // Quitar el botón de eliminar porque en edición estricta de 1 tarea no se puede quitar
                 document.querySelector('.btn-quitar-tarea').classList.add('hidden');
                 aplicarRestriccionesBloques('EDITAR_TAREA');
             }
@@ -451,7 +455,6 @@
             document.getElementById('modalFormulario').classList.remove('hidden');
         };
 
-        // LÓGICA DE FILAS DINÁMICAS
         function agregarFilaTareaEstructura(valoresPredefinidos = null) {
             contadorTareasUi++;
             const idFila = `tarea_row_${contadorTareasUi}`;
@@ -532,19 +535,21 @@
         };
         document.getElementById('btnAgregarFilaTarea').addEventListener('click', () => agregarFilaTareaEstructura());
 
-        // PROCESADOR DE GUARDADO BLINDADO
+        // EL GUARDADO ESTÁ BLINDADO CON RACE-TIMEOUT PARA NO BLOQUEAR LA PANTALLA
         document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
+            const errorDiv = document.getElementById('errorModalTexto');
+            
             btnGuardar.innerText = "Guardando...";
             btnGuardar.disabled = true;
+            errorDiv.classList.add('hidden');
 
             try {
                 const modo = document.getElementById('inputModoEdicion').value;
                 const idRegistro = document.getElementById('inputIdRegistro').value;
                 const ts = new Date().toISOString();
 
-                // Caso 1: Editar una Iniciativa Existente (Propaga a todos sus hijos)
                 if (modo === 'EDITAR_INICIATIVA') {
                     const infoIniciativa = {
                         iniciativa: document.getElementById('inputIniciativa').value,
@@ -557,12 +562,10 @@
                     const docsToUpdate = cacheDatosRaw.filter(p => p.iniciativa === oldName);
                     
                     for(let d of docsToUpdate) {
-                        await updateDoc(doc(db, "actividades", d.id), infoIniciativa);
+                        await promesaConLimite(updateDoc(doc(db, "actividades", d.id), infoIniciativa), 8000);
                     }
-                    await registrarAuditoria("Actualización Masiva", `Editó la iniciativa padre: ${infoIniciativa.iniciativa} (${docsToUpdate.length} tareas actualizadas).`);
+                    registrarAuditoria("Actualización Masiva", `Editó la iniciativa padre: ${infoIniciativa.iniciativa}`);
                 }
-                
-                // Caso 2: Editar una Tarea Específica
                 else if (modo === 'EDITAR_TAREA') {
                     const filaUi = document.getElementById('contenedorListaTareas').children[0];
                     let r = filaUi.querySelector('.input-tarea-resp-select').value;
@@ -576,11 +579,9 @@
                         fechaentregatarea: filaUi.querySelector('.input-tarea-fecha').value,
                         alertas: filaUi.querySelector('.input-tarea-alertas').value
                     };
-                    await updateDoc(doc(db, "actividades", idRegistro), updateData);
-                    await registrarAuditoria("Actualización", `Editó la tarea: ${updateData.tarea}`);
+                    await promesaConLimite(updateDoc(doc(db, "actividades", idRegistro), updateData), 8000);
+                    registrarAuditoria("Actualización", `Editó la tarea: ${updateData.tarea}`);
                 }
-                
-                // Caso 3: Crear Nuevo (Iniciativa o Tareas bajo iniciativa existente)
                 else {
                     const actRef = collection(db, "actividades");
                     let baseData = {};
@@ -595,14 +596,14 @@
                         };
                     } else {
                         const s = document.getElementById('selectIniciativaPadre');
-                        if(!s.value) throw new Error("Debes seleccionar una iniciativa válida.");
+                        if(!s.value) throw new Error("Debes crear al menos una iniciativa antes de asociar una tarea nueva.");
                         const opt = s.options[s.selectedIndex];
                         baseData = {
                             iniciativa: s.value,
-                            respiniciativa: opt.getAttribute('data-resp'),
-                            areainiciativa: opt.getAttribute('data-area'),
-                            impacto: opt.getAttribute('data-impacto'),
-                            fechaentregainiciativa: opt.getAttribute('data-fecha')
+                            respiniciativa: opt.getAttribute('data-resp') || '',
+                            areainiciativa: opt.getAttribute('data-area') || '',
+                            impacto: opt.getAttribute('data-impacto') || 'Medio',
+                            fechaentregainiciativa: opt.getAttribute('data-fecha') || ''
                         };
                     }
 
@@ -612,7 +613,7 @@
                         let r = f.querySelector('.input-tarea-resp-select').value;
                         if(r === "OTRO") r = f.querySelector('.input-tarea-resp-otro').value;
                         
-                        await addDoc(actRef, {
+                        await promesaConLimite(addDoc(actRef, {
                             ...baseData, fechacreacion: ts,
                             tarea: f.querySelector('.input-tarea-nombre').value,
                             estado: f.querySelector('.input-tarea-estado').value,
@@ -620,17 +621,23 @@
                             responsable: r,
                             fechaentregatarea: f.querySelector('.input-tarea-fecha').value,
                             alertas: f.querySelector('.input-tarea-alertas').value
-                        });
+                        }), 8000);
                         numNuevas++;
                     }
-                    await registrarAuditoria("Creación", `Agregó ${numNuevas} tarea(s) a la iniciativa: ${baseData.iniciativa}`);
+                    registrarAuditoria("Creación", `Agregó ${numNuevas} tarea(s) a la iniciativa: ${baseData.iniciativa}`);
                 }
 
-                // Cierre Seguro de Modal
                 document.getElementById('modalFormulario').classList.add('hidden');
             } catch (error) {
                 console.error("Error guardando:", error);
-                alert("Hubo un error al guardar. Revisa la consola.");
+                
+                // Muestra visualmente por qué falló directamente en el modal
+                if(error.message.includes("permissions") || error.message.includes("permission_denied")) {
+                    errorDiv.innerText = "❌ Denegado: Firebase rechazó el guardado. Ve a tu consola de Firebase > Firestore Database > Rules, y aplica las Reglas de Seguridad.";
+                } else {
+                    errorDiv.innerText = "❌ Fallo crítico: " + error.message;
+                }
+                errorDiv.classList.remove('hidden');
             } finally {
                 btnGuardar.innerText = "Guardar Todo";
                 btnGuardar.disabled = false;
