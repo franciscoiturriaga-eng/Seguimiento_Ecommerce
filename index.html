@@ -61,6 +61,37 @@
             <button id="btnLogout" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium ml-1">Salir</button>
         </div>
     </header>
+
+        <!-- PANEL FILTROS MULTI (colapsable) — dentro del sticky -->
+        <div id="panelFiltros" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm mt-3 overflow-hidden">
+            <button id="btnToggleFiltros" onclick="window.togglePanelFiltros()" class="w-full flex justify-between items-center px-4 py-3 hover:bg-slate-50 transition text-left">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-700">🎯 Filtros</span>
+                    <span id="badgeFiltrosActivos" class="hidden bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
+                </div>
+                <span id="iconToggleFiltros" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
+            </button>
+            <div id="cuerpoPanelFiltros" class="hidden border-t border-slate-100 p-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
+                        <div id="chipsEstado" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Impacto</p>
+                        <div id="chipsImpacto" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Responsable</p>
+                        <div id="chipsResponsable" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativa</p>
+                        <div id="chipsIniciativa" class="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1" style="scrollbar-width:thin;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div><!-- end sticky -->
 
     <div class="px-6 pb-6">
@@ -92,37 +123,6 @@
 
     <!-- VISTA TABLERO -->
     <div id="vistaTablero">
-
-        <!-- PANEL FILTROS MULTI (colapsable) -->
-        <div id="panelFiltros" class="hidden bg-white rounded-xl border border-slate-200 shadow-sm mb-4 overflow-hidden">
-            <button id="btnToggleFiltros" onclick="window.togglePanelFiltros()" class="w-full flex justify-between items-center px-4 py-3 hover:bg-slate-50 transition text-left">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm font-semibold text-slate-700">🎯 Filtros</span>
-                    <span id="badgeFiltrosActivos" class="hidden bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full"></span>
-                </div>
-                <span id="iconToggleFiltros" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
-            </button>
-            <div id="cuerpoPanelFiltros" class="hidden border-t border-slate-100 p-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
-                        <div id="chipsEstado" class="flex flex-wrap gap-1.5"></div>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Impacto</p>
-                        <div id="chipsImpacto" class="flex flex-wrap gap-1.5"></div>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Responsable</p>
-                        <div id="chipsResponsable" class="flex flex-wrap gap-1.5"></div>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativa</p>
-                        <div id="chipsIniciativa" class="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1" style="scrollbar-width:thin;"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- GRÁFICAS -->
         <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
