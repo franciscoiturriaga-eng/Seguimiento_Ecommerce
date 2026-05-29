@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control de Proyectos</title>
+    <title>Control de Proyectos - Hites</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -21,65 +21,125 @@
         </div>
     </div>
 
-    <div id="plataforma" class="hidden p-8 max-w-6xl mx-auto">
+    <div id="plataforma" class="hidden p-8 max-w-7xl mx-auto">
         <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div>
-                <h1 class="text-2xl font-bold text-blue-600">Control de Iniciativas</h1>
+                <h1 class="text-2xl font-bold text-blue-600">Control de Iniciativas y Tareas</h1>
                 <p id="txtUsuario" class="text-slate-500 text-sm">Cargando usuario...</p>
             </div>
-            <div class="flex gap-4">
+            <div class="flex gap-4 items-center">
+                <select id="filtroEstadoGlobal" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+                    <option value="TODOS">Todos los Estados</option>
+                    <option value="Backlog">Backlog</option>
+                    <option value="En Progreso">En Progreso</option>
+                    <option value="Pausado">Pausado</option>
+                    <option value="Bloqueado">Bloqueado</option>
+                    <option value="Finalizado">Finalizado</option>
+                </select>
                 <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cerrar Sesión</button>
-                <button id="btnAbrirModal" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Iniciativa</button>
+                <button id="btnAbrirModal" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Tarea/Iniciativa</button>
             </div>
         </header>
 
         <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Cargando datos desde Google Sheets...</div>
 
-        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-semibold mb-4 text-slate-700">Iniciativas por Estado</h2>
-                <canvas id="graficaEstados"></canvas>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Iniciativas por Estado (Clic para filtrar)</h2>
+                <div class="h-64"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-lg font-semibold mb-4 text-slate-700">Proyectos por Tema</h2>
-                <canvas id="graficaTemas"></canvas>
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Tareas por Área</h2>
+                <div class="h-64"><canvas id="graficaTemas"></canvas></div>
+            </div>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-400 mb-4">Carga por Responsable</h2>
+                <div class="h-64"><canvas id="graficaResponsables"></canvas></div>
+            </div>
+        </div>
+
+        <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-6 border-b border-slate-100 bg-slate-50/50">
+                <h3 class="font-bold text-slate-700 text-lg">Desglose Jerárquico: Iniciativas y Tareas</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-100/75 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                            <th class="p-4 pl-8">Estructura / Tarea</th>
+                            <th class="p-4">Responsable</th>
+                            <th class="p-4">Estado</th>
+                            <th class="p-4">Área</th>
+                            <th class="p-4">Fecha Entrega</th>
+                            <th class="p-4">Alertas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
+                        </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <div id="modalFormulario" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6">
-            <h2 class="text-xl font-bold text-slate-800 mb-4">Agregar Nueva Iniciativa</h2>
+    <div id="modalFormulario" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-md w-full p-6 my-8">
+            <h2 class="text-xl font-bold text-slate-800 mb-4">Registrar Actividad</h2>
             <form id="formIniciativa" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Nombre de la Iniciativa</label>
-                    <input type="text" id="inputIniciativa" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Iniciativa (Proyecto General)</label>
+                    <input type="text" id="inputIniciativa" required placeholder="Ej: Rediseño de Checkout" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Tarea Específica</label>
+                    <input type="text" id="inputTarea" required placeholder="Ej: Cambiar color de botones" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-600 mb-1">Responsable</label>
-                    <input type="text" id="inputResponsable" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Estado</label>
-                    <select id="selectEstado" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                        <option value="Backlog">Backlog</option>
-                        <option value="En Progreso">En Progreso</option>
-                        <option value="Bloqueado">Bloqueado</option>
-                        <option value="Finalizado">Finalizado</option>
+                    <select id="selectResponsable" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <option value="Francisco Iturriaga">Francisco Iturriaga</option>
+                        <option value="Carlos Mendoza">Carlos Mendoza</option>
+                        <option value="Ana María">Ana María</option>
+                        <option value="OTRO">Otro (Ingresar manualmente)...</option>
                     </select>
+                    <input type="text" id="inputResponsableOtro" placeholder="Escribe el nombre del nuevo responsable" class="hidden mt-2 w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Estado</label>
+                        <select id="selectEstado" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Backlog">Backlog</option>
+                            <option value="En Progreso">En Progreso</option>
+                            <option value="Pausado">Pausado</option>
+                            <option value="Bloqueado">Bloqueado</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Área / Tema</label>
+                        <select id="selectTema" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Marketing">Marketing</option>
+                            <option value="Tecnología">Tecnología</option>
+                            <option value="Operaciones">Operaciones</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-600 mb-1">Tema / Área</label>
-                    <select id="selectTema" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                        <option value="Marketing">Marketing</option>
-                        <option value="Tecnología">Tecnología</option>
-                        <option value="Operaciones">Operaciones</option>
-                        <option value="RRHH">RRHH</option>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Fecha de Entrega</label>
+                    <input type="date" id="inputFechaEntrega" required class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600 mb-1">Configuración de Alertas</label>
+                    <select id="selectAlertas" class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <option value="Sin alertas">Sin alertas</option>
+                        <option value="Notificar al responsable al vencer">Notificar al responsable al vencer</option>
+                        <option value="Notificar cambios de estado al Admin">Notificar cambios de estado al Admin</option>
+                        <option value="Alerta diaria hasta finalizar">Alerta diaria hasta finalizar</option>
                     </select>
                 </div>
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" id="btnCerrarModal" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cancelar</button>
-                    <button type="submit" id="btnGuardar" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar Proyecto</button>
+                    <button type="submit" id="btnGuardar" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar</button>
                 </div>
             </form>
         </div>
@@ -89,10 +149,8 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // URL DE TU GOOGLE APPS SCRIPT
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXDEBW-nGCiWRzbUTtuXQBMP3wbgluz3ZxMmNpn3RSEksBlr6m7g70Lu2QikBOJS0/exec";
 
-        // CONFIGURACIÓN DE FIREBASE DE FRANCISCO
         const firebaseConfig = {
             apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
             authDomain: "control-proyectos-33bfb.firebaseapp.com",
@@ -112,12 +170,13 @@
         const errorLogin = document.getElementById('errorLogin');
         const modalFormulario = document.getElementById('modalFormulario');
 
-        let chartEstados = null;
-        let chartTemas = null;
+        let cacheDatosRaw = [];
+        let estadoFiltroActual = "TODOS";
+
+        let chartEstados = null, chartTemas = null, chartResponsables = null;
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // FILTRO DE SEGURIDAD EXCLUSIVO PARA HITES.CL
                 if (user.email.endsWith('@hites.cl')) {
                     domLogin.classList.add('hidden');
                     domPlataforma.classList.remove('hidden');
@@ -125,7 +184,7 @@
                     cargarDatosDesdeSheets();
                 } else {
                     signOut(auth);
-                    errorLogin.innerText = "Acceso denegado. Solo se permiten correos corporativos (@hites.cl).";
+                    errorLogin.innerText = "Acceso denegado. Solo cuentas @hites.cl.";
                     errorLogin.classList.remove('hidden');
                 }
             } else {
@@ -134,105 +193,192 @@
             }
         });
 
-        // Cargar datos reales del Excel
         function cargarDatosDesdeSheets() {
             document.getElementById('txtCargando').classList.remove('hidden');
             document.getElementById('contenedorGraficas').classList.add('hidden');
+            document.getElementById('contenedorTabla').classList.add('hidden');
 
             fetch(SCRIPT_URL)
                 .then(res => res.json())
                 .then(data => {
+                    cacheDatosRaw = data;
                     document.getElementById('txtCargando').classList.add('hidden');
                     document.getElementById('contenedorGraficas').classList.remove('hidden');
-                    procesarYRenderizarGraficas(data);
-                })
-                .catch(err => {
-                    document.getElementById('txtCargando').innerText = "Error al conectar con Google Sheets.";
-                    console.error(err);
+                    document.getElementById('contenedorTabla').classList.remove('hidden');
+                    renderizarTodo();
                 });
         }
 
-        function procesarYRenderizarGraficas(proyectos) {
-            // Contadores base
-            const estados = { 'Backlog': 0, 'En Progreso': 0, 'Bloqueado': 0, 'Finalizado': 0 };
-            const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'RRHH': 0 };
+        function renderizarTodo() {
+            // Aplicar el filtro dinámico de estado
+            const datosFiltrados = estadoFiltroActual === "TODOS" 
+                ? cacheDatosRaw 
+                : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
+
+            renderizarGraficas(datosFiltrados);
+            renderizarTablaJerarquica(datosFiltrados);
+        }
+
+        function renderizarGraficas(proyectos) {
+            const estados = { 'Backlog': 0, 'En Progreso': 0, 'Pausado': 0, 'Bloqueado': 0, 'Finalizado': 0 };
+            const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'Comercial': 0 };
+            const responsables = {};
 
             proyectos.forEach(p => {
                 if(estados[p.estado] !== undefined) estados[p.estado]++;
                 if(temas[p.tema] !== undefined) temas[p.tema]++;
+                if(p.responsable) {
+                    responsables[p.responsable] = (responsables[p.responsable] || 0) + 1;
+                }
             });
 
-            // Si las gráficas ya existían, las destruimos para redibujar
             if(chartEstados) chartEstados.destroy();
             if(chartTemas) chartTemas.destroy();
+            if(chartResponsables) chartResponsables.destroy();
 
-            const ctxEstados = document.getElementById('graficaEstados');
-            chartEstados = new Chart(ctxEstados, {
+            // 1. Gráfica de Estados (Interactiva al hacer clic)
+            chartEstados = new Chart(document.getElementById('graficaEstados'), {
                 type: 'bar',
-                data: {
-                    labels: Object.keys(estados),
-                    datasets: [{ label: 'Cantidad', data: Object.values(estados), backgroundColor: '#3b82f6', borderRadius: 4 }]
-                },
-                options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+                data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#3b82f6', borderRadius: 6 }] },
+                options: {
+                    maintainAspectRatio: false,
+                    onClick: (e, elementos) => {
+                        if (elementos.length > 0) {
+                            const index = elementos[0].index;
+                            const estadoClickeado = chartEstados.data.labels[index];
+                            estadoFiltroActual = estadoClickeado;
+                            document.getElementById('filtroEstadoGlobal').value = estadoClickeado;
+                            renderizarTodo();
+                        }
+                    },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+                }
             });
 
-            const ctxTemas = document.getElementById('graficaTemas');
-            chartTemas = new Chart(ctxTemas, {
+            // 2. Gráfica de Áreas
+            chartTemas = new Chart(document.getElementById('graficaTemas'), {
                 type: 'doughnut',
-                data: {
-                    labels: Object.keys(temas),
-                    datasets: [{ data: Object.values(temas), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }]
-                }
+                data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }] },
+                options: { maintainAspectRatio: false }
+            });
+
+            // 3. Gráfica de Responsables por Estado
+            chartResponsables = new Chart(document.getElementById('graficaResponsables'), {
+                type: 'bar',
+                data: { labels: Object.keys(responsables), datasets: [{ label: `Tareas (${estadoFiltroActual})`, data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 6 }] },
+                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
             });
         }
 
-        // LÓGICA DEL FORMULARIO MODAL
+        function renderizarTablaJerarquica(proyectos) {
+            const cuerpo = document.getElementById('cuerpoTabla');
+            cuerpo.innerHTML = "";
+
+            // Agrupar tareas por Iniciativa
+            const deasglose = {};
+            proyectos.forEach(p => {
+                if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = [];
+                deasglose[p.iniciativa].push(p);
+            });
+
+            // Dibujar estructura jerárquica
+            Object.keys(deasglose).forEach(iniciativa => {
+                // Fila Padre (Iniciativa)
+                const filaPadre = document.createElement('tr');
+                filaPadre.className = "bg-slate-50 font-bold text-slate-800 border-t border-slate-300";
+                filaPadre.innerHTML = `
+                    <td class="p-3 pl-4 text-blue-600 flex items-center gap-2">📂 ${iniciativa}</td>
+                    <td colspan="5" class="p-3 text-xs text-slate-400 italic">${deasglose[iniciativa].length} Tarea(s) asociada(s)</td>
+                `;
+                cuerpo.appendChild(filaPadre);
+
+                // Filas Hijos (Tareas)
+                deasglose[iniciativa].forEach(t => {
+                    const filaHijo = document.createElement('tr');
+                    filaHijo.className = "hover:bg-slate-50/50";
+                    
+                    // Colores visuales para estados
+                    let badgeEstado = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
+                    if(t.estado === "En Progreso") badgeEstado = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
+                    if(t.estado === "Pausado") badgeEstado = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
+                    if(t.estado === "Bloqueado") badgeEstado = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
+                    if(t.estado === "Finalizado") badgeEstado = `<span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Finalizado</span>`;
+
+                    let fechaFormateada = t["fecha entrega"] ? new Date(t["fecha entrega"]).toLocaleDateString('es-CL') : '-';
+
+                    filaHijo.innerHTML = `
+                        <td class="p-3 pl-12 text-slate-600 font-medium">↳ ${t.tarea || 'Sin nombre'}</td>
+                        <td class="p-3 text-slate-600">${t.responsable || '-'}</td>
+                        <td class="p-3">${badgeEstado}</td>
+                        <td class="p-3 text-slate-500">${t.tema || '-'}</td>
+                        <td class="p-3 text-slate-500 font-mono">${fechaFormateada}</td>
+                        <td class="p-3 text-xs text-slate-400 max-w-xs truncate">${t.alertas || 'Sin alertas'}</td>
+                    `;
+                    cuerpo.appendChild(filaHijo);
+                });
+            });
+        }
+
+        // CONTROL DEL DESPLEGABLE RESPONSABLE (Muestra/Oculta campo "Otro")
+        document.getElementById('selectResponsable').addEventListener('change', (e) => {
+            const inputOtro = document.getElementById('inputResponsableOtro');
+            if(e.target.value === "OTRO") {
+                inputOtro.classList.remove('hidden');
+                inputOtro.required = true;
+            } else {
+                inputOtro.classList.add('hidden');
+                inputOtro.required = false;
+            }
+        });
+
+        // FILTRO GLOBAL DESDE HEADER
+        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => {
+            estadoFiltroActual = e.target.value;
+            renderizarTodo();
+        });
+
+        // MODAL EVENTOS
         document.getElementById('btnAbrirModal').addEventListener('click', () => modalFormulario.classList.remove('hidden'));
         document.getElementById('btnCerrarModal').addEventListener('click', () => modalFormulario.classList.add('hidden'));
 
+        // GUARDAR DATOS POR POST
         document.getElementById('formIniciativa').addEventListener('submit', (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
             btnGuardar.innerText = "Guardando...";
             btnGuardar.disabled = true;
 
-            const nuevoProyecto = {
+            let responsableFinal = document.getElementById('selectResponsable').value;
+            if(responsableFinal === "OTRO") {
+                responsableFinal = document.getElementById('inputResponsableOtro').value;
+            }
+
+            const payload = {
                 iniciativa: document.getElementById('inputIniciativa').value,
-                responsable: document.getElementById('inputResponsable').value,
+                tarea: document.getElementById('inputTarea').value,
+                responsable: responsableFinal,
                 estado: document.getElementById('selectEstado').value,
-                tema: document.getElementById('selectTema').value
+                tema: document.getElementById('selectTema').value,
+                fechaEntrega: document.getElementById('inputFechaEntrega').value,
+                alertas: document.getElementById('selectAlertas').value
             };
 
-            // Enviar datos al Apps Script por POST
             fetch(SCRIPT_URL, {
                 method: "POST",
                 mode: "no-cors",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(nuevoProyecto)
+                body: JSON.stringify(payload)
             }).then(() => {
                 modalFormulario.classList.add('hidden');
                 document.getElementById('formIniciativa').reset();
-                btnGuardar.innerText = "Guardar Proyecto";
+                document.getElementById('inputResponsableOtro').classAdd = "hidden";
+                btnGuardar.innerText = "Guardar";
                 btnGuardar.disabled = false;
-                
-                // Recargar el dashboard 1.5 seg después para asegurar que el Sheet se guardó
                 setTimeout(cargarDatosDesdeSheets, 1500);
-            }).catch(err => {
-                alert("Error al guardar.");
-                btnGuardar.innerText = "Guardar Proyecto";
-                btnGuardar.disabled = false;
             });
         });
 
-        // LOGIN / LOGOUT
-        document.getElementById('btnLogin').addEventListener('click', () => {
-            errorLogin.classList.add('hidden');
-            signInWithPopup(auth, provider).catch(() => {
-                errorLogin.innerText = "Error al autenticar.";
-                errorLogin.classList.remove('hidden');
-            });
-        });
-
+        document.getElementById('btnLogin').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
     </script>
 </body>
