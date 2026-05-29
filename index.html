@@ -107,12 +107,24 @@
     </div>
 
     <div id="modalFormulario" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 id="tituloModal" class="text-xl font-bold text-slate-800 mb-4">Registrar Nueva Actividad</h2>
+            
+            <div id="selectorTipoFlujo" class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-6">
+                <button type="button" id="btnFlujoIniciativa" class="py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition">📂 Nueva Iniciativa</button>
+                <button type="button" id="btnFlujoTarea" class="py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition">↳ Nueva Tarea</button>
+            </div>
+
             <form id="formIniciativa" class="space-y-4">
                 <input type="hidden" id="inputIdRegistro" value="">
-                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600">Datos de la Iniciativa (Padre)</h3>
+                <input type="hidden" id="inputFlujoActual" value="INICIATIVA"> <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-amber-700">Seleccionar Iniciativa Padre</label>
+                    <select id="selectIniciativaPadre" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-amber-500">
+                        </select>
+                </div>
+
+                <div id="bloqueDatosIniciativa" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600">Datos de la Iniciativa</h3>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Iniciativa</label>
                         <input type="text" id="inputIniciativa" required placeholder="Ej: Rediseño Carro de Compras" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
@@ -137,61 +149,14 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos de la Tarea Específica (Hijo)</h3>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Tarea</label>
-                        <input type="text" id="inputTarea" required placeholder="Ej: Integrar nueva pasarela de pago" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                <div id="contenedorListaTareas" class="space-y-4">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Estado Tarea</label>
-                            <select id="selectEstado" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                                <option value="Backlog">Backlog</option>
-                                <option value="En Progreso">En Progreso</option>
-                                <option value="Pausado">Pausado</option>
-                                <option value="Bloqueado">Bloqueado</option>
-                                <option value="Finalizado">Finalizado</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Área / Tema</label>
-                            <select id="selectTema" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                                <option value="Marketing">Marketing</option>
-                                <option value="Tecnología">Tecnología</option>
-                                <option value="Operaciones">Operaciones</option>
-                                <option value="Comercial">Comercial</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Responsable Tarea</label>
-                        <select id="selectResponsable" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                            <option value="Francisco Iturriaga">Francisco Iturriaga</option>
-                            <option value="Carlos Mendoza">Carlos Mendoza</option>
-                            <option value="Ana María">Ana María</option>
-                            <option value="OTRO">Otro (Ingresar manualmente)...</option>
-                        </select>
-                        <input type="text" id="inputResponsableOtro" placeholder="Escribe el nombre del nuevo responsable" class="hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Tarea</label>
-                            <input type="date" id="inputFechaEntregaTarea" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Configuración Alertas</label>
-                            <select id="selectAlertas" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                                <option value="Sin alertas">Sin alertas</option>
-                                <option value="Notificar al responsable al vencer">Notificar al responsable al vencer</option>
-                                <option value="Notificar cambios de estado al Admin">Notificar cambios de estado al Admin</option>
-                                <option value="Alerta diaria hasta finalizar">Alerta diaria hasta finalizar</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="flex justify-end gap-3 pt-2">
+                <button type="button" id="btnAgregarFilaTarea" class="w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-500 hover:text-blue-600 py-3 rounded-xl text-sm font-semibold transition bg-slate-50/50">
+                    + Agregar otra tarea a esta iniciativa
+                </button>
+
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
                     <button type="button" id="btnCerrarModal" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cancelar</button>
                     <button type="submit" id="btnGuardar" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar Todo</button>
                 </div>
@@ -223,6 +188,7 @@
         let iniciativasColapsadas = new Set(); 
         let columnaOrdenActual = null;
         let ordenAscendente = true;
+        let contadorTareasUi = 0; // Para dar IDs únicos a los campos dinámicos en el DOM
 
         let chartEstados = null, chartTemas = null, chartResponsables = null;
         let chartIniSalud = null, chartTareasSalud = null;
@@ -246,7 +212,6 @@
                 document.getElementById('pantallaLogin').classList.add('hidden');
                 document.getElementById('plataforma').classList.remove('hidden');
                 document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${user.email})`;
-                
                 iniciarEscuchaFirestore(); 
             } else if (user) {
                 signOut(auth);
@@ -258,7 +223,7 @@
             }
         });
 
-        // LECTURA EN TIEMPO REAL DESDE FIRESTORE
+        // ESCUCHA FIRESTORE
         function iniciarEscuchaFirestore() {
             document.getElementById('txtCargando').classList.remove('hidden');
             document.getElementById('contenedorGraficas').classList.add('hidden');
@@ -279,10 +244,315 @@
                 document.getElementById('contenedorTabla').classList.remove('hidden');
                 
                 renderizarTodo();
+                actualizarSelectorIniciativasPadre();
             });
         }
 
-        // RENDERIZADO GENERAL
+        // LLENAR SELECTOR DE INICIATIVAS EXISTENTES
+        function actualizarSelectorIniciativasPadre() {
+            const select = document.getElementById('selectIniciativaPadre');
+            if(!select) return;
+            
+            // Extraer nombres únicos de iniciativas
+            const iniciativasUnicas = [...new Set(cacheDatosRaw.map(p => p.iniciativa))].sort();
+            
+            select.innerHTML = iniciativasUnicas.map(ini => {
+                // Encontrar la meta e info del padre para mostrar en el select
+                const datosPadre = cacheDatosRaw.find(p => p.iniciativa === ini);
+                return `<option value="${ini}" data-resp="${datosPadre.respiniciativa || ''}" data-impacto="${datosPadre.impacto || 'Medio'}" data-fecha="${datosPadre.fechaentregainiciativa || ''}">${ini}</option>`;
+            }).join('');
+        }
+
+        // FLUJO INTERFAZ MODAL DINÁMICO
+        function cambiarFlujoModal(flujo) {
+            document.getElementById('inputFlujoActual').value = flujo;
+            const btnIni = document.getElementById('btnFlujoIniciativa');
+            const btnTar = document.getElementById('btnFlujoTarea');
+            const bloqueIni = document.getElementById('bloqueDatosIniciativa');
+            const bloqueAsociar = document.getElementById('bloqueAsociarIniciativa');
+            const btnAddFila = document.getElementById('btnAgregarFilaTarea');
+
+            if (flujo === 'INICIATIVA') {
+                btnIni.className = "py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
+                btnTar.className = "py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition";
+                bloqueIni.classList.remove('hidden');
+                bloqueAsociar.classList.add('hidden');
+                btnAddFila.classList.remove('hidden');
+                
+                document.getElementById('inputIniciativa').required = true;
+                document.getElementById('inputRespIniciativa').required = true;
+                document.getElementById('inputFechaEntregaIniciativa').required = true;
+            } else {
+                btnTar.className = "py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition";
+                btnIni.className = "py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition";
+                bloqueIni.classList.add('hidden');
+                bloqueAsociar.classList.remove('hidden');
+                btnAddFila.classList.add('hidden');
+
+                document.getElementById('inputIniciativa').required = false;
+                document.getElementById('inputRespIniciativa').required = false;
+                document.getElementById('inputFechaEntregaIniciativa').required = false;
+                
+                // Asegurar que al menos quede una fila de tarea en la vista
+                const contenedor = document.getElementById('contenedorListaTareas');
+                if(contenedor.children.length === 0) agregarFilaTareaEstructura();
+            }
+        }
+
+        function agregarFilaTareaEstructura(valoresPredefinidos = null) {
+            contadorTareasUi++;
+            const idFila = `tarea_row_${contadorTareasUi}`;
+            const contenedor = document.getElementById('contenedorListaTareas');
+
+            const div = document.createElement('div');
+            div.id = idFila;
+            div.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative group";
+            
+            // Botón eliminar tarea (solo si hay más de una en modo Iniciativa)
+            const botonEliminarHtml = `
+                <button type="button" onclick="window.eliminarFilaTareaUi('${idFila}')" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 text-xs font-semibold hidden md:block">
+                    ✕ Quitar Tarea
+                </button>
+            `;
+
+            div.innerHTML = `
+                ${botonEliminarHtml}
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos de la Tarea</h4>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Tarea</label>
+                    <input type="text" class="input-tarea-nombre w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required placeholder="Ej: Integrar nueva pasarela de pago">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Estado Tarea</label>
+                        <select class="input-tarea-estado w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Backlog">Backlog</option>
+                            <option value="En Progreso">En Progreso</option>
+                            <option value="Pausado">Pausado</option>
+                            <option value="Bloqueado">Bloqueado</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Área / Tema</label>
+                        <select class="input-tarea-tema w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Marketing">Marketing</option>
+                            <option value="Tecnología" selected>Tecnología</option>
+                            <option value="Operaciones">Operaciones</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Responsable Tarea</label>
+                    <select class="input-tarea-resp-select w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" onchange="window.handleSelectResponsableDinamico('${idFila}', this.value)">
+                        <option value="Francisco Iturriaga">Francisco Iturriaga</option>
+                        <option value="Carlos Mendoza">Carlos Mendoza</option>
+                        <option value="Ana María">Ana María</option>
+                        <option value="OTRO">Otro (Ingresar manualmente)...</option>
+                    </select>
+                    <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" placeholder="Escribe el nombre del nuevo responsable">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Tarea</label>
+                        <input type="date" class="input-tarea-fecha w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Configuración Alertas</label>
+                        <select class="input-tarea-alertas w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Sin alertas">Sin alertas</option>
+                            <option value="Notificar al responsable al vencer">Notificar al responsable al vencer</option>
+                            <option value="Notificar cambios de estado al Admin">Notificar cambios de estado al Admin</option>
+                            <option value="Alerta diaria hasta finalizar">Alerta diaria hasta finalizar</option>
+                        </select>
+                    </div>
+                </div>
+            `;
+            contenedor.appendChild(div);
+
+            // Rellenar si viene de una edición
+            if(valoresPredefinidos) {
+                div.querySelector('.input-tarea-nombre').value = valoresPredefinidos.tarea || '';
+                div.querySelector('.input-tarea-estado').value = valoresPredefinidos.estado || 'Backlog';
+                div.querySelector('.input-tarea-tema').value = valoresPredefinidos.tema || 'Tecnología';
+                div.querySelector('.input-tarea-alertas').value = valoresPredefinidos.alertas || 'Sin alertas';
+                
+                let resp = valoresPredefinidos.responsable || '';
+                let selectResp = div.querySelector('.input-tarea-resp-select');
+                let opt = Array.from(selectResp.options).find(o => o.value === resp);
+                if(opt) {
+                    selectResp.value = resp;
+                } else if (resp) {
+                    selectResp.value = 'OTRO';
+                    let inputOtro = div.querySelector('.input-tarea-resp-otro');
+                    inputOtro.value = resp;
+                    inputOtro.classList.remove('hidden');
+                }
+
+                if(valoresPredefinidos.fechaentregatarea) {
+                    const dateObj = new Date(valoresPredefinidos.fechaentregatarea);
+                    if(!isNaN(dateObj)) div.querySelector('.input-tarea-fecha').value = dateObj.toISOString().split('T')[0];
+                }
+            }
+        }
+
+        window.eliminarFilaTareaUi = function(idFila) {
+            const fila = document.getElementById(idFila);
+            if(fila) fila.remove();
+        };
+
+        window.handleSelectResponsableDinamico = function(idFila, valor) {
+            const fila = document.getElementById(idFila);
+            const inputOtro = fila.querySelector('.input-tarea-resp-otro');
+            if(valor === "OTRO") {
+                inputOtro.classList.remove('hidden');
+                inputOtro.required = true;
+            } else {
+                inputOtro.classList.add('hidden');
+                inputOtro.required = false;
+            }
+        };
+
+        // ENLAZAR COMPORTAMIENTOS DE LA INTERFAZ MODAL
+        document.getElementById('btnFlujoIniciativa').addEventListener('click', () => cambiarFlujoModal('INICIATIVA'));
+        document.getElementById('btnFlujoTarea').addEventListener('click', () => cambiarFlujoModal('TAREA'));
+        document.getElementById('btnAgregarFilaTarea').addEventListener('click', () => agregarFilaTareaEstructura());
+
+        // CONFIGURACIÓN DE MODAL NUEVOS
+        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('inputIdRegistro').value = "";
+            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
+            document.getElementById('selectorTipoFlujo').classList.remove('hidden'); // Permitir elegir flujo
+            document.getElementById('contenedorListaTareas').innerHTML = "";
+            
+            cambiarFlujoModal('INICIATIVA');
+            agregarFilaTareaEstructura(); // Arranca con un bloque de tarea vacío
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        });
+
+        document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
+
+        // EDICIÓN DE FILAS EXISTENTES
+        window.abrirModalEdicion = function(idFila) {
+            const item = cacheDatosRaw.find(p => p.id === idFila);
+            if(!item) return;
+
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('tituloModal').innerText = "Editar Actividad";
+            document.getElementById('inputIdRegistro').value = item.id;
+            
+            // Ocultamos el selector de flujo porque en edición modificamos un registro específico ya creado
+            document.getElementById('selectorTipoFlujo').classList.add('hidden');
+            document.getElementById('bloqueAsociarIniciativa').classList.add('hidden');
+            document.getElementById('btnAgregarFilaTarea').classList.add('hidden');
+            document.getElementById('bloqueDatosIniciativa').classList.remove('hidden');
+
+            // Llenar datos de iniciativa
+            document.getElementById('inputIniciativa').value = item.iniciativa || '';
+            document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
+            document.getElementById('selectImpacto').value = item.impacto || 'Medio';
+            
+            if(item.fechaentregainiciativa) {
+                const dateObj = new Date(item.fechaentregainiciativa);
+                if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
+            }
+
+            // Inyectar datos de la tarea única para edición
+            document.getElementById('contenedorListaTareas').innerHTML = "";
+            agregarFilaTareaEstructura(item);
+
+            document.getElementById('inputIniciativa').required = true;
+            document.getElementById('inputRespIniciativa').required = true;
+            document.getElementById('inputFechaEntregaIniciativa').required = true;
+
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        };
+
+        // FORM SUBMIT (GUARDADO INTEGRADO EN FIRESTORE)
+        document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btnGuardar = document.getElementById('btnGuardar');
+            btnGuardar.innerText = "Guardando...";
+            btnGuardar.disabled = true;
+
+            const idRegistro = document.getElementById('inputIdRegistro').value;
+            const flujoActual = document.getElementById('inputFlujoActual').value;
+
+            let infoIniciativa = {};
+
+            // Configurar cabecera de la iniciativa base según el flujo elegido
+            if (flujoActual === 'INICIATIVA' || idRegistro) {
+                infoIniciativa = {
+                    iniciativa: document.getElementById('inputIniciativa').value,
+                    impacto: document.getElementById('selectImpacto').value,
+                    respiniciativa: document.getElementById('inputRespIniciativa').value,
+                    fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
+                };
+            } else {
+                // Si es flujo TAREA, extraemos la info del select del padre existente
+                const selectPadre = document.getElementById('selectIniciativaPadre');
+                const optSeleccionada = selectPadre.options[selectPadre.selectedIndex];
+                infoIniciativa = {
+                    iniciativa: selectPadre.value,
+                    impacto: optSeleccionada.getAttribute('data-impacto'),
+                    respiniciativa: optSeleccionada.getAttribute('data-resp'),
+                    fechaentregainiciativa: optSeleccionada.getAttribute('data-fecha')
+                };
+            }
+
+            // Capturar todas las tareas del formulario dinámico
+            const filasTareasUi = document.getElementById('contenedorListaTareas').children;
+            const loteTareas = [];
+
+            for (let fila text of filasTareasUi) {
+                let inputRespSel = fila.querySelector('.input-tarea-resp-select').value;
+                if(inputRespSel === "OTRO") inputRespSel = fila.querySelector('.input-tarea-resp-otro').value;
+
+                loteTareas.push({
+                    tarea: fila.querySelector('.input-tarea-nombre').value,
+                    estado: fila.querySelector('.input-tarea-estado').value,
+                    tema: fila.querySelector('.input-tarea-tema').value,
+                    responsable: inputRespSel,
+                    fechaentregatarea: fila.querySelector('.input-tarea-fecha').value,
+                    alertas: fila.querySelector('.input-tarea-alertas').value
+                });
+            }
+
+            try {
+                if (idRegistro) {
+                    // MODO EDICIÓN: Actualiza el documento específico de la tarea modificada
+                    const docRef = doc(db, "actividades", idRegistro);
+                    const itemTareaUnica = loteTareas[0] || { tarea: "" };
+                    await updateDoc(docRef, { ...infoIniciativa, ...itemTareaUnica });
+                } else {
+                    // MODO CREACIÓN NUEVA (Permite procesar en bucle multi-tarea o tarea suelta)
+                    const actividadesRef = collection(db, "actividades");
+                    const timestampCreacion = new Date().toISOString();
+
+                    if(loteTareas.length === 0) {
+                        // Si se creó una iniciativa sin tareas asociadas en la vista
+                        await addDoc(actividadesRef, { ...infoIniciativa, tarea: "", estado: "Backlog", tema: "Tecnología", responsable: infoIniciativa.respiniciativa, fechaentregatarea: infoIniciativa.fechaentregainiciativa, alertas: "Sin alertas", fechacreacion: timestampCreacion });
+                    } else {
+                        // Guardar un documento independiente por cada tarea de la lista
+                        for (let datosTarea of loteTareas) {
+                            await addDoc(actividadesRef, { ...infoIniciativa, ...datosTarea, fechacreacion: timestampCreacion });
+                        }
+                    }
+                }
+                
+                document.getElementById('modalFormulario').classList.add('hidden');
+            } catch (error) {
+                console.error("Error guardando en Firestore:", error);
+                alert("Ocurrió un error al guardar.");
+            } finally {
+                btnGuardar.innerText = "Guardar Todo";
+                btnGuardar.disabled = false;
+            }
+        });
+
+        // REUTILIZACIÓN DE RENDERIZADOS Y GRÁFICAS (SIN MODIFICACIONES)
         function renderizarTodo() {
             const btnFiltro = document.getElementById('btnLimpiarFiltros');
             if(estadoFiltroActual === "TODOS") {
@@ -299,7 +569,6 @@
             renderizarTablaJerarquica(datosFiltrados);
         }
 
-        // GRÁFICAS
         function renderizarGraficasSalud(proyectos) {
             const hoy = new Date(); hoy.setHours(0,0,0,0);
             let iniOnTime = 0, iniAtraso = 0, tarOnTime = 0, tarAtraso = 0;
@@ -325,7 +594,7 @@
                 options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
             });
 
-            if(chartTareasSalud) chartTareasSalud.destroy();
+            if(chartTareasSalud) chartTareasSalul.destroy();
             chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
                 type: 'pie',
                 data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
@@ -366,45 +635,6 @@
             chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
         }
 
-        // EDICIÓN Y ORDENAMIENTO
-        window.abrirModalEdicion = function(idFila) {
-            const item = cacheDatosRaw.find(p => p.id === idFila);
-            if(!item) return;
-
-            document.getElementById('tituloModal').innerText = "Editar Actividad";
-            document.getElementById('inputIdRegistro').value = item.id;
-            
-            document.getElementById('inputIniciativa').value = item.iniciativa || '';
-            document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
-            document.getElementById('selectImpacto').value = item.impacto || 'Medio';
-            if(item.fechaentregainiciativa) {
-                const dateObj = new Date(item.fechaentregainiciativa);
-                if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
-            }
-
-            document.getElementById('inputTarea').value = item.tarea || '';
-            document.getElementById('selectEstado').value = item.estado || 'Backlog';
-            document.getElementById('selectTema').value = item.tema || 'Tecnología';
-            document.getElementById('selectAlertas').value = item.alertas || 'Sin alertas';
-            
-            let respTar = item.responsabletarea || item.responsable || '';
-            let optExistente = Array.from(document.getElementById('selectResponsable').options).find(o => o.value === respTar);
-            if(optExistente) {
-                document.getElementById('selectResponsable').value = respTar;
-                document.getElementById('inputResponsableOtro').classList.add('hidden');
-            } else {
-                document.getElementById('selectResponsable').value = 'OTRO';
-                document.getElementById('inputResponsableOtro').value = respTar;
-                document.getElementById('inputResponsableOtro').classList.remove('hidden');
-            }
-
-            if(item.fechaentregatarea) {
-                const dateObjT = new Date(item.fechaentregatarea);
-                if(!isNaN(dateObjT)) document.getElementById('inputFechaEntregaTarea').value = dateObjT.toISOString().split('T')[0];
-            }
-            document.getElementById('modalFormulario').classList.remove('hidden');
-        };
-
         window.cambiarOrden = function(columna) {
             if(columnaOrdenActual === columna) {
                 ordenAscendente = !ordenAscendente;
@@ -432,7 +662,6 @@
             return '';
         }
 
-        // TABLA JERÁRQUICA
         function renderizarTablaJerarquica(proyectos) {
             const cuerpo = document.getElementById('cuerpoTabla');
             cuerpo.innerHTML = "";
@@ -479,7 +708,6 @@
                 const filaPadre = document.createElement('tr');
                 filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
                 
-                // IMPORTANTE: Ahora el id va envuelto en comillas simples: '${primerasMetas.id}'
                 filaPadre.innerHTML = `
                     <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa}')">
                         <span class="text-xs text-slate-400 w-4">${estaColapsado ? '▶' : '▼'}</span>
@@ -526,7 +754,6 @@
                         const filaHijo = document.createElement('tr');
                         filaHijo.className = filaFondoClase;
                         
-                        // IMPORTANTE: Ahora el id va envuelto en comillas simples: '${t.id}'
                         filaHijo.innerHTML = `
                             <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
                             <td class="p-2 text-slate-600 text-xs">${t.responsabletarea || t.responsable || '-'}</td>
@@ -549,71 +776,6 @@
             else iniciativasColapsadas.add(iniciativa);
             renderizarTodo();
         }
-
-        // EVENTOS DOM
-        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
-        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
-        
-        document.getElementById('selectResponsable').addEventListener('change', (e) => {
-            const i = document.getElementById('inputResponsableOtro');
-            if(e.target.value === "OTRO") { i.classList.remove('hidden'); i.required = true; } 
-            else { i.classList.add('hidden'); i.required = false; }
-        });
-
-        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
-            document.getElementById('formIniciativa').reset();
-            document.getElementById('inputIdRegistro').value = "";
-            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
-            document.getElementById('inputResponsableOtro').classList.add('hidden');
-            document.getElementById('modalFormulario').classList.remove('hidden');
-        });
-
-        document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
-
-        // GUARDAR EN FIRESTORE
-        document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btnGuardar = document.getElementById('btnGuardar');
-            btnGuardar.innerText = "Guardando...";
-            btnGuardar.disabled = true;
-
-            let respFinal = document.getElementById('selectResponsable').value;
-            if(respFinal === "OTRO") respFinal = document.getElementById('inputResponsableOtro').value;
-
-            const payload = {
-                iniciativa: document.getElementById('inputIniciativa').value,
-                impacto: document.getElementById('selectImpacto').value,
-                respiniciativa: document.getElementById('inputRespIniciativa').value,
-                fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value,
-                tarea: document.getElementById('inputTarea').value,
-                responsable: respFinal,
-                estado: document.getElementById('selectEstado').value,
-                tema: document.getElementById('selectTema').value,
-                fechaentregatarea: document.getElementById('inputFechaEntregaTarea').value,
-                alertas: document.getElementById('selectAlertas').value
-            };
-
-            const idRegistro = document.getElementById('inputIdRegistro').value;
-
-            try {
-                if (idRegistro) {
-                    const docRef = doc(db, "actividades", idRegistro);
-                    await updateDoc(docRef, payload);
-                } else {
-                    payload.fechacreacion = new Date().toISOString();
-                    const actividadesRef = collection(db, "actividades");
-                    await addDoc(actividadesRef, payload);
-                }
-                
-                document.getElementById('modalFormulario').classList.add('hidden');
-            } catch (error) {
-                console.error("Error de base de datos:", error);
-                alert("Ocurrió un error al guardar. Revisa la consola.");
-            } finally {
-                btnGuardar.innerText = "Guardar Todo";
-                btnGuardar.disabled = false;
-            }
-        });
 
         document.getElementById('btnLogin').addEventListener('click', () => signInWithPopup(auth, provider));
         document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
