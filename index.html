@@ -244,4 +244,360 @@
             if (user && user.email.endsWith('@hites.cl')) {
                 document.getElementById('pantallaLogin').classList.add('hidden');
                 document.getElementById('plataforma').classList.remove('hidden');
-                document.
+                document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${user.email})`;
+                cargarDatosDesdeSheets();
+            } else if (user) {
+                signOut(auth);
+                document.getElementById('errorLogin').innerText = "Acceso denegado. Solo cuentas @hites.cl.";
+                document.getElementById('errorLogin').classList.remove('hidden');
+            } else {
+                document.getElementById('pantallaLogin').classList.remove('hidden');
+                document.getElementById('plataforma').classList.add('hidden');
+            }
+        });
+
+        function cargarDatosDesdeSheets() {
+            document.getElementById('txtCargando').classList.remove('hidden');
+            document.getElementById('contenedorGraficas').classList.add('hidden');
+            document.getElementById('contenedorGraficasSalud').classList.add('hidden');
+            document.getElementById('contenedorTabla').classList.add('hidden');
+
+            fetch(SCRIPT_URL).then(res => res.json()).then(data => {
+                cacheDatosRaw = data.map(item => {
+                    let normalizado = {};
+                    for (let key in item) {
+                        normalizado[key.replace(/[\s_]/g, '').toLowerCase()] = item[key];
+                    }
+                    if (normalizado.id) normalizado.id = parseInt(normalizado.id);
+                    return normalizado;
+                });
+                document.getElementById('txtCargando').classList.add('hidden');
+                document.getElementById('contenedorGraficas').classList.remove('hidden');
+                document.getElementById('contenedorGraficasSalud').classList.remove('hidden');
+                document.getElementById('contenedorTabla').classList.remove('hidden');
+                renderizarTodo();
+            });
+        }
+
+        function renderizarTodo() {
+            const btnFiltro = document.getElementById('btnLimpiarFiltros');
+            if(estadoFiltroActual === "TODOS") {
+                btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition";
+                btnFiltro.disabled = true;
+            } else {
+                btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm";
+                btnFiltro.disabled = false;
+            }
+
+            const datosFiltrados = estadoFiltroActual === "TODOS" ? cacheDatosRaw : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
+            renderizarGraficasPrincipales(datosFiltrados);
+            renderizarGraficasSalud(cacheDatosRaw);
+            renderizarTablaJerarquica(datosFiltrados);
+        }
+
+        function renderizarGraficasSalud(proyectos) {
+            const hoy = new Date(); hoy.setHours(0,0,0,0);
+            let iniOnTime = 0, iniAtraso = 0, tarOnTime = 0, tarAtraso = 0;
+
+            proyectos.forEach(p => {
+                if(!p.tarea || p.estado === "Finalizado") return;
+                let fEntrega = p.fechaentregatarea ? new Date(p.fechaentregatarea) : null;
+                if(fEntrega && fEntrega < hoy) tarAtraso++; else tarOnTime++;
+            });
+
+            const iniciativasUnicas = {};
+            proyectos.forEach(p => { if(!iniciativasUnicas[p.iniciativa]) iniciativasUnicas[p.iniciativa] = p; });
+
+            Object.values(iniciativasUnicas).forEach(ini => {
+                let fEntregaIni = ini.fechaentregainiciativa ? new Date(ini.fechaentregainiciativa) : null;
+                if (fEntregaIni && fEntregaIni < hoy) iniAtraso++; else iniOnTime++;
+            });
+
+            if(chartIniSalud) chartIniSalud.destroy();
+            chartIniSalud = new Chart(document.getElementById('graficaIniciativasSalud'), {
+                type: 'pie', // Gráfico Torta
+                data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [iniAtraso, iniOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
+                options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
+            });
+
+            if(chartTareasSalud) chartTareasSalud.destroy();
+            chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
+                type: 'pie', // Gráfico Torta
+                data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
+                options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
+            });
+        }
+
+        function renderizarGraficasPrincipales(proyectos) {
+            const estados = { 'Backlog': 0, 'En Progreso': 0, 'Pausado': 0, 'Bloqueado': 0, 'Finalizado': 0 };
+            const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'Comercial': 0 };
+            const responsables = {};
+
+            proyectos.forEach(p => {
+                if(estados[p.estado] !== undefined) estados[p.estado]++;
+                if(temas[p.tema] !== undefined) temas[p.tema]++;
+                let resp = p.responsabletarea || p.responsable;
+                if(resp) responsables[resp] = (responsables[resp] || 0) + 1;
+            });
+
+            if(chartEstados) chartEstados.destroy();
+            chartEstados = new Chart(document.getElementById('graficaEstados'), {
+                type: 'bar',
+                data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 4 }] },
+                options: { maintainAspectRatio: false, onClick: (e, els) => {
+                    if (els.length > 0) {
+                        const est = chartEstados.data.labels[els[0].index];
+                        estadoFiltroActual = (estadoFiltroActual === est) ? "TODOS" : est;
+                        document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual;
+                        renderizarTodo();
+                    }
+                }}
+            });
+
+            if(chartTemas) chartTemas.destroy();
+            chartTemas = new Chart(document.getElementById('graficaTemas'), { type: 'doughnut', data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false }});
+
+            if(chartResponsables) chartResponsables.destroy();
+            chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
+        }
+
+        window.abrirModalEdicion = function(idFila) {
+            const item = cacheDatosRaw.find(p => p.id === idFila);
+            if(!item) return;
+
+            document.getElementById('tituloModal').innerText = "Editar Actividad";
+            document.getElementById('inputIdRegistro').value = item.id;
+            
+            document.getElementById('inputIniciativa').value = item.iniciativa || '';
+            document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
+            document.getElementById('selectImpacto').value = item.impacto || 'Medio';
+            if(item.fechaentregainiciativa) {
+                const dateObj = new Date(item.fechaentregainiciativa);
+                if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
+            }
+
+            document.getElementById('inputTarea').value = item.tarea || '';
+            document.getElementById('selectEstado').value = item.estado || 'Backlog';
+            document.getElementById('selectTema').value = item.tema || 'Tecnología';
+            document.getElementById('selectAlertas').value = item.alertas || 'Sin alertas';
+            
+            let respTar = item.responsabletarea || item.responsable || '';
+            let optExistente = Array.from(document.getElementById('selectResponsable').options).find(o => o.value === respTar);
+            if(optExistente) {
+                document.getElementById('selectResponsable').value = respTar;
+                document.getElementById('inputResponsableOtro').classList.add('hidden');
+            } else {
+                document.getElementById('selectResponsable').value = 'OTRO';
+                document.getElementById('inputResponsableOtro').value = respTar;
+                document.getElementById('inputResponsableOtro').classList.remove('hidden');
+            }
+
+            if(item.fechaentregatarea) {
+                const dateObjT = new Date(item.fechaentregatarea);
+                if(!isNaN(dateObjT)) document.getElementById('inputFechaEntregaTarea').value = dateObjT.toISOString().split('T')[0];
+            }
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        };
+
+        // LÓGICA DE ORDENAMIENTO
+        window.cambiarOrden = function(columna) {
+            if(columnaOrdenActual === columna) {
+                ordenAscendente = !ordenAscendente;
+            } else {
+                columnaOrdenActual = columna;
+                ordenAscendente = true;
+            }
+            // Reset iconos
+            ['jerarquia','responsable','estado','tema','fechaentrega','fechacreacion'].forEach(c => {
+                document.getElementById('icon-sort-' + c).innerText = '↕';
+                document.getElementById('icon-sort-' + c).className = 'text-slate-400 text-[10px] ml-1';
+            });
+            // Set icono activo
+            document.getElementById('icon-sort-' + columna).innerText = ordenAscendente ? '↑' : '↓';
+            document.getElementById('icon-sort-' + columna).className = 'text-blue-600 font-bold text-[10px] ml-1';
+            
+            renderizarTodo();
+        }
+
+        function obtenerValorParaOrden(item, col, esPadre) {
+            if(col === 'jerarquia') return esPadre ? (item.iniciativa || '').toLowerCase() : (item.tarea || '').toLowerCase();
+            if(col === 'responsable') return esPadre ? (item.respiniciativa || item.responsableiniciativa || '').toLowerCase() : (item.responsabletarea || item.responsable || '').toLowerCase();
+            if(col === 'estado') return esPadre ? 'z' : (item.estado || '').toLowerCase();
+            if(col === 'tema') return esPadre ? 'z' : (item.tema || '').toLowerCase();
+            if(col === 'fechaentrega') return esPadre ? new Date(item.fechaentregainiciativa || '2099') : new Date(item.fechaentregatarea || '2099');
+            if(col === 'fechacreacion') return new Date(item.fechacreacion || item.fecha || '1970');
+            return '';
+        }
+
+        function renderizarTablaJerarquica(proyectos) {
+            const cuerpo = document.getElementById('cuerpoTabla');
+            cuerpo.innerHTML = "";
+            const deasglose = {};
+            proyectos.forEach(p => { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); });
+
+            // Convertir a Array para ordenar
+            let grupos = Object.keys(deasglose).map(iniciativa => {
+                return { nombre: iniciativa, padre: deasglose[iniciativa][0], hijos: deasglose[iniciativa] }
+            });
+
+            // Aplicar orden si existe
+            if(columnaOrdenActual) {
+                grupos.sort((a, b) => {
+                    let valA = obtenerValorParaOrden(a.padre, columnaOrdenActual, true);
+                    let valB = obtenerValorParaOrden(b.padre, columnaOrdenActual, true);
+                    if(valA < valB) return ordenAscendente ? -1 : 1;
+                    if(valA > valB) return ordenAscendente ? 1 : -1;
+                    return 0;
+                });
+                grupos.forEach(g => {
+                    g.hijos.sort((a, b) => {
+                        let valA = obtenerValorParaOrden(a, columnaOrdenActual, false);
+                        let valB = obtenerValorParaOrden(b, columnaOrdenActual, false);
+                        if(valA < valB) return ordenAscendente ? -1 : 1;
+                        if(valA > valB) return ordenAscendente ? 1 : -1;
+                        return 0;
+                    });
+                });
+            }
+
+            grupos.forEach(grupo => {
+                const iniciativa = grupo.nombre;
+                const primerasMetas = grupo.padre;
+                const estaColapsado = iniciativasColapsadas.has(iniciativa);
+                
+                let badgeImpacto = '';
+                if(primerasMetas.impacto === 'Alto') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase">Impacto Alto</span>`;
+                if(primerasMetas.impacto === 'Medio') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 uppercase">Impacto Medio</span>`;
+                if(primerasMetas.impacto === 'Bajo') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase">Impacto Bajo</span>`;
+
+                const fEntregaIniRaw = primerasMetas.fechaentregainiciativa;
+                const fEntregaIniFormateada = fEntregaIniRaw ? new Date(fEntregaIniRaw).toLocaleDateString('es-CL') : '-';
+                const fCreacionIniFormateada = (primerasMetas.fechacreacion || primerasMetas.fecha) ? new Date((primerasMetas.fechacreacion || primerasMetas.fecha)).toLocaleDateString('es-CL') : '-';
+
+                const filaPadre = document.createElement('tr');
+                filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
+                
+                filaPadre.innerHTML = `
+                    <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa}')">
+                        <span class="text-xs text-slate-400 w-4">${estaColapsado ? '▶' : '▼'}</span>
+                        📂 ${iniciativa} ${badgeImpacto}
+                    </td>
+                    <td class="p-3 text-slate-700 text-xs">${primerasMetas.respiniciativa || primerasMetas.responsableiniciativa || '-'}</td>
+                    <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">Iniciativa</span></td>
+                    <td class="p-3">-</td>
+                    <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIniFormateada}</td>
+                    <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIniFormateada}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="window.abrirModalEdicion(${primerasMetas.id})" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
+                    </td>
+                `;
+                cuerpo.appendChild(filaPadre);
+
+                if (!estaColapsado) {
+                    grupo.hijos.forEach(t => {
+                        if(!t.tarea) return;
+                        const hoy = new Date(); hoy.setHours(0,0,0,0);
+                        const fEntregaTarea = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
+                        const fEntregaIni = fEntregaIniRaw ? new Date(fEntregaIniRaw) : null;
+                        
+                        let celdaFechaClase = "text-slate-600 font-mono";
+                        let filaFondoClase = "hover:bg-slate-50/80 transition group";
+
+                        if(fEntregaTarea) {
+                            fEntregaTarea.setHours(0,0,0,0);
+                            if (fEntregaIni && fEntregaTarea > fEntregaIni) celdaFechaClase = "text-red-600 font-bold underline";
+                            const diffDias = Math.ceil((fEntregaTarea - hoy) / (1000 * 60 * 60 * 24));
+                            if(t.estado !== "Finalizado") {
+                                if (diffDias < 0) filaFondoClase = "bg-red-50/80 text-red-900 hover:bg-red-100/70 transition group";
+                                else if (diffDias <= 15) filaFondoClase = "bg-red-50 text-red-900 hover:bg-red-100/70 transition group";
+                                else if (diffDias <= 30) filaFondoClase = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition group";
+                            }
+                        }
+
+                        let badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
+                        if(t.estado === "En Progreso") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
+                        if(t.estado === "Pausado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
+                        if(t.estado === "Bloqueado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
+                        if(t.estado === "Finalizado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Finalizado</span>`;
+
+                        const filaHijo = document.createElement('tr');
+                        filaHijo.className = filaFondoClase;
+                        filaHijo.innerHTML = `
+                            <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
+                            <td class="p-2 text-slate-600 text-xs">${t.responsabletarea || t.responsable || '-'}</td>
+                            <td class="p-2">${badgeEstado}</td>
+                            <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
+                            <td class="p-2 ${celdaFechaClase} text-xs">${fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="window.abrirModalEdicion(${t.id})" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
+                            </td>
+                        `;
+                        cuerpo.appendChild(filaHijo);
+                    });
+                }
+            });
+        }
+
+        window.toggleColapso = function(iniciativa) {
+            if(iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa);
+            else iniciativasColapsadas.add(iniciativa);
+            renderizarTodo();
+        }
+
+        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
+        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
+        
+        document.getElementById('selectResponsable').addEventListener('change', (e) => {
+            const i = document.getElementById('inputResponsableOtro');
+            if(e.target.value === "OTRO") { i.classList.remove('hidden'); i.required = true; } 
+            else { i.classList.add('hidden'); i.required = false; }
+        });
+
+        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('inputIdRegistro').value = "";
+            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
+            document.getElementById('inputResponsableOtro').classList.add('hidden');
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        });
+
+        document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
+
+        document.getElementById('formIniciativa').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btnGuardar = document.getElementById('btnGuardar');
+            btnGuardar.innerText = "Guardando...";
+            btnGuardar.disabled = true;
+
+            let respFinal = document.getElementById('selectResponsable').value;
+            if(respFinal === "OTRO") respFinal = document.getElementById('inputResponsableOtro').value;
+
+            const payload = {
+                id: document.getElementById('inputIdRegistro').value,
+                iniciativa: document.getElementById('inputIniciativa').value,
+                impacto: document.getElementById('selectImpacto').value,
+                respIniciativa: document.getElementById('inputRespIniciativa').value,
+                fechaEntregaIniciativa: document.getElementById('inputFechaEntregaIniciativa').value,
+                tarea: document.getElementById('inputTarea').value,
+                responsable: respFinal,
+                estado: document.getElementById('selectEstado').value,
+                tema: document.getElementById('selectTema').value,
+                fechaEntregaTarea: document.getElementById('inputFechaEntregaTarea').value,
+                alertas: document.getElementById('selectAlertas').value
+            };
+
+            fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+            .then(() => {
+                document.getElementById('modalFormulario').classList.add('hidden');
+                btnGuardar.innerText = "Guardar Todo";
+                btnGuardar.disabled = false;
+                setTimeout(cargarDatosDesdeSheets, 1500);
+            });
+        });
+
+        document.getElementById('btnLogin').addEventListener('click', () => signInWithPopup(auth, provider));
+        document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
+    </script>
+</body>
+</html>
