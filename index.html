@@ -117,10 +117,12 @@
 
             <form id="formIniciativa" class="space-y-4">
                 <input type="hidden" id="inputIdRegistro" value="">
-                <input type="hidden" id="inputFlujoActual" value="INICIATIVA"> <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
+                <input type="hidden" id="inputFlujoActual" value="INICIATIVA">
+
+                <div id="bloqueAsociarIniciativa" class="hidden bg-amber-50/50 p-4 rounded-xl border border-amber-200 space-y-2">
                     <label class="block text-xs font-bold uppercase tracking-wider text-amber-700">Seleccionar Iniciativa Padre</label>
                     <select id="selectIniciativaPadre" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:border-amber-500">
-                        </select>
+                    </select>
                 </div>
 
                 <div id="bloqueDatosIniciativa" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
@@ -150,7 +152,7 @@
                 </div>
 
                 <div id="contenedorListaTareas" class="space-y-4">
-                    </div>
+                </div>
 
                 <button type="button" id="btnAgregarFilaTarea" class="w-full flex items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-blue-500 text-slate-500 hover:text-blue-600 py-3 rounded-xl text-sm font-semibold transition bg-slate-50/50">
                     + Agregar otra tarea a esta iniciativa
@@ -188,7 +190,7 @@
         let iniciativasColapsadas = new Set(); 
         let columnaOrdenActual = null;
         let ordenAscendente = true;
-        let contadorTareasUi = 0; // Para dar IDs únicos a los campos dinámicos en el DOM
+        let contadorTareasUi = 0;
 
         let chartEstados = null, chartTemas = null, chartResponsables = null;
         let chartIniSalud = null, chartTareasSalud = null;
@@ -206,7 +208,16 @@
             }
         };
 
-        // AUTENTICACIÓN
+        // ENLAZAR BOTONES DE AUTENTICACIÓN INMEDIATAMENTE
+        document.getElementById('btnLogin').addEventListener('click', () => {
+            signInWithPopup(auth, provider).catch(err => {
+                document.getElementById('errorLogin').innerText = "Error en login: " + err.message;
+                document.getElementById('errorLogin').classList.remove('hidden');
+            });
+        });
+        document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
+
+        // OBSERVAR ESTADO DE AUTENTICACIÓN
         onAuthStateChanged(auth, (user) => {
             if (user && user.email.endsWith('@hites.cl')) {
                 document.getElementById('pantallaLogin').classList.add('hidden');
@@ -223,13 +234,8 @@
             }
         });
 
-        // ESCUCHA FIRESTORE
+        // ESCUCHA OPTIMIZADA DE FIRESTORE
         function iniciarEscuchaFirestore() {
-            document.getElementById('txtCargando').classList.remove('hidden');
-            document.getElementById('contenedorGraficas').classList.add('hidden');
-            document.getElementById('contenedorGraficasSalud').classList.add('hidden');
-            document.getElementById('contenedorTabla').classList.add('hidden');
-
             const proyectosRef = collection(db, "actividades");
 
             onSnapshot(proyectosRef, (snapshot) => {
@@ -243,27 +249,32 @@
                 document.getElementById('contenedorGraficasSalud').classList.remove('hidden');
                 document.getElementById('contenedorTabla').classList.remove('hidden');
                 
-                renderizarTodo();
-                actualizarSelectorIniciativasPadre();
+                // Intentar renderizar de forma segura atrapando cualquier error gráfico aislado
+                try {
+                    renderizarTodo();
+                    actualizarSelectorIniciativasPadre();
+                } catch (error) {
+                    console.error("Error en renderizado general:", error);
+                }
+            }, (error) => {
+                console.error("Error de conexión a Firestore (Posible cuota excedida):", error);
+                document.getElementById('txtCargando').innerText = "⚠️ Error al conectar con la base de datos o cuota diaria excedida en Firebase.";
             });
         }
 
-        // LLENAR SELECTOR DE INICIATIVAS EXISTENTES
         function actualizarSelectorIniciativasPadre() {
             const select = document.getElementById('selectIniciativaPadre');
             if(!select) return;
             
-            // Extraer nombres únicos de iniciativas
-            const iniciativasUnicas = [...new Set(cacheDatosRaw.map(p => p.iniciativa))].sort();
+            const iniciativasUnicas = [...new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean))].sort();
             
             select.innerHTML = iniciativasUnicas.map(ini => {
-                // Encontrar la meta e info del padre para mostrar en el select
                 const datosPadre = cacheDatosRaw.find(p => p.iniciativa === ini);
                 return `<option value="${ini}" data-resp="${datosPadre.respiniciativa || ''}" data-impacto="${datosPadre.impacto || 'Medio'}" data-fecha="${datosPadre.fechaentregainiciativa || ''}">${ini}</option>`;
             }).join('');
         }
 
-        // FLUJO INTERFAZ MODAL DINÁMICO
+        // CONTROL DE FLUJOS DINÁMICOS EN MODAL
         function cambiarFlujoModal(flujo) {
             document.getElementById('inputFlujoActual').value = flujo;
             const btnIni = document.getElementById('btnFlujoIniciativa');
@@ -293,7 +304,6 @@
                 document.getElementById('inputRespIniciativa').required = false;
                 document.getElementById('inputFechaEntregaIniciativa').required = false;
                 
-                // Asegurar que al menos quede una fila de tarea en la vista
                 const contenedor = document.getElementById('contenedorListaTareas');
                 if(contenedor.children.length === 0) agregarFilaTareaEstructura();
             }
@@ -308,15 +318,10 @@
             div.id = idFila;
             div.className = "bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3 relative group";
             
-            // Botón eliminar tarea (solo si hay más de una en modo Iniciativa)
-            const botonEliminarHtml = `
-                <button type="button" onclick="window.eliminarFilaTareaUi('${idFila}')" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 text-xs font-semibold hidden md:block">
+            div.innerHTML = `
+                <button type="button" onclick="window.eliminarFilaTareaUi('${idFila}')" class="absolute top-3 right-3 text-slate-400 hover:text-red-500 text-xs font-semibold">
                     ✕ Quitar Tarea
                 </button>
-            `;
-
-            div.innerHTML = `
-                ${botonEliminarHtml}
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Datos de la Tarea</h4>
                 <div>
                     <label class="block text-xs font-medium text-slate-600 mb-1">Nombre de la Tarea</label>
@@ -371,7 +376,6 @@
             `;
             contenedor.appendChild(div);
 
-            // Rellenar si viene de una edición
             if(valoresPredefinidos) {
                 div.querySelector('.input-tarea-nombre').value = valoresPredefinidos.tarea || '';
                 div.querySelector('.input-tarea-estado').value = valoresPredefinidos.estado || 'Backlog';
@@ -398,8 +402,13 @@
         }
 
         window.eliminarFilaTareaUi = function(idFila) {
-            const fila = document.getElementById(idFila);
-            if(fila) fila.remove();
+            const container = document.getElementById('contenedorListaTareas');
+            if(container.children.length > 1) {
+                const fila = document.getElementById(idFila);
+                if(fila) fila.remove();
+            } else {
+                alert("Debes dejar al menos una tarea asignada.");
+            }
         };
 
         window.handleSelectResponsableDinamico = function(idFila, valor) {
@@ -414,27 +423,24 @@
             }
         };
 
-        // ENLAZAR COMPORTAMIENTOS DE LA INTERFAZ MODAL
         document.getElementById('btnFlujoIniciativa').addEventListener('click', () => cambiarFlujoModal('INICIATIVA'));
         document.getElementById('btnFlujoTarea').addEventListener('click', () => cambiarFlujoModal('TAREA'));
         document.getElementById('btnAgregarFilaTarea').addEventListener('click', () => agregarFilaTareaEstructura());
 
-        // CONFIGURACIÓN DE MODAL NUEVOS
         document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
             document.getElementById('formIniciativa').reset();
             document.getElementById('inputIdRegistro').value = "";
             document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
-            document.getElementById('selectorTipoFlujo').classList.remove('hidden'); // Permitir elegir flujo
+            document.getElementById('selectorTipoFlujo').classList.remove('hidden');
             document.getElementById('contenedorListaTareas').innerHTML = "";
             
             cambiarFlujoModal('INICIATIVA');
-            agregarFilaTareaEstructura(); // Arranca con un bloque de tarea vacío
+            agregarFilaTareaEstructura();
             document.getElementById('modalFormulario').classList.remove('hidden');
         });
 
         document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
 
-        // EDICIÓN DE FILAS EXISTENTES
         window.abrirModalEdicion = function(idFila) {
             const item = cacheDatosRaw.find(p => p.id === idFila);
             if(!item) return;
@@ -443,13 +449,11 @@
             document.getElementById('tituloModal').innerText = "Editar Actividad";
             document.getElementById('inputIdRegistro').value = item.id;
             
-            // Ocultamos el selector de flujo porque en edición modificamos un registro específico ya creado
             document.getElementById('selectorTipoFlujo').classList.add('hidden');
             document.getElementById('bloqueAsociarIniciativa').classList.add('hidden');
             document.getElementById('btnAgregarFilaTarea').classList.add('hidden');
             document.getElementById('bloqueDatosIniciativa').classList.remove('hidden');
 
-            // Llenar datos de iniciativa
             document.getElementById('inputIniciativa').value = item.iniciativa || '';
             document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
             document.getElementById('selectImpacto').value = item.impacto || 'Medio';
@@ -459,7 +463,6 @@
                 if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
             }
 
-            // Inyectar datos de la tarea única para edición
             document.getElementById('contenedorListaTareas').innerHTML = "";
             agregarFilaTareaEstructura(item);
 
@@ -470,7 +473,7 @@
             document.getElementById('modalFormulario').classList.remove('hidden');
         };
 
-        // FORM SUBMIT (GUARDADO INTEGRADO EN FIRESTORE)
+        // SUBMIT DEL FORMULARIO CON INTERFAZ ASÍNCRONA CORREGIDA
         document.getElementById('formIniciativa').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
@@ -482,7 +485,6 @@
 
             let infoIniciativa = {};
 
-            // Configurar cabecera de la iniciativa base según el flujo elegido
             if (flujoActual === 'INICIATIVA' || idRegistro) {
                 infoIniciativa = {
                     iniciativa: document.getElementById('inputIniciativa').value,
@@ -491,22 +493,26 @@
                     fechaentregainiciativa: document.getElementById('inputFechaEntregaIniciativa').value
                 };
             } else {
-                // Si es flujo TAREA, extraemos la info del select del padre existente
                 const selectPadre = document.getElementById('selectIniciativaPadre');
+                if(!selectPadre.value) {
+                    alert("Por favor selecciona o crea primero una iniciativa válida.");
+                    btnGuardar.innerText = "Guardar Todo";
+                    btnGuardar.disabled = false;
+                    return;
+                }
                 const optSeleccionada = selectPadre.options[selectPadre.selectedIndex];
                 infoIniciativa = {
                     iniciativa: selectPadre.value,
-                    impacto: optSeleccionada.getAttribute('data-impacto'),
-                    respiniciativa: optSeleccionada.getAttribute('data-resp'),
-                    fechaentregainiciativa: optSeleccionada.getAttribute('data-fecha')
+                    impacto: optSeleccionada.getAttribute('data-impacto') || 'Medio',
+                    respiniciativa: optSeleccionada.getAttribute('data-resp') || '',
+                    fechaentregainiciativa: optSeleccionada.getAttribute('data-fecha') || ''
                 };
             }
 
-            // Capturar todas las tareas del formulario dinámico
             const filasTareasUi = document.getElementById('contenedorListaTareas').children;
             const loteTareas = [];
 
-            for (let fila text of filasTareasUi) {
+            for (let fila of filasTareasUi) {
                 let inputRespSel = fila.querySelector('.input-tarea-resp-select').value;
                 if(inputRespSel === "OTRO") inputRespSel = fila.querySelector('.input-tarea-resp-otro').value;
 
@@ -522,37 +528,32 @@
 
             try {
                 if (idRegistro) {
-                    // MODO EDICIÓN: Actualiza el documento específico de la tarea modificada
                     const docRef = doc(db, "actividades", idRegistro);
                     const itemTareaUnica = loteTareas[0] || { tarea: "" };
                     await updateDoc(docRef, { ...infoIniciativa, ...itemTareaUnica });
                 } else {
-                    // MODO CREACIÓN NUEVA (Permite procesar en bucle multi-tarea o tarea suelta)
                     const actividadesRef = collection(db, "actividades");
                     const timestampCreacion = new Date().toISOString();
 
                     if(loteTareas.length === 0) {
-                        // Si se creó una iniciativa sin tareas asociadas en la vista
                         await addDoc(actividadesRef, { ...infoIniciativa, tarea: "", estado: "Backlog", tema: "Tecnología", responsable: infoIniciativa.respiniciativa, fechaentregatarea: infoIniciativa.fechaentregainiciativa, alertas: "Sin alertas", fechacreacion: timestampCreacion });
                     } else {
-                        // Guardar un documento independiente por cada tarea de la lista
                         for (let datosTarea of loteTareas) {
                             await addDoc(actividadesRef, { ...infoIniciativa, ...datosTarea, fechacreacion: timestampCreacion });
                         }
                     }
                 }
-                
                 document.getElementById('modalFormulario').classList.add('hidden');
             } catch (error) {
                 console.error("Error guardando en Firestore:", error);
-                alert("Ocurrió un error al guardar.");
+                alert("Ocurrió un error al guardar en la base de datos.");
             } finally {
                 btnGuardar.innerText = "Guardar Todo";
                 btnGuardar.disabled = false;
             }
         });
 
-        // REUTILIZACIÓN DE RENDERIZADOS Y GRÁFICAS (SIN MODIFICACIONES)
+        // FUNCIONES DE RENDERIZADO Y GRÁFICOS (CORREGIDO ERROR CRÍTICO)
         function renderizarTodo() {
             const btnFiltro = document.getElementById('btnLimpiarFiltros');
             if(estadoFiltroActual === "TODOS") {
@@ -569,6 +570,7 @@
             renderizarTablaJerarquica(datosFiltrados);
         }
 
+        // CORREGIDA LA LÍNEA CRÍTICA AQUÍ ABAJO (chartTareasSalud en vez de chartTareasSalul)
         function renderizarGraficasSalud(proyectos) {
             const hoy = new Date(); hoy.setHours(0,0,0,0);
             let iniOnTime = 0, iniAtraso = 0, tarOnTime = 0, tarAtraso = 0;
@@ -594,7 +596,8 @@
                 options: { maintainAspectRatio: false, plugins: { tooltip: pieTooltipOptions } }
             });
 
-            if(chartTareasSalud) chartTareasSalul.destroy();
+            // ✨ CORRECCIÓN: Variable corregida correctamente para evitar romper la app
+            if(chartTareasSalud) chartTareasSalud.destroy();
             chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
                 type: 'pie',
                 data: { labels: ['Con Atraso', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
@@ -610,7 +613,7 @@
             proyectos.forEach(p => {
                 if(estados[p.estado] !== undefined) estados[p.estado]++;
                 if(temas[p.tema] !== undefined) temas[p.tema]++;
-                let resp = p.responsabletarea || p.responsable;
+                let resp = p.responsable || p.responsabletarea;
                 if(resp) responsables[resp] = (responsables[resp] || 0) + 1;
             });
 
@@ -654,7 +657,7 @@
 
         function obtenerValorParaOrden(item, col, esPadre) {
             if(col === 'jerarquia') return esPadre ? (item.iniciativa || '').toLowerCase() : (item.tarea || '').toLowerCase();
-            if(col === 'responsable') return esPadre ? (item.respiniciativa || item.responsableiniciativa || '').toLowerCase() : (item.responsabletarea || item.responsable || '').toLowerCase();
+            if(col === 'responsable') return esPadre ? (item.respiniciativa || item.responsableiniciativa || '').toLowerCase() : (item.responsable || item.responsabletarea || '').toLowerCase();
             if(col === 'estado') return esPadre ? 'z' : (item.estado || '').toLowerCase();
             if(col === 'tema') return esPadre ? 'z' : (item.tema || '').toLowerCase();
             if(col === 'fechaentrega') return esPadre ? new Date(item.fechaentregainiciativa || '2099') : new Date(item.fechaentregatarea || '2099');
@@ -666,7 +669,7 @@
             const cuerpo = document.getElementById('cuerpoTabla');
             cuerpo.innerHTML = "";
             const deasglose = {};
-            proyectos.forEach(p => { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); });
+            proyectos.forEach(p => { if (p.iniciativa) { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); } });
 
             let grupos = Object.keys(deasglose).map(iniciativa => {
                 return { nombre: iniciativa, padre: deasglose[iniciativa][0], hijos: deasglose[iniciativa] }
@@ -756,7 +759,7 @@
                         
                         filaHijo.innerHTML = `
                             <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
-                            <td class="p-2 text-slate-600 text-xs">${t.responsabletarea || t.responsable || '-'}</td>
+                            <td class="p-2 text-slate-600 text-xs">${t.responsable || t.responsabletarea || '-'}</td>
                             <td class="p-2">${badgeEstado}</td>
                             <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
                             <td class="p-2 ${celdaFechaClase} text-xs">${fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-'}</td>
@@ -776,9 +779,6 @@
             else iniciativasColapsadas.add(iniciativa);
             renderizarTodo();
         }
-
-        document.getElementById('btnLogin').addEventListener('click', () => signInWithPopup(auth, provider));
-        document.getElementById('btnLogout').addEventListener('click', () => signOut(auth));
     </script>
 </body>
 </html>
