@@ -49,15 +49,15 @@
                     ✕ Limpiar Filtros
                 </button>
                 <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cerrar Sesión</button>
-                <button id="btnAbrirModal" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Actividad</button>
+                <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">+ Nueva Actividad</button>
             </div>
         </header>
 
         <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Cargando datos desde Google Sheets...</div>
 
-        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Estados (Clic para Filtrar / Deshacer)</h2>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Estados (Clic para Filtrar)</h2>
                 <div class="h-60"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -70,10 +70,21 @@
             </div>
         </div>
 
+        <div id="contenedorGraficasSalud" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Salud de Iniciativas (Entregas)</h2>
+                <div class="h-48"><canvas id="graficaIniciativasSalud"></canvas></div>
+            </div>
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Salud de Tareas (Entregas)</h2>
+                <div class="h-48"><canvas id="graficaTareasSalud"></canvas></div>
+            </div>
+        </div>
+
         <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="p-5 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
                 <h3 class="font-bold text-slate-700 text-base">Estructura General: Iniciativas y Tareas</h3>
-                <span class="text-xs text-slate-400 font-mono">Semáforo: Amarillo &lt;= 30 días | Rojo &lt;= 15 días o Desfasado de la Iniciativa</span>
+                <span class="text-xs text-slate-400 font-mono">Amarillo &lt;= 30 días | Rojo &lt;= 15 días o Atrasado</span>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -82,10 +93,11 @@
                             <th class="p-3 pl-6 w-1/3">Jerarquía / Actividad</th>
                             <th class="p-3">Responsable</th>
                             <th class="p-3">Estado</th>
-                            <th class="p-3">Área / Tema</th>
+                            <th class="p-3">Área</th>
                             <th class="p-3">Fecha Entrega</th>
                             <th class="p-3">Alertas</th>
-                            <th class="p-3 text-right pr-6">Fecha Creación</th>
+                            <th class="p-3 text-right">Creado</th>
+                            <th class="p-3 text-center">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200">
@@ -97,9 +109,10 @@
 
     <div id="modalFormulario" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
-            <h2 class="text-xl font-bold text-slate-800 mb-4">Registrar Iniciativa / Tarea</h2>
+            <h2 id="tituloModal" class="text-xl font-bold text-slate-800 mb-4">Registrar Nueva Actividad</h2>
             <form id="formIniciativa" class="space-y-4">
-                
+                <input type="hidden" id="inputIdRegistro" value="">
+
                 <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 space-y-3">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600">Datos de la Iniciativa (Padre)</h3>
                     <div>
@@ -112,9 +125,17 @@
                             <input type="text" id="inputRespIniciativa" required placeholder="Ej: Francisco Iturriaga" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Iniciativa</label>
-                            <input type="date" id="inputFechaEntregaIniciativa" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">Impacto (Negocio)</label>
+                            <select id="selectImpacto" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                                <option value="Alto">Alto</option>
+                                <option value="Medio">Medio</option>
+                                <option value="Bajo">Bajo</option>
+                            </select>
                         </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Iniciativa</label>
+                        <input type="date" id="inputFechaEntregaIniciativa" required class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                     </div>
                 </div>
 
@@ -185,7 +206,6 @@
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxVXDEBW-nGCiWRzbUTtuXQBMP3wbgluz3ZxMmNpn3RSEksBlr6m7g70Lu2QikBOJS0/exec";
-
         const firebaseConfig = {
             apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
             authDomain: "control-proyectos-33bfb.firebaseapp.com",
@@ -199,79 +219,105 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        const domLogin = document.getElementById('pantallaLogin');
-        const domPlataforma = document.getElementById('plataforma');
-        const txtUsuario = document.getElementById('txtUsuario');
-        const errorLogin = document.getElementById('errorLogin');
-        const modalFormulario = document.getElementById('modalFormulario');
-        const btnLimpiarFiltros = document.getElementById('btnLimpiarFiltros');
-
         let cacheDatosRaw = [];
         let estadoFiltroActual = "TODOS";
-        let iniciativasColapsadas = new Set(); // Mantiene registro de qué carpetas están cerradas
+        let iniciativasColapsadas = new Set(); 
 
         let chartEstados = null, chartTemas = null, chartResponsables = null;
+        let chartIniSalud = null, chartTareasSalud = null;
 
         onAuthStateChanged(auth, (user) => {
-            if (user) {
-                if (user.email.endsWith('@hites.cl')) {
-                    domLogin.classList.add('hidden');
-                    domPlataforma.classList.remove('hidden');
-                    txtUsuario.innerText = `Conectado como: ${user.displayName} (${user.email})`;
-                    cargarDatosDesdeSheets();
-                } else {
-                    signOut(auth);
-                    errorLogin.innerText = "Acceso denegado. Solo cuentas válidas de @hites.cl.";
-                    errorLogin.classList.remove('hidden');
-                }
+            if (user && user.email.endsWith('@hites.cl')) {
+                document.getElementById('pantallaLogin').classList.add('hidden');
+                document.getElementById('plataforma').classList.remove('hidden');
+                document.getElementById('txtUsuario').innerText = `Conectado como: ${user.displayName} (${user.email})`;
+                cargarDatosDesdeSheets();
+            } else if (user) {
+                signOut(auth);
+                document.getElementById('errorLogin').innerText = "Acceso denegado. Solo cuentas @hites.cl.";
+                document.getElementById('errorLogin').classList.remove('hidden');
             } else {
-                domLogin.classList.remove('hidden');
-                domPlataforma.classList.add('hidden');
+                document.getElementById('pantallaLogin').classList.remove('hidden');
+                document.getElementById('plataforma').classList.add('hidden');
             }
         });
 
         function cargarDatosDesdeSheets() {
             document.getElementById('txtCargando').classList.remove('hidden');
             document.getElementById('contenedorGraficas').classList.add('hidden');
+            document.getElementById('contenedorGraficasSalud').classList.add('hidden');
             document.getElementById('contenedorTabla').classList.add('hidden');
 
-            fetch(SCRIPT_URL)
-                .then(res => res.json())
-                .then(data => {
-                    // Normalizador inteligente de propiedades para evitar desfases de minúsculas/mayúsculas del Excel
-                    cacheDatosRaw = data.map(item => {
-                        let normalizado = {};
-                        for (let key in item) {
-                            let keyLimpia = key.replace(/[\s_]/g, '').toLowerCase();
-                            normalizado[keyLimpia] = item[key];
-                        }
-                        return normalizado;
-                    });
-
-                    document.getElementById('txtCargando').classList.add('hidden');
-                    document.getElementById('contenedorGraficas').classList.remove('hidden');
-                    document.getElementById('contenedorTabla').classList.remove('hidden');
-                    renderizarTodo();
+            fetch(SCRIPT_URL).then(res => res.json()).then(data => {
+                cacheDatosRaw = data.map(item => {
+                    let normalizado = {};
+                    for (let key in item) {
+                        normalizado[key.replace(/[\s_]/g, '').toLowerCase()] = item[key];
+                    }
+                    // Forzar que el ID sea numérico si existe
+                    if (normalizado.id) normalizado.id = parseInt(normalizado.id);
+                    return normalizado;
                 });
+                document.getElementById('txtCargando').classList.add('hidden');
+                document.getElementById('contenedorGraficas').classList.remove('hidden');
+                document.getElementById('contenedorGraficasSalud').classList.remove('hidden');
+                document.getElementById('contenedorTabla').classList.remove('hidden');
+                renderizarTodo();
+            });
         }
 
         function renderizarTodo() {
-            if (estadoFiltroActual === "TODOS") {
-                btnLimpiarFiltros.classList.add('hidden');
-            } else {
-                btnLimpiarFiltros.classList.remove('hidden');
-            }
-
-            // Filtrado dinámico
-            const datosFiltrados = estadoFiltroActual === "TODOS" 
-                ? cacheDatosRaw 
-                : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
-
-            renderizarGraficas(datosFiltrados);
+            document.getElementById('btnLimpiarFiltros').classList.toggle('hidden', estadoFiltroActual === "TODOS");
+            const datosFiltrados = estadoFiltroActual === "TODOS" ? cacheDatosRaw : cacheDatosRaw.filter(p => p.estado === estadoFiltroActual);
+            renderizarGraficasPrincipales(datosFiltrados);
+            renderizarGraficasSalud(cacheDatosRaw); // La salud siempre se calcula sobre el total
             renderizarTablaJerarquica(datosFiltrados);
         }
 
-        function renderizarGraficas(proyectos) {
+        function renderizarGraficasSalud(proyectos) {
+            const hoy = new Date();
+            hoy.setHours(0,0,0,0);
+
+            let iniOnTime = 0, iniAtraso = 0;
+            let tarOnTime = 0, tarAtraso = 0;
+
+            // Salud Tareas
+            proyectos.forEach(p => {
+                if(!p.tarea || p.estado === "Finalizado") return; // Solo medimos tareas activas
+                let fEntrega = p.fechaentregatarea ? new Date(p.fechaentregatarea) : null;
+                if(fEntrega && fEntrega < hoy) tarAtraso++;
+                else tarOnTime++;
+            });
+
+            // Salud Iniciativas (Agrupamos por nombre para evaluar la fecha de entrega general)
+            const iniciativasUnicas = {};
+            proyectos.forEach(p => {
+                if(!iniciativasUnicas[p.iniciativa]) iniciativasUnicas[p.iniciativa] = p;
+            });
+
+            Object.values(iniciativasUnicas).forEach(ini => {
+                // Solo evaluamos iniciativas que tengan tareas no finalizadas (muy básico)
+                let fEntregaIni = ini.fechaentregainiciativa ? new Date(ini.fechaentregainiciativa) : null;
+                if (fEntregaIni && fEntregaIni < hoy) iniAtraso++;
+                else iniOnTime++;
+            });
+
+            if(chartIniSalud) chartIniSalud.destroy();
+            chartIniSalud = new Chart(document.getElementById('graficaIniciativasSalud'), {
+                type: 'pie',
+                data: { labels: ['Atrasadas', 'On Time'], datasets: [{ data: [iniAtraso, iniOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
+                options: { maintainAspectRatio: false }
+            });
+
+            if(chartTareasSalud) chartTareasSalud.destroy();
+            chartTareasSalud = new Chart(document.getElementById('graficaTareasSalud'), {
+                type: 'pie',
+                data: { labels: ['Atrasadas', 'On Time'], datasets: [{ data: [tarAtraso, tarOnTime], backgroundColor: ['#ef4444', '#10b981'] }] },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        function renderizarGraficasPrincipales(proyectos) {
             const estados = { 'Backlog': 0, 'En Progreso': 0, 'Pausado': 0, 'Bloqueado': 0, 'Finalizado': 0 };
             const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'Comercial': 0 };
             const responsables = {};
@@ -279,158 +325,157 @@
             proyectos.forEach(p => {
                 if(estados[p.estado] !== undefined) estados[p.estado]++;
                 if(temas[p.tema] !== undefined) temas[p.tema]++;
-                let resp = p.responsabletarea || p.responsable || 'Sin asignar';
+                let resp = p.responsabletarea || p.responsable;
                 if(resp) responsables[resp] = (responsables[resp] || 0) + 1;
             });
 
             if(chartEstados) chartEstados.destroy();
-            if(chartTemas) chartTemas.destroy();
-            if(chartResponsables) chartResponsables.destroy();
-
-            // 1. Gráfica de Estados (Clic filtra, Clic de nuevo deshace)
             chartEstados = new Chart(document.getElementById('graficaEstados'), {
                 type: 'bar',
-                data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 6 }] },
-                options: {
-                    maintainAspectRatio: false,
-                    onClick: (e, elementos) => {
-                        if (elementos.length > 0) {
-                            const index = elementos[0].index;
-                            const estadoClickeado = chartEstados.data.labels[index];
-                            
-                            // Si hace clic en el que ya estaba filtrado, se deshace
-                            estadoFiltroActual = (estadoFiltroActual === estadoClickeado) ? "TODOS" : estadoClickeado;
-                            document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual;
-                            renderizarTodo();
-                        }
-                    },
-                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-                }
+                data: { labels: Object.keys(estados), datasets: [{ label: 'Tareas', data: Object.values(estados), backgroundColor: '#004bc0', borderRadius: 4 }] },
+                options: { maintainAspectRatio: false, onClick: (e, els) => {
+                    if (els.length > 0) {
+                        const est = chartEstados.data.labels[els[0].index];
+                        estadoFiltroActual = (estadoFiltroActual === est) ? "TODOS" : est;
+                        document.getElementById('filtroEstadoGlobal').value = estadoFiltroActual;
+                        renderizarTodo();
+                    }
+                }}
             });
 
-            // 2. Gráfica de Temas / Áreas
-            chartTemas = new Chart(document.getElementById('graficaTemas'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0', '#10b981', '#f59e0b', '#ef4444'] }] },
-                options: { maintainAspectRatio: false }
-            });
+            if(chartTemas) chartTemas.destroy();
+            chartTemas = new Chart(document.getElementById('graficaTemas'), { type: 'doughnut', data: { labels: Object.keys(temas), datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0', '#10b981', '#f59e0b', '#ef4444'] }] }, options: { maintainAspectRatio: false }});
 
-            // 3. Gráfica de Responsables
-            chartResponsables = new Chart(document.getElementById('graficaResponsables'), {
-                type: 'bar',
-                data: { labels: Object.keys(responsables), datasets: [{ label: `Tareas`, data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 6 }] },
-                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
-            });
+            if(chartResponsables) chartResponsables.destroy();
+            chartResponsables = new Chart(document.getElementById('graficaResponsables'), { type: 'bar', data: { labels: Object.keys(responsables), datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 4 }] }, options: { maintainAspectRatio: false }});
         }
+
+        // FUNCIÓN GLOBAL PARA EDITAR (Se invoca desde el botón de la tabla)
+        window.abrirModalEdicion = function(idFila) {
+            const item = cacheDatosRaw.find(p => p.id === idFila);
+            if(!item) return;
+
+            document.getElementById('tituloModal').innerText = "Editar Actividad";
+            document.getElementById('inputIdRegistro').value = item.id;
+            
+            // Poblar campos Iniciativa
+            document.getElementById('inputIniciativa').value = item.iniciativa || '';
+            document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
+            document.getElementById('selectImpacto').value = item.impacto || 'Medio';
+            
+            if(item.fechaentregainiciativa) {
+                const dateObj = new Date(item.fechaentregainiciativa);
+                if(!isNaN(dateObj)) document.getElementById('inputFechaEntregaIniciativa').value = dateObj.toISOString().split('T')[0];
+            }
+
+            // Poblar campos Tarea
+            document.getElementById('inputTarea').value = item.tarea || '';
+            document.getElementById('selectEstado').value = item.estado || 'Backlog';
+            document.getElementById('selectTema').value = item.tema || 'Tecnología';
+            document.getElementById('selectAlertas').value = item.alertas || 'Sin alertas';
+            
+            let respTar = item.responsabletarea || item.responsable || '';
+            let optExistente = Array.from(document.getElementById('selectResponsable').options).find(o => o.value === respTar);
+            if(optExistente) {
+                document.getElementById('selectResponsable').value = respTar;
+                document.getElementById('inputResponsableOtro').classList.add('hidden');
+            } else {
+                document.getElementById('selectResponsable').value = 'OTRO';
+                document.getElementById('inputResponsableOtro').value = respTar;
+                document.getElementById('inputResponsableOtro').classList.remove('hidden');
+            }
+
+            if(item.fechaentregatarea) {
+                const dateObjT = new Date(item.fechaentregatarea);
+                if(!isNaN(dateObjT)) document.getElementById('inputFechaEntregaTarea').value = dateObjT.toISOString().split('T')[0];
+            }
+
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        };
 
         function renderizarTablaJerarquica(proyectos) {
             const cuerpo = document.getElementById('cuerpoTabla');
             cuerpo.innerHTML = "";
-
-            // Agrupar filas por Iniciativa
             const deasglose = {};
-            proyectos.forEach(p => {
-                if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = [];
-                deasglose[p.iniciativa].push(p);
-            });
+            proyectos.forEach(p => { if (!deasglose[p.iniciativa]) deasglose[p.iniciativa] = []; deasglose[p.iniciativa].push(p); });
 
             Object.keys(deasglose).forEach(iniciativa => {
                 const primerasMetas = deasglose[iniciativa][0];
                 const estaColapsado = iniciativasColapsadas.has(iniciativa);
+                
+                let badgeImpacto = '';
+                if(primerasMetas.impacto === 'Alto') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-700 uppercase">Impacto Alto</span>`;
+                if(primerasMetas.impacto === 'Medio') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-yellow-100 text-yellow-700 uppercase">Impacto Medio</span>`;
+                if(primerasMetas.impacto === 'Bajo') badgeImpacto = `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 uppercase">Impacto Bajo</span>`;
 
-                // Formatear fechas padre
-                let fEntregaIniRaw = primerasMetas.fechaentregainiciativa;
-                let fEntregaIniFormateada = fEntregaIniRaw ? new Date(fEntregaIniRaw).toLocaleDateString('es-CL') : '-';
-                let fCreacionIniRaw = primerasMetas.fechacreacion || primerasMetas.fecha;
-                let fCreacionIniFormateada = fCreacionIniRaw ? new Date(fCreacionIniRaw).toLocaleDateString('es-CL') : '-';
+                const fEntregaIniRaw = primerasMetas.fechaentregainiciativa;
+                const fEntregaIniFormateada = fEntregaIniRaw ? new Date(fEntregaIniRaw).toLocaleDateString('es-CL') : '-';
+                const fCreacionIniFormateada = (primerasMetas.fechacreacion || primerasMetas.fecha) ? new Date((primerasMetas.fechacreacion || primerasMetas.fecha)).toLocaleDateString('es-CL') : '-';
 
-                // FILA PADRE (Iniciativa)
+                // Fila PADRE
                 const filaPadre = document.createElement('tr');
-                filaPadre.className = "bg-slate-100/60 font-bold text-slate-800 border-t border-slate-300 select-none cursor-pointer hover:bg-slate-100 transition";
+                filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
                 
                 filaPadre.innerHTML = `
-                    <td class="p-3 pl-4 text-blue-700 flex items-center gap-2 font-semibold">
+                    <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="toggleColapso('${iniciativa}')">
                         <span class="text-xs text-slate-400 w-4">${estaColapsado ? '▶' : '▼'}</span>
-                        📂 ${iniciativa}
+                        📂 ${iniciativa} ${badgeImpacto}
                     </td>
                     <td class="p-3 text-slate-700 text-xs">${primerasMetas.respiniciativa || primerasMetas.responsableiniciativa || '-'}</td>
                     <td class="p-3"><span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-xs">Iniciativa</span></td>
                     <td class="p-3">-</td>
                     <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIniFormateada}</td>
                     <td class="p-3">-</td>
-                    <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIniFormateada}</td>
+                    <td class="p-3 text-right font-mono text-xs text-slate-400">${fCreacionIniFormateada}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="window.abrirModalEdicion(${primerasMetas.id})" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa (Afecta primera tarea)">✏️</button>
+                    </td>
                 `;
-
-                // Evento para expandir / contraer
-                filaPadre.addEventListener('click', () => {
-                    if(iniciativasColapsadas.has(iniciativa)) {
-                        iniciativasColapsadas.delete(iniciativa);
-                    } else {
-                        iniciativasColapsadas.add(iniciativa);
-                    }
-                    renderizarTodo();
-                });
-
                 cuerpo.appendChild(filaPadre);
 
-                // FILAS HIJAS (Tareas) - Solo se dibujan si el padre no está colapsado
+                // FILAS HIJAS
                 if (!estaColapsado) {
                     deasglose[iniciativa].forEach(t => {
-                        // Saltarse si no hay tarea registrada en la fila
                         if(!t.tarea) return;
-
-                        const filaHijo = document.createElement('tr');
                         
-                        // LÓGICA DE TIEMPOS Y ALERTAS VISUALES (Cálculos de días pendientes)
-                        const hoy = new Date();
-                        hoy.setHours(0,0,0,0);
+                        const hoy = new Date(); hoy.setHours(0,0,0,0);
                         const fEntregaTarea = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
                         const fEntregaIni = fEntregaIniRaw ? new Date(fEntregaIniRaw) : null;
                         
                         let celdaFechaClase = "text-slate-600 font-mono";
-                        let filaFondoClase = "hover:bg-slate-50/80 transition";
+                        let filaFondoClase = "hover:bg-slate-50/80 transition group";
 
                         if(fEntregaTarea) {
                             fEntregaTarea.setHours(0,0,0,0);
-                            
-                            // Alerta 1: Tarea excede la fecha de la iniciativa madre -> Texto fecha Rojo
-                            if (fEntregaIni && fEntregaTarea > fEntregaIni) {
-                                celdaFechaClase = "text-red-600 font-bold underline";
-                            }
+                            if (fEntregaIni && fEntregaTarea > fEntregaIni) celdaFechaClase = "text-red-600 font-bold underline";
 
-                            // Cálculo de días restantes para semáforos de vencimiento
-                            const diffTiempo = fEntregaTarea - hoy;
-                            const diffDias = Math.ceil(diffTiempo / (1000 * 60 * 60 * 24));
-
+                            const diffDias = Math.ceil((fEntregaTarea - hoy) / (1000 * 60 * 60 * 24));
                             if(t.estado !== "Finalizado") {
-                                if (diffDias <= 15) {
-                                    filaFondoClase = "bg-red-50 text-red-900 hover:bg-red-100/70 transition"; // Menos de 15 días: Fondo Rojo
-                                } else if (diffDias <= 30) {
-                                    filaFondoClase = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition"; // Menos de 30 días: Fondo Amarillo
-                                }
+                                if (diffDias < 0) filaFondoClase = "bg-red-50/80 text-red-900 hover:bg-red-100/70 transition group"; // Atrasado
+                                else if (diffDias <= 15) filaFondoClase = "bg-red-50 text-red-900 hover:bg-red-100/70 transition group";
+                                else if (diffDias <= 30) filaFondoClase = "bg-yellow-50 text-yellow-900 hover:bg-yellow-100/70 transition group";
                             }
                         }
 
-                        // Badges de estado con estilos independientes
-                        let badgeEstado = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
-                        if(t.estado === "En Progreso") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
-                        if(t.estado === "Pausado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
-                        if(t.estado === "Bloqueado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
-                        if(t.estado === "Finalizado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Finalizado</span>`;
+                        let badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">${t.estado}</span>`;
+                        if(t.estado === "En Progreso") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-700">En Progreso</span>`;
+                        if(t.estado === "Pausado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">Pausado</span>`;
+                        if(t.estado === "Bloqueado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-700">Bloqueado</span>`;
+                        if(t.estado === "Finalizado") badgeEstado = `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Finalizado</span>`;
 
-                        let fEntregaTareaFormateada = fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-';
-                        let fCreacionTareaRaw = t.fechacreacion || t.fecha;
-                        let fCreacionTareaFormateada = fCreacionTareaRaw ? new Date(fCreacionTareaRaw).toLocaleDateString('es-CL') : '-';
-
+                        const filaHijo = document.createElement('tr');
                         filaHijo.className = filaFondoClase;
                         filaHijo.innerHTML = `
                             <td class="p-2 pl-10 text-slate-600 font-medium">↳ ${t.tarea}</td>
                             <td class="p-2 text-slate-600 text-xs">${t.responsabletarea || t.responsable || '-'}</td>
                             <td class="p-2">${badgeEstado}</td>
                             <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
-                            <td class="p-2 ${celdaFechaClase}">${fEntregaTareaFormateada}</td>
-                            <td class="p-2 text-xs text-slate-400 max-w-xs truncate">${t.alertas || 'Sin alertas'}</td>
-                            <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionTareaFormateada}</td>
+                            <td class="p-2 ${celdaFechaClase} text-xs">${fEntregaTarea ? fEntregaTarea.toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 text-[10px] text-slate-400 max-w-xs truncate">${t.alertas || 'Sin alertas'}</td>
+                            <td class="p-2 text-right font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
+                            <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onclick="window.abrirModalEdicion(${t.id})" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
+                            </td>
                         `;
                         cuerpo.appendChild(filaHijo);
                     });
@@ -438,70 +483,64 @@
             });
         }
 
-        // SELECTORES Y FILTROS INTERACTIVOS
-        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => {
-            estadoFiltroActual = e.target.value;
+        // Función para el acordeón
+        window.toggleColapso = function(iniciativa) {
+            if(iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa);
+            else iniciativasColapsadas.add(iniciativa);
             renderizarTodo();
-        });
+        }
 
-        btnLimpiarFiltros.addEventListener('click', () => {
-            estadoFiltroActual = "TODOS";
-            document.getElementById('filtroEstadoGlobal').value = "TODOS";
-            renderizarTodo();
-        });
-
-        // DESPLEGABLE DINÁMICO RESPONSABLE ("Otro")
+        // EVENTOS BÁSICOS
+        document.getElementById('filtroEstadoGlobal').addEventListener('change', (e) => { estadoFiltroActual = e.target.value; renderizarTodo(); });
+        document.getElementById('btnLimpiarFiltros').addEventListener('click', () => { estadoFiltroActual = "TODOS"; document.getElementById('filtroEstadoGlobal').value = "TODOS"; renderizarTodo(); });
+        
         document.getElementById('selectResponsable').addEventListener('change', (e) => {
-            const inputOtro = document.getElementById('inputResponsableOtro');
-            if(e.target.value === "OTRO") {
-                inputOtro.classList.remove('hidden');
-                inputOtro.required = true;
-            } else {
-                inputOtro.classList.add('hidden');
-                inputOtro.required = false;
-            }
+            const i = document.getElementById('inputResponsableOtro');
+            if(e.target.value === "OTRO") { i.classList.remove('hidden'); i.required = true; } 
+            else { i.classList.add('hidden'); i.required = false; }
         });
 
-        // ACCIONES MODAL
-        document.getElementById('btnAbrirModal').addEventListener('click', () => modalFormulario.classList.remove('hidden'));
-        document.getElementById('btnCerrarModal').addEventListener('click', () => modalFormulario.classList.add('hidden'));
+        // NUEVO REGISTRO (Limpia form antes de abrir)
+        document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
+            document.getElementById('formIniciativa').reset();
+            document.getElementById('inputIdRegistro').value = ""; // Limpiar ID
+            document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
+            document.getElementById('inputResponsableOtro').classList.add('hidden');
+            document.getElementById('modalFormulario').classList.remove('hidden');
+        });
 
-        // GUARDAR DATOS POR POST EN GOOGLE SHEETS
+        document.getElementById('btnCerrarModal').addEventListener('click', () => document.getElementById('modalFormulario').classList.add('hidden'));
+
+        // SUBMIT: CREACIÓN Y EDICIÓN
         document.getElementById('formIniciativa').addEventListener('submit', (e) => {
             e.preventDefault();
             const btnGuardar = document.getElementById('btnGuardar');
             btnGuardar.innerText = "Guardando...";
             btnGuardar.disabled = true;
 
-            let responsableTareaFinal = document.getElementById('selectResponsable').value;
-            if(responsableTareaFinal === "OTRO") {
-                responsableTareaFinal = document.getElementById('inputResponsableOtro').value;
-            }
+            let respFinal = document.getElementById('selectResponsable').value;
+            if(respFinal === "OTRO") respFinal = document.getElementById('inputResponsableOtro').value;
 
             const payload = {
+                id: document.getElementById('inputIdRegistro').value, // Si tiene valor, el script edita
                 iniciativa: document.getElementById('inputIniciativa').value,
+                impacto: document.getElementById('selectImpacto').value,
                 respIniciativa: document.getElementById('inputRespIniciativa').value,
                 fechaEntregaIniciativa: document.getElementById('inputFechaEntregaIniciativa').value,
                 tarea: document.getElementById('inputTarea').value,
-                responsable: responsableTareaFinal,
+                responsable: respFinal,
                 estado: document.getElementById('selectEstado').value,
                 tema: document.getElementById('selectTema').value,
                 fechaEntregaTarea: document.getElementById('inputFechaEntregaTarea').value,
                 alertas: document.getElementById('selectAlertas').value
             };
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            }).then(() => {
-                modalFormulario.classList.add('hidden');
-                document.getElementById('formIniciativa').reset();
-                document.getElementById('inputResponsableOtro').classList.add('hidden');
+            fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+            .then(() => {
+                document.getElementById('modalFormulario').classList.add('hidden');
                 btnGuardar.innerText = "Guardar Todo";
                 btnGuardar.disabled = false;
-                setTimeout(cargarDatosDesdeSheets, 1500);
+                setTimeout(cargarDatosDesdeSheets, 1500); // Recargar
             });
         });
 
