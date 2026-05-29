@@ -35,9 +35,10 @@
 </div>
 
 <!-- PLATAFORMA -->
-<div id="plataforma" class="hidden p-6 max-w-screen-2xl mx-auto">
-    <!-- HEADER -->
-    <header class="flex justify-between items-center mb-6 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+<div id="plataforma" class="hidden max-w-screen-2xl mx-auto">
+    <!-- HEADER STICKY -->
+    <div class="sticky top-0 z-30 bg-slate-50 px-6 pt-6 pb-3">
+    <header class="flex justify-between items-center bg-white p-5 rounded-xl shadow-sm border border-slate-200">
         <div class="flex items-center gap-4">
             <svg class="w-11 h-11" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="50" cy="50" r="48" fill="#004bc0"/>
@@ -60,7 +61,9 @@
             <button id="btnLogout" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium ml-1">Salir</button>
         </div>
     </header>
+    </div><!-- end sticky -->
 
+    <div class="px-6 pb-6">
     <div id="txtCargando" class="text-center py-8 text-slate-500 font-medium">Conectando con la Base de Datos...</div>
 
     <!-- VISTA AUDITORÍA -->
@@ -181,6 +184,7 @@
             </div>
         </div>
     </div>
+    </div><!-- end scrollable content -->
 </div>
 
 <!-- MODAL FORMULARIO -->
@@ -234,18 +238,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega Meta</label>
-                        <input type="date" id="inputFechaEntregaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Fecha de Inicio</label>
                         <input type="date" id="inputFechaInicioIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                     </div>
-                    <div class="flex items-end pb-0.5">
-                        <p class="text-[11px] text-slate-400 leading-tight">Desde cuándo aparece la iniciativa en la línea de tiempo.</p>
-                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega</label>
+                    <input type="date" id="inputFechaEntregaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                 </div>
             </div>
 
@@ -732,17 +731,38 @@ function renderizarGantt(proyectosFiltrados) {
     });
 
     const hoy = new Date(); hoy.setHours(0,0,0,0);
-    const fin = new Date(hoy); fin.setMonth(fin.getMonth() + 6);
-    const totalDias = Math.ceil((fin - hoy) / 86400000);
     const coloresImpacto = { 'Crítico': ['#7c3aed','#ddd6fe'], 'Alto': ['#dc2626','#fee2e2'], 'Medio': ['#d97706','#fef3c7'], 'Bajo': ['#059669','#d1fae5'] };
+
+    // Calcular ventana dinámica: desde la fecha de inicio más temprana hasta 6 meses desde hoy
+    let fechaVentanaInicio = new Date(hoy);
+    Object.keys(desglose).forEach(iniciativa => {
+        const padre = desglose[iniciativa][0];
+        let fs;
+        if (padre.fechainicioiniciativa) {
+            fs = new Date(padre.fechainicioiniciativa);
+        } else {
+            const fechasTareas = desglose[iniciativa].filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
+            fs = fechasTareas.length > 0 ? new Date(Math.min(...fechasTareas)) : new Date(hoy);
+        }
+        fs.setHours(0,0,0,0);
+        if (fs < fechaVentanaInicio) fechaVentanaInicio = fs;
+    });
+    // Retroceder un poco para margen visual
+    fechaVentanaInicio.setDate(fechaVentanaInicio.getDate() - 5);
+
+    const fechaVentanaFin = new Date(hoy); fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 6);
+    const totalDias = Math.ceil((fechaVentanaFin - fechaVentanaInicio) / 86400000);
+
+    // Posición de "hoy" en el eje
+    const hoyPct = Math.max(0, Math.min(100, (Math.ceil((hoy - fechaVentanaInicio) / 86400000) / totalDias) * 100));
 
     // Meses header
     const meses = [];
-    let cur = new Date(hoy); cur.setDate(1);
-    while (cur <= fin) {
+    let cur = new Date(fechaVentanaInicio); cur.setDate(1);
+    while (cur <= fechaVentanaFin) {
         const label = cur.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' });
-        const diasDesdeHoy = Math.max(0, Math.ceil((cur - hoy) / 86400000));
-        meses.push({ label, pos: diasDesdeHoy / totalDias * 100 });
+        const diasDesdeInicio = Math.ceil((cur - fechaVentanaInicio) / 86400000);
+        meses.push({ label, pos: Math.max(0, (diasDesdeInicio / totalDias) * 100) });
         cur.setMonth(cur.getMonth() + 1);
     }
 
@@ -750,6 +770,7 @@ function renderizarGantt(proyectosFiltrados) {
         <div style="position:sticky; top:0; z-index:2; background:#fff; padding-bottom:6px;">
             <div style="display:flex; position:relative; height:22px; margin-left:210px; border-bottom:1px solid #e2e8f0;">
                 ${meses.map(m => `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`).join('')}
+                <div style="position:absolute; left:${hoyPct}%; top:0; bottom:-200px; width:1.5px; background:#3b82f6; opacity:0.35; pointer-events:none;"></div>
             </div>
         </div>`;
 
@@ -767,7 +788,6 @@ function renderizarGantt(proyectosFiltrados) {
         const fechaMeta = padre.fechaentregainiciativa ? new Date(padre.fechaentregainiciativa) : null;
         if (!fechaMeta) return;
 
-        // Fecha inicio: usar fechainicioiniciativa si existe, sino la más temprana de tareas, sino hoy
         let fechaStart;
         if (padre.fechainicioiniciativa) {
             fechaStart = new Date(padre.fechainicioiniciativa);
@@ -782,12 +802,12 @@ function renderizarGantt(proyectosFiltrados) {
         const colors = coloresImpacto[padre.impacto] || coloresImpacto['Medio'];
         const vencida = fechaMeta < hoy && estadoIni !== 'Finalizado';
 
-        // Calcular posición relativa a ventana de 6 meses
-        const startDias = Math.max(-totalDias * 0.05, Math.ceil((fechaStart - hoy) / 86400000));
-        const endDias = Math.min(totalDias * 1.05, Math.ceil((fechaMeta - hoy) / 86400000));
-        const startPct = Math.max(0, (startDias / totalDias) * 100);
-        const endPct = Math.min(100, (endDias / totalDias) * 100);
+        const startDias = Math.ceil((fechaStart - fechaVentanaInicio) / 86400000);
+        const endDias = Math.ceil((fechaMeta - fechaVentanaInicio) / 86400000);
+        const startPct = Math.max(0, Math.min(100, (startDias / totalDias) * 100));
+        const endPct = Math.max(0, Math.min(100, (endDias / totalDias) * 100));
         const widthPct = Math.max(0.8, endPct - startPct);
+        const showEndLabel = endPct <= 98;
 
         const fmtInicio = fechaStart.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
         const fmtMeta = fechaMeta.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
@@ -800,13 +820,10 @@ function renderizarGantt(proyectosFiltrados) {
                 <div style="font-size:10px; color:#94a3b8; margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio} → ${fmtMeta}</div>
             </div>
             <div style="flex:1; position:relative; height:26px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; overflow:visible;">
-                <div class="gantt-bar" style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:${vencida?'#ef4444':colors[0]}; border-radius:6px; overflow:hidden; cursor:default;" title="${iniciativa}">
-                    <div style="height:100%; width:${avance}%; background:rgba(255,255,255,0.28); flex-shrink:0;"></div>
+                <div class="gantt-bar" style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:${vencida?'#ef4444':colors[0]}; border-radius:6px; overflow:hidden; cursor:default;" title="${iniciativa}: ${fmtInicio} → ${fmtMeta}">
+                    <div style="height:100%; width:${avance}%; background:rgba(255,255,255,0.28);"></div>
                 </div>
-                ${endPct <= 100 ? `<div style="position:absolute; left:calc(${endPct}% + 5px); top:50%; transform:translateY(-50%); font-size:10px; color:${vencida?'#ef4444':'#64748b'}; font-weight:600; white-space:nowrap;">${vencida?'⚠ ':''}${fmtMeta}</div>` : ''}
-                <div style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;">
-                    <div style="position:absolute; left:0%; top:0; bottom:0; width:1.5px; background:#3b82f6; opacity:0.35;"></div>
-                </div>
+                ${showEndLabel ? `<div style="position:absolute; left:calc(${endPct}% + 5px); top:50%; transform:translateY(-50%); font-size:10px; color:${vencida?'#ef4444':'#64748b'}; font-weight:600; white-space:nowrap;">${vencida?'⚠ ':''}${fmtMeta}</div>` : ''}
             </div>
         </div>`;
     });
@@ -821,10 +838,9 @@ function renderizarGantt(proyectosFiltrados) {
             <div style="max-height:${containerH}px; overflow-y:${scrollable?'auto':'visible'}; padding-right:4px; scrollbar-width:thin;">
                 ${filasHTML}
             </div>
-            ${scrollable ? `<div style="text-align:center; padding-top:8px; font-size:10px; color:#94a3b8;">Scroll para ver las ${iniciativas.length - MAX_VISIBLE} iniciativas restantes</div>` : ''}
+            ${scrollable ? `<div style="text-align:center; padding-top:8px; font-size:10px; color:#94a3b8;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
         </div>`;
 
-    // Leyenda
     const leyendaHTML = `
         <div style="display:flex; gap:16px; margin-top:10px; padding-top:10px; border-top:1px solid #f1f5f9; flex-wrap:wrap;">
             ${Object.entries(coloresImpacto).map(([imp,[color]]) => `<div style="display:flex; align-items:center; gap:5px; font-size:10px; color:#64748b;"><div style="width:12px;height:12px;border-radius:3px;background:${color};"></div>${imp}</div>`).join('')}
@@ -1190,16 +1206,20 @@ function agregarFilaTareaEstructura(vals = null) {
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Inicio <span class="text-slate-400 font-normal">(opcional)</span></label>
+                <input type="date" class="input-tarea-fechainicio w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+            </div>
+            <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega</label>
                 <input type="date" class="input-tarea-fecha w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
             </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Alertas</label>
-                <select class="input-tarea-alertas w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                    <option value="Sin alertas">Sin alertas</option>
-                    <option value="Notificar al responsable">Notificar al responsable</option>
-                </select>
-            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Alertas</label>
+            <select class="input-tarea-alertas w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                <option value="Sin alertas">Sin alertas</option>
+                <option value="Notificar al responsable">Notificar al responsable</option>
+            </select>
         </div>
         <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Comentarios <span class="text-slate-400 font-normal">(opcional)</span></label>
@@ -1207,10 +1227,14 @@ function agregarFilaTareaEstructura(vals = null) {
         </div>`;
     contenedor.appendChild(div);
 
-    // Auto-estado si avance = 100
+    // Auto-estado según avance
     div.querySelector('.input-tarea-avance').addEventListener('change', function() {
-        if (this.value === '100') {
-            div.querySelector('.input-tarea-estado').value = 'Finalizado';
+        const estadoSelect = div.querySelector('.input-tarea-estado');
+        const v = Number(this.value);
+        if (v === 100) {
+            estadoSelect.value = 'Finalizado';
+        } else if (v > 0 && estadoSelect.value === 'Backlog') {
+            estadoSelect.value = 'En Progreso';
         }
     });
 
@@ -1222,6 +1246,10 @@ function agregarFilaTareaEstructura(vals = null) {
         div.querySelector('.input-tarea-avance').value = String(vals.avance || 0);
         div.querySelector('.input-tarea-tema').value = vals.tema || 'Tecnología';
         div.querySelector('.input-tarea-alertas').value = vals.alertas || 'Sin alertas';
+        if (vals.fechainicio) {
+            const di = new Date(vals.fechainicio);
+            if (!isNaN(di)) div.querySelector('.input-tarea-fechainicio').value = di.toISOString().split('T')[0];
+        }
         if (vals.fechaentregatarea) {
             const d = new Date(vals.fechaentregatarea);
             if (!isNaN(d)) div.querySelector('.input-tarea-fecha').value = d.toISOString().split('T')[0];
@@ -1291,6 +1319,7 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                 avance: avanceVal,
                 tema: filaUi.querySelector('.input-tarea-tema').value,
                 responsable: r,
+                fechainicio: filaUi.querySelector('.input-tarea-fechainicio').value,
                 fechaentregatarea: filaUi.querySelector('.input-tarea-fecha').value,
                 alertas: filaUi.querySelector('.input-tarea-alertas').value,
                 comentarios: filaUi.querySelector('.input-tarea-comentarios').value
@@ -1338,6 +1367,7 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                     avance: avanceVal,
                     tema: f.querySelector('.input-tarea-tema').value,
                     responsable: r,
+                    fechainicio: f.querySelector('.input-tarea-fechainicio').value,
                     fechaentregatarea: f.querySelector('.input-tarea-fecha').value,
                     alertas: f.querySelector('.input-tarea-alertas').value,
                     comentarios: f.querySelector('.input-tarea-comentarios').value
