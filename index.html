@@ -7,17 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-slate-50 text-slate-900 font-sans p-8">
+<body class="bg-slate-50 text-slate-900 font-sans">
 
-    <div class="max-w-6xl mx-auto">
+    <div id="pantallaLogin" class="min-h-screen flex items-center justify-center bg-slate-100">
+        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 max-w-md w-full text-center">
+            <h1 class="text-3xl font-extrabold text-blue-600 mb-2">Control de Proyectos</h1>
+            <p class="text-slate-500 mb-8">Inicia sesión con el correo de tu empresa para acceder.</p>
+            
+            <button id="btnLogin" class="w-full flex items-center justify-center gap-3 bg-white border border-slate-300 text-slate-700 font-semibold py-3 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition-all">
+                <svg class="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#EA4335" d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.133 1 1.18 5.925 1.18 12s4.953 11 11.06 11c6.373 0 10.596-4.414 10.596-10.77 0-.725-.078-1.282-.175-1.945H12.24z"/>
+                </svg>
+                Iniciar Sesión con Google
+            </button>
+            <p id="errorLogin" class="text-red-500 text-sm mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <div id="plataforma" class="hidden p-8 max-w-6xl mx-auto">
         <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div>
                 <h1 class="text-2xl font-bold text-blue-600">Control de Iniciativas</h1>
-                <p class="text-slate-500 text-sm">Monitoreo en tiempo real</p>
+                <p id="txtUsuario" class="text-slate-500 text-sm">Cargando usuario...</p>
             </div>
-            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
-                + Nueva Iniciativa
-            </button>
+            <div class="flex gap-4">
+                <button id="btnLogout" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">
+                    Cerrar Sesión
+                </button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                    + Nueva Iniciativa
+                </button>
+            </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -32,34 +52,85 @@
         </div>
     </div>
 
-    <script>
-        // Gráfica de Estados (Barras)
-        const ctxEstados = document.getElementById('graficaEstados');
-        new Chart(ctxEstados, {
-            type: 'bar',
-            data: {
-                labels: ['Backlog', 'En Progreso', 'Bloqueado', 'Finalizado'],
-                datasets: [{
-                    label: 'Cantidad',
-                    data: [4, 6, 2, 8],
-                    backgroundColor: '#3b82f6',
-                    borderRadius: 4
-                }]
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // ⚠️ PEGA AQUÍ TUS CREDENCIALES REALES DE FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
+  authDomain: "control-proyectos-33bfb.firebaseapp.com",
+  projectId: "control-proyectos-33bfb",
+  storageBucket: "control-proyectos-33bfb.firebasestorage.app",
+  messagingSenderId: "614616026781",
+  appId: "1:614616026781:web:caaf274a8afbcb23080e74"
+};
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        const domLogin = document.getElementById('pantallaLogin');
+        const domPlataforma = document.getElementById('plataforma');
+        const txtUsuario = document.getElementById('txtUsuario');
+        const errorLogin = document.getElementById('errorLogin');
+
+        // Escuchar si el usuario está logueado o no
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // REGLA DE SEGURIDAD PARA TU EMPRESA
+                // Reemplaza 'tuempresa.com' por el dominio de tu negocio
+                if (user.email.endsWith('@tuempresa.com') || user.email === 'tu-correo-personal@gmail.com') {
+                    domLogin.classList.add('hidden');
+                    domPlataforma.classList.remove('hidden');
+                    txtUsuario.innerText = `Conectado como: ${user.displayName} (${user.email})`;
+                    renderCharts();
+                } else {
+                    // Si alguien entra con un correo intruso, lo expulsamos
+                    signOut(auth);
+                    errorLogin.innerText = "Acceso denegado. Solo se permiten correos corporativos.";
+                    errorLogin.classList.remove('hidden');
+                }
+            } else {
+                domLogin.classList.remove('hidden');
+                domPlataforma.classList.add('hidden');
             }
         });
 
-        // Gráfica de Temas (Dona)
-        const ctxTemas = document.getElementById('graficaTemas');
-        new Chart(ctxTemas, {
-            type: 'doughnut',
-            data: {
-                labels: ['Marketing', 'Tecnología', 'Operaciones', 'RRHH'],
-                datasets: [{
-                    data: [5, 8, 4, 3],
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
-                }]
-            }
+        // Botón de Iniciar Sesión
+        document.getElementById('btnLogin').addEventListener('click', () => {
+            errorLogin.classList.add('hidden');
+            signInWithPopup(auth, provider).catch((error) => {
+                errorLogin.innerText = "Error al autenticar con Google.";
+                errorLogin.classList.remove('hidden');
+            });
         });
+
+        // Botón de Cerrar Sesión
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // Función para dibujar las gráficas
+        function renderCharts() {
+            const ctxEstados = document.getElementById('graficaEstados');
+            new Chart(ctxEstados, {
+                type: 'bar',
+                data: {
+                    labels: ['Backlog', 'En Progreso', 'Bloqueado', 'Finalizado'],
+                    datasets: [{ label: 'Cantidad', data: [4, 6, 2, 8], backgroundColor: '#3b82f6', borderRadius: 4 }]
+                }
+            });
+
+            const ctxTemas = document.getElementById('graficaTemas');
+            new Chart(ctxTemas, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Marketing', 'Tecnología', 'Operaciones', 'RRHH'],
+                    datasets: [{ data: [5, 8, 4, 3], backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'] }]
+                }
+            });
+        }
     </script>
 </body>
 </html>
