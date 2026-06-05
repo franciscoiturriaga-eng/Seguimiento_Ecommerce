@@ -152,22 +152,22 @@
     <div id="vistaTablero">
 
         <!-- GRÁFICAS -->
-        <div id="contenedorGraficas" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div id="contenedorGraficas" class="hidden grid gap-4 mb-4" style="grid-template-columns: 160px 1fr 1fr 1fr;">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Impacto</h2>
-                <div class="h-44"><canvas id="graficaImpacto"></canvas></div>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Impacto</h2>
+                <div class="h-52"><canvas id="graficaImpacto"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
-                <div class="h-44"><canvas id="graficaTemas"></canvas></div>
+                <div id="contenedorGraficaTemas" style="height:220px; overflow-y:auto; scrollbar-width:thin;"><canvas id="graficaTemas"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
-                <div class="h-44"><canvas id="graficaEstados"></canvas></div>
+                <div class="h-52"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Carga por Responsable</h2>
-                <div class="h-44"><canvas id="graficaResponsables"></canvas></div>
+                <div id="contenedorGraficaResp" style="height:220px; overflow-y:auto; scrollbar-width:thin;"><canvas id="graficaResponsables"></canvas></div>
             </div>
         </div>
 
@@ -739,15 +739,21 @@ function renderizarGraficasPrincipales(proyectos) {
         }
     });
 
-    // Temas (barras horizontal, solo áreas con tareas)
+    // Temas (barras horizontal, altura dinámica, clic para filtrar)
     if (chartTemas) chartTemas.destroy();
-    const temasActivos = Object.entries(temas).filter(([,v]) => v > 0);
+    const temasActivos = Object.entries(temas).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
     const temasColores = ['#004bc0','#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4','#a855f7','#64748b'];
-    chartTemas = new Chart(document.getElementById('graficaTemas'), {
+    const alturaBarTemas = Math.max(220, temasActivos.length * 28);
+    const canvasTemas = document.getElementById('graficaTemas');
+    canvasTemas.style.height = alturaBarTemas + 'px';
+    canvasTemas.height = alturaBarTemas;
+    chartTemas = new Chart(canvasTemas, {
         type: 'bar',
         data: {
             labels: temasActivos.map(([k]) => k),
-            datasets: [{ label: 'Tareas', data: temasActivos.map(([,v]) => v), backgroundColor: temasActivos.map((_, i) => temasColores[i % temasColores.length]), borderRadius: 4 }]
+            datasets: [{ label: 'Tareas', data: temasActivos.map(([,v]) => v),
+                backgroundColor: temasActivos.map(([k]) => filtrosActivos.responsable.has(k) || filtrosActivos.iniciativa.size === 0 ? temasColores[temasActivos.findIndex(([kk])=>kk===k) % temasColores.length] : '#cbd5e1'),
+                borderRadius: 4 }]
         },
         options: {
             indexAxis: 'y',
@@ -756,6 +762,14 @@ function renderizarGraficasPrincipales(proyectos) {
             scales: {
                 x: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null }, grid: { display: false } },
                 y: { ticks: { font: { size: 10 } } }
+            },
+            onClick: (e, els) => {
+                if (els.length > 0) {
+                    const area = temasActivos[els[0].index][0];
+                    if (filtrosActivos.iniciativa.has(area)) filtrosActivos.iniciativa.delete(area);
+                    else filtrosActivos.iniciativa.add(area);
+                    construirChipsFiltros(); renderizarTodo();
+                }
             }
         }
     });
@@ -794,18 +808,38 @@ function renderizarGraficasPrincipales(proyectos) {
         }
     });
 
-    // Responsables
+    // Responsables (barras horizontal, orden fijo, clic para filtrar)
     if (chartResponsables) chartResponsables.destroy();
-    chartResponsables = new Chart(document.getElementById('graficaResponsables'), {
+    const ORDEN_RESP = ['Dani','Dena','Maida','Robert','Anto','Itu'];
+    const respOrdenado = ORDEN_RESP.map(r => ({ nombre: r, valor: responsables[r] || 0 })).filter(r => r.valor > 0);
+    const alturaBarResp = Math.max(220, respOrdenado.length * 36);
+    const canvasResp = document.getElementById('graficaResponsables');
+    canvasResp.style.height = alturaBarResp + 'px';
+    canvasResp.height = alturaBarResp;
+    chartResponsables = new Chart(canvasResp, {
         type: 'bar',
         data: {
-            labels: Object.keys(responsables),
-            datasets: [{ label: 'Tareas', data: Object.values(responsables), backgroundColor: '#10b981', borderRadius: 5 }]
+            labels: respOrdenado.map(r => r.nombre),
+            datasets: [{ label: 'Tareas', data: respOrdenado.map(r => r.valor),
+                backgroundColor: respOrdenado.map(r => filtrosActivos.responsable.has(r.nombre) || filtrosActivos.responsable.size === 0 ? '#10b981' : '#cbd5e1'),
+                borderRadius: 4 }]
         },
         options: {
+            indexAxis: 'y',
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            ...integerYAxis
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} tarea${ctx.parsed.x !== 1 ? 's' : ''}` } } },
+            scales: {
+                x: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null }, grid: { display: false } },
+                y: { ticks: { font: { size: 11 } } }
+            },
+            onClick: (e, els) => {
+                if (els.length > 0) {
+                    const resp = respOrdenado[els[0].index].nombre;
+                    if (filtrosActivos.responsable.has(resp)) filtrosActivos.responsable.delete(resp);
+                    else filtrosActivos.responsable.add(resp);
+                    construirChipsFiltros(); renderizarTodo();
+                }
+            }
         }
     });
 }
