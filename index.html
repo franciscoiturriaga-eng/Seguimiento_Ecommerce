@@ -243,10 +243,19 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Área Iniciativa</label>
                         <select id="selectAreaIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                            <option value="Ecommerce">Ecommerce</option>
                             <option value="Tecnología">Tecnología</option>
+                            <option value="Electro">Electro</option>
+                            <option value="Blandos">Blandos</option>
+                            <option value="Deco">Deco</option>
+                            <option value="Calzado">Calzado</option>
+                            <option value="Belleza">Belleza</option>
+                            <option value="Infantil">Infantil</option>
+                            <option value="Mujer">Mujer</option>
+                            <option value="Hombre">Hombre</option>
                             <option value="Marketing">Marketing</option>
                             <option value="Operaciones">Operaciones</option>
-                            <option value="Comercial">Comercial</option>
+                            <option value="Diseño">Diseño</option>
                         </select>
                     </div>
                 </div>
@@ -640,7 +649,7 @@ function renderizarTodo() {
 // GRÁFICAS
 function renderizarGraficasPrincipales(proyectos) {
     const estados = { 'Backlog': 0, 'Pausado': 0, 'Bloqueado': 0, 'En Progreso': 0, 'Finalizado': 0 };
-    const temas = { 'Marketing': 0, 'Tecnología': 0, 'Operaciones': 0, 'Comercial': 0 };
+    const temas = { 'Ecommerce': 0, 'Tecnología': 0, 'Electro': 0, 'Blandos': 0, 'Deco': 0, 'Calzado': 0, 'Belleza': 0, 'Infantil': 0, 'Mujer': 0, 'Hombre': 0, 'Marketing': 0, 'Operaciones': 0, 'Diseño': 0 };
     const responsables = {};
     const impactos = { 'Crítico': 0, 'Alto': 0, 'Medio': 0, 'Bajo': 0 };
     const iniciativasProcesadas = new Set();
@@ -1246,10 +1255,19 @@ function agregarFilaTareaEstructura(vals = null) {
             <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Área / Tema</label>
                 <select class="input-tarea-tema w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
-                    <option value="Marketing">Marketing</option>
-                    <option value="Tecnología" selected>Tecnología</option>
-                    <option value="Operaciones">Operaciones</option>
-                    <option value="Comercial">Comercial</option>
+                        <option value="Ecommerce">Ecommerce</option>
+                        <option value="Tecnología">Tecnología</option>
+                        <option value="Electro">Electro</option>
+                        <option value="Blandos">Blandos</option>
+                        <option value="Deco">Deco</option>
+                        <option value="Calzado">Calzado</option>
+                        <option value="Belleza">Belleza</option>
+                        <option value="Infantil">Infantil</option>
+                        <option value="Mujer">Mujer</option>
+                        <option value="Hombre">Hombre</option>
+                        <option value="Marketing">Marketing</option>
+                        <option value="Operaciones">Operaciones</option>
+                        <option value="Diseño">Diseño</option>
                 </select>
             </div>
             <div>
