@@ -56,6 +56,10 @@
 
             <!-- Desktop: botones visibles directamente -->
             <div class="hidden sm:flex items-center gap-2">
+                <div class="relative">
+                    <input id="inputBuscador" type="text" placeholder="🔍 Buscar..." class="text-sm border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 w-48 focus:outline-none focus:border-blue-400 bg-slate-50 focus:bg-white transition" oninput="window.aplicarBuscador(this.value)">
+                    <button id="btnLimpiarBuscador" onclick="window.limpiarBuscador()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+                </div>
                 <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition text-xs font-bold">👁️ Historial</button>
                 <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-200 transition text-xs font-bold">← Volver</button>
                 <div id="controlesFiltro" class="flex gap-2 items-center">
@@ -213,7 +217,10 @@
 <!-- MODAL FORMULARIO -->
 <div id="modalFormulario" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full p-6 max-h-[92vh] overflow-y-auto">
-        <h2 id="tituloModal" class="text-xl font-bold text-slate-800 mb-4">Registrar Nueva Actividad</h2>
+        <div class="flex justify-between items-start mb-4">
+            <h2 id="tituloModal" class="text-xl font-bold text-slate-800">Registrar Nueva Actividad</h2>
+            <button type="button" id="btnCerrarModalX" onclick="document.getElementById('modalFormulario').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none ml-4 flex-shrink-0">✕</button>
+        </div>
         <div id="selectorTipoFlujo" class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-4">
             <button type="button" id="btnFlujoIniciativa" class="py-2 text-sm font-semibold rounded-lg bg-white shadow-sm text-blue-600 transition">📂 Nueva Iniciativa</button>
             <button type="button" id="btnFlujoTarea" class="py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-800 transition">↳ Nueva Tarea</button>
@@ -238,7 +245,15 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Responsable Iniciativa</label>
-                        <input type="text" id="inputRespIniciativa" placeholder="Ej: Francisco Iturriaga" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <select id="inputRespIniciativa" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                        <option value="">Seleccionar...</option>
+                        <option value="Dani">Dani</option>
+                        <option value="Dena">Dena</option>
+                        <option value="Maida">Maida</option>
+                        <option value="Robert">Robert</option>
+                        <option value="Anto">Anto</option>
+                        <option value="Itu">Itu</option>
+                    </select>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-600 mb-1">Área Iniciativa</label>
@@ -365,6 +380,7 @@ const db = getFirestore(app);
 
 let cacheDatosRaw = [];
 let filtrosActivos = { estado: new Set(), impacto: new Set(), responsable: new Set(), iniciativa: new Set() };
+let terminoBusqueda = '';
 let iniciativasColapsadas = new Set();
 let columnaOrdenActual = null;
 let ordenAscendente = true;
@@ -582,6 +598,7 @@ function hayFiltrosActivos() {
 
 document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     Object.keys(filtrosActivos).forEach(k => filtrosActivos[k].clear());
+    window.limpiarBuscador();
     construirChipsFiltros();
     renderizarTodo();
 });
@@ -592,6 +609,32 @@ window.togglePanelFiltros = function() {
     const abierto = !cuerpo.classList.contains('hidden');
     cuerpo.classList.toggle('hidden', abierto);
     icon.style.transform = abierto ? '' : 'rotate(180deg)';
+};
+
+window.aplicarBuscador = function(val) {
+    terminoBusqueda = val.trim().toLowerCase();
+    document.getElementById('btnLimpiarBuscador').classList.toggle('hidden', !terminoBusqueda);
+    renderizarTodo();
+};
+
+window.limpiarBuscador = function() {
+    document.getElementById('inputBuscador').value = '';
+    terminoBusqueda = '';
+    document.getElementById('btnLimpiarBuscador').classList.add('hidden');
+    renderizarTodo();
+};
+
+window.filtrarPorClick = function(tipo, valor) {
+    if (filtrosActivos[tipo].has(valor)) filtrosActivos[tipo].delete(valor);
+    else filtrosActivos[tipo].add(valor);
+    construirChipsFiltros();
+    renderizarTodo();
+    // Abrir panel filtros si está cerrado
+    const cuerpo = document.getElementById('cuerpoPanelFiltros');
+    if (cuerpo.classList.contains('hidden')) {
+        cuerpo.classList.remove('hidden');
+        document.getElementById('iconToggleFiltros').style.transform = 'rotate(180deg)';
+    }
 };
 
 function actualizarBadgeFiltros() {
@@ -640,6 +683,12 @@ function renderizarTodo() {
     if (filtrosActivos.impacto.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.impacto.has(p.impacto));
     if (filtrosActivos.responsable.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.responsable.has(p.responsable) || filtrosActivos.responsable.has(p.respiniciativa));
     if (filtrosActivos.iniciativa.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.iniciativa.has(p.iniciativa));
+    if (terminoBusqueda) {
+        datosFiltrados = datosFiltrados.filter(p =>
+            [p.iniciativa, p.tarea, p.responsable, p.respiniciativa, p.estado, p.tema, p.areainiciativa, p.descripcion, p.comentarios]
+            .some(v => (v||'').toLowerCase().includes(terminoBusqueda))
+        );
+    }
 
     renderizarGraficasPrincipales(datosFiltrados);
     renderizarGantt(datosFiltrados);
@@ -690,52 +739,25 @@ function renderizarGraficasPrincipales(proyectos) {
         }
     });
 
-    // Temas (donut con porcentajes)
+    // Temas (barras horizontal, solo áreas con tareas)
     if (chartTemas) chartTemas.destroy();
-    const totalTemas = Object.values(temas).reduce((a,b) => a+b, 0);
+    const temasActivos = Object.entries(temas).filter(([,v]) => v > 0);
+    const temasColores = ['#004bc0','#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316','#84cc16','#06b6d4','#a855f7','#64748b'];
     chartTemas = new Chart(document.getElementById('graficaTemas'), {
-        type: 'doughnut',
+        type: 'bar',
         data: {
-            labels: Object.keys(temas),
-            datasets: [{ data: Object.values(temas), backgroundColor: ['#004bc0','#10b981','#f59e0b','#ef4444'] }]
+            labels: temasActivos.map(([k]) => k),
+            datasets: [{ label: 'Tareas', data: temasActivos.map(([,v]) => v), backgroundColor: temasActivos.map((_, i) => temasColores[i % temasColores.length]), borderRadius: 4 }]
         },
         options: {
+            indexAxis: 'y',
             maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 10 } },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => {
-                            const pct = totalTemas > 0 ? Math.round(ctx.parsed * 100 / totalTemas) : 0;
-                            return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
-                        }
-                    }
-                }
-            },
-            animation: false
-        },
-        plugins: [{
-            id: 'doughnutLabels',
-            afterDatasetsDraw(chart) {
-                const { ctx } = chart;
-                chart.data.datasets.forEach((dataset, i) => {
-                    const meta = chart.getDatasetMeta(i);
-                    meta.data.forEach((arc, j) => {
-                        const val = dataset.data[j];
-                        if (val === 0) return;
-                        const pct = totalTemas > 0 ? Math.round(val * 100 / totalTemas) : 0;
-                        const { x, y } = arc.tooltipPosition();
-                        ctx.save();
-                        ctx.fillStyle = '#fff';
-                        ctx.font = 'bold 10px Inter, sans-serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText(`${pct}%`, x, y);
-                        ctx.restore();
-                    });
-                });
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} tarea${ctx.parsed.x !== 1 ? 's' : ''}` } } },
+            scales: {
+                x: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null }, grid: { display: false } },
+                y: { ticks: { font: { size: 10 } } }
             }
-        }]
+        }
     });
 
     // Estados
@@ -1011,10 +1033,10 @@ function renderizarTablaJerarquica(proyectos) {
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa} ${badgeImpacto(pMetas.impacto)}
             </td>
-            <td class="p-3 text-slate-700 text-xs">${pMetas.respiniciativa || '-'}</td>
+            <td class="p-3 text-slate-700 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('responsable','${pMetas.respiniciativa || ''}')">${pMetas.respiniciativa || '-'}</td>
             <td class="p-3">${badgeEstado(estadoIni)}</td>
             <td class="p-3">${barraAvance(avanceIni, true)}</td>
-            <td class="p-3 text-slate-500 text-xs">${pMetas.areainiciativa || '-'}</td>
+            <td class="p-3 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('iniciativa','${iniciativa.replace(/'/g,"\\'")}')">${pMetas.areainiciativa || '-'}</td>
             <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIni}</td>
             <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIni}</td>
             <td class="p-3 text-center flex justify-center gap-2">
@@ -1040,10 +1062,10 @@ function renderizarTablaJerarquica(proyectos) {
                 filaHijo.className = "hover:bg-slate-50/80 transition group fila-tarea-clickable";
                 filaHijo.innerHTML = `
                     <td class="p-2 pl-10 text-slate-600 font-medium">↳ <span class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
-                    <td class="p-2 text-slate-600 text-xs">${t.responsable || '-'}</td>
+                    <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
                     <td class="p-2">${barraAvance(avanceTarea, true)}</td>
-                    <td class="p-2 text-slate-500 text-xs">${t.tema || '-'}</td>
+                    <td class="p-2 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('iniciativa',cacheDatosRaw.find(x=>x.id==='${t.id}')?.iniciativa||'')">${t.tema || '-'}</td>
                     <td class="p-2 text-xs"><span class="${cFecha}">${fET ? fET.toLocaleDateString('es-CL') : '-'}</span></td>
                     <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
                     <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity flex justify-center gap-2">
@@ -1272,11 +1294,14 @@ function agregarFilaTareaEstructura(vals = null) {
             </div>
             <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Responsable</label>
-                <select class="input-tarea-resp-select w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" onchange="window.handleSelectResponsable('${idFila}', this.value)">
-                    <option value="Francisco Iturriaga">Francisco Iturriaga</option>
-                    <option value="Carlos Mendoza">Carlos Mendoza</option>
-                    <option value="Ana María">Ana María</option>
-                    <option value="OTRO">Otro...</option>
+                <select class="input-tarea-resp-select w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <option value="">Seleccionar...</option>
+                    <option value="Dani">Dani</option>
+                    <option value="Dena">Dena</option>
+                    <option value="Maida">Maida</option>
+                    <option value="Robert">Robert</option>
+                    <option value="Anto">Anto</option>
+                    <option value="Itu">Itu</option>
                 </select>
                 <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
