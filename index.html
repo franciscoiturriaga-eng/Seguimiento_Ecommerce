@@ -195,6 +195,16 @@
                 <p class="text-[11px] text-amber-300">Clic para ver</p>
             </div>
 
+        <!-- VISTA RESPONSABLES -->
+        <div id="contenedorResponsables" class="hidden mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
+                <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
+            </div>
+            <div id="tarjetasResponsables" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
+        </div>
+
+
         <!-- GRÁFICAS -->
         <div id="contenedorGraficas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
@@ -213,16 +223,6 @@
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Responsable</h2>
                 <div id="contenedorGraficaResp" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaResponsables"></canvas></div>
             </div>
-        </div>
-
-
-        <!-- VISTA RESPONSABLES -->
-        <div id="contenedorResponsables" class="hidden mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
-                <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
-            </div>
-            <div id="tarjetasResponsables" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
         </div>
 
 
@@ -266,6 +266,7 @@
                 </table>
             </div><!-- end overflow-x -->
         </div><!-- end contenedorTabla -->
+
     </div>
     </div><!-- end scrollable content -->
 </div>
