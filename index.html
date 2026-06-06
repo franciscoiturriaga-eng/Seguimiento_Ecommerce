@@ -10,6 +10,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* DARK MODE */
+        .dark body { background:#0f172a; color:#e2e8f0; }
+        .dark .bg-white { background:#1e293b !important; }
+        .dark .bg-slate-50 { background:#0f172a !important; }
+        .dark .bg-slate-100 { background:#1e293b !important; }
+        .dark .bg-slate-50\/70 { background:#1e293b !important; }
+        .dark .border-slate-200 { border-color:#334155 !important; }
+        .dark .border-slate-100 { border-color:#1e293b !important; }
+        .dark .text-slate-700 { color:#cbd5e1 !important; }
+        .dark .text-slate-600 { color:#94a3b8 !important; }
+        .dark .text-slate-500 { color:#64748b !important; }
+        .dark .text-slate-400 { color:#475569 !important; }
+        .dark .text-slate-800 { color:#e2e8f0 !important; }
+        .dark .text-slate-900 { color:#f1f5f9 !important; }
+        .dark .divide-slate-200 > * { border-color:#334155 !important; }
+        .dark .bg-slate-100\/80 { background:#1e293b !important; }
+        .dark .hover\:bg-slate-50\/80:hover { background:#334155 !important; }
+        .dark .hover\:bg-slate-50:hover { background:#334155 !important; }
+        .dark #pantallaLogin { background:#0f172a; }
         .gantt-bar { transition: opacity 0.2s; }
         .gantt-bar:hover { opacity: 0.85; filter: brightness(1.05); }
         .filter-chip { cursor: pointer; transition: all 0.15s; user-select: none; }
@@ -66,6 +85,7 @@
                     <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>✕ Limpiar Filtros</button>
                     <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm text-sm">+ Nueva Actividad</button>
                 </div>
+                <button id="btnModoOscuro" onclick="window.toggleModoOscuro()" class="bg-slate-100 text-slate-500 px-2.5 py-2 rounded-lg hover:bg-slate-200 transition text-sm" title="Modo oscuro">🌙</button>
                 <button id="btnLogout" class="bg-slate-100 text-slate-600 px-3 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Salir</button>
             </div>
 
@@ -85,6 +105,7 @@
             <button id="btnVerAuditoriaMobile" class="hidden w-full text-left bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-2 rounded-lg text-sm font-semibold">👁️ Historial de Cambios</button>
             <button id="btnVolverTableroMobile" class="hidden w-full text-left bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg text-sm font-semibold">← Volver al Tablero</button>
             <button id="btnLimpiarFiltrosMobile" class="w-full text-left bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed" disabled>✕ Limpiar Filtros</button>
+            <button onclick="window.toggleModoOscuro()" class="w-full text-left bg-slate-100 text-slate-600 border border-slate-200 px-3 py-2 rounded-lg text-sm font-semibold" id="btnModoOscuroMobile">🌙 Modo Oscuro</button>
             <button id="btnLogoutMobile" class="w-full text-left bg-red-50 text-red-600 border border-red-100 px-3 py-2 rounded-lg text-sm font-semibold">Cerrar Sesión</button>
         </div>
     </header>
@@ -171,6 +192,30 @@
             </div>
         </div>
 
+        <!-- RESUMEN EJECUTIVO -->
+        <div id="contenedorResumen" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col gap-1">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avance Global</p>
+                <p id="resumenAvanceNum" class="text-3xl font-extrabold text-blue-600">—</p>
+                <div class="w-full h-1.5 bg-slate-100 rounded-full mt-1"><div id="resumenAvanceBar" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width:0%"></div></div>
+            </div>
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col gap-1">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Iniciativas</p>
+                <p id="resumenIniciativas" class="text-3xl font-extrabold text-slate-700">—</p>
+                <p id="resumenIniciativasSub" class="text-[11px] text-slate-400"></p>
+            </div>
+            <div class="bg-white rounded-xl border border-red-100 shadow-sm p-4 flex flex-col gap-1 cursor-pointer hover:bg-red-50 transition" onclick="window.filtrarPorClick('estado','Bloqueado')">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-red-400">Bloqueadas</p>
+                <p id="resumenBloqueadas" class="text-3xl font-extrabold text-red-500">—</p>
+                <p class="text-[11px] text-red-300">Clic para filtrar</p>
+            </div>
+            <div class="bg-white rounded-xl border border-amber-100 shadow-sm p-4 flex flex-col gap-1 cursor-pointer hover:bg-amber-50 transition" id="cardVencenSemana">
+                <p class="text-[10px] font-bold uppercase tracking-wider text-amber-500">Vencen esta semana</p>
+                <p id="resumenVencenNum" class="text-3xl font-extrabold text-amber-500">—</p>
+                <p class="text-[11px] text-amber-300">Clic para ver</p>
+            </div>
+        </div>
+
         <!-- GANTT -->
         <div id="contenedorGantt" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-4 overflow-hidden">
             <div class="p-4 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
@@ -180,6 +225,15 @@
             <div style="overflow-x:auto; padding:16px;">
                 <div id="ganttContenido"></div>
             </div>
+        </div>
+
+        <!-- VISTA RESPONSABLES -->
+        <div id="contenedorResponsables" class="hidden mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
+                <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
+            </div>
+            <div id="tarjetasResponsables" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
         </div>
 
         <!-- TABLA -->
@@ -545,10 +599,12 @@ function iniciarEscuchaFirestore() {
         snapshot.forEach((d) => cacheDatosRaw.push({ id: d.id, ...d.data() }));
         document.getElementById('txtCargando').classList.add('hidden');
         document.getElementById('contenedorGraficas').classList.remove('hidden');
+        document.getElementById('contenedorResumen').classList.remove('hidden');
         document.getElementById('contenedorGantt').classList.remove('hidden');
+        document.getElementById('contenedorResponsables').classList.remove('hidden');
         document.getElementById('contenedorTabla').classList.remove('hidden');
         document.getElementById('panelFiltros').classList.remove('hidden');
-        try { renderizarTodo(); actualizarSelectorIniciativasPadre(); construirChipsFiltros(); } catch (e) { console.error("Error UI:", e); }
+        try { renderizarTodo(); actualizarSelectorIniciativasPadre(); construirChipsFiltros(); actualizarBadgeVencimiento(); aplicarModoOscuro(); } catch (e) { console.error("Error UI:", e); }
     });
 }
 
@@ -723,9 +779,175 @@ function renderizarTodo() {
     }
 
     renderizarGraficasPrincipales(datosFiltrados);
+    renderizarResumenEjecutivo(datosFiltrados);
+    renderizarTarjetasResponsables(datosFiltrados);
     renderizarGantt(datosFiltrados);
     renderizarTablaJerarquica(datosFiltrados);
 }
+
+// ============================================================
+// 1. RESUMEN EJECUTIVO
+// ============================================================
+function renderizarResumenEjecutivo(datos) {
+    const tareas = datos.filter(p => p.tarea);
+    const iniciativasUnicas = [...new Set(datos.map(p => p.iniciativa).filter(Boolean))];
+    const finalizadas = iniciativasUnicas.filter(ini => {
+        const hijos = datos.filter(p => p.iniciativa === ini);
+        return calcularEstadoIniciativa(hijos) === 'Finalizado';
+    });
+
+    // Avance global ponderado
+    const avanceTotal = tareas.length > 0
+        ? Math.round(tareas.reduce((a, t) => a + (Number(t.avance) || 0), 0) / tareas.length)
+        : 0;
+
+    // Vencen esta semana
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const enSieteDias = new Date(hoy); enSieteDias.setDate(enSieteDias.getDate() + 7);
+    const vencenSemana = tareas.filter(t => {
+        if (!t.fechaentregatarea || t.estado === 'Finalizado') return false;
+        const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
+        return f >= hoy && f <= enSieteDias;
+    });
+
+    const bloqueadas = tareas.filter(t => t.estado === 'Bloqueado');
+
+    document.getElementById('resumenAvanceNum').textContent = avanceTotal + '%';
+    document.getElementById('resumenAvanceBar').style.width = avanceTotal + '%';
+    document.getElementById('resumenAvanceBar').className = `h-full rounded-full transition-all duration-500 ${avanceTotal >= 75 ? 'bg-green-500' : avanceTotal >= 40 ? 'bg-blue-500' : 'bg-amber-400'}`;
+    document.getElementById('resumenIniciativas').textContent = iniciativasUnicas.length;
+    document.getElementById('resumenIniciativasSub').textContent = `${finalizadas.length} completadas`;
+    document.getElementById('resumenBloqueadas').textContent = bloqueadas.length;
+    document.getElementById('resumenVencenNum').textContent = vencenSemana.length;
+
+    // Card vencen semana: click filtra por En Progreso + Backlog con fecha próxima
+    document.getElementById('cardVencenSemana').onclick = () => {
+        if (vencenSemana.length === 0) return;
+        // Resaltar visualmente en la tabla
+        document.getElementById('contenedorTabla').scrollIntoView({ behavior: 'smooth' });
+    };
+}
+
+// ============================================================
+// 2. TARJETAS POR RESPONSABLE
+// ============================================================
+let vistaRespVisible = true;
+window.toggleVistaResponsables = function() {
+    vistaRespVisible = !vistaRespVisible;
+    document.getElementById('tarjetasResponsables').classList.toggle('hidden', !vistaRespVisible);
+    document.getElementById('btnToggleVistaResp').textContent = vistaRespVisible ? '⊟ Ocultar' : '⊞ Mostrar';
+};
+
+function renderizarTarjetasResponsables(datos) {
+    const ORDEN = ['Dani','Dena','Maida','Robert','Anto','Itu'];
+    const cont = document.getElementById('tarjetasResponsables');
+    if (!vistaRespVisible) return;
+    cont.innerHTML = '';
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+
+    ORDEN.forEach(resp => {
+        const tareas = datos.filter(p => p.tarea && p.responsable === resp);
+        if (tareas.length === 0) return;
+        const pendientes = tareas.filter(t => t.estado === 'Backlog' || t.estado === 'Pausado');
+        const enProgreso = tareas.filter(t => t.estado === 'En Progreso');
+        const bloqueadas = tareas.filter(t => t.estado === 'Bloqueado');
+        const finalizadas = tareas.filter(t => t.estado === 'Finalizado');
+        const vencidas = tareas.filter(t => {
+            if (!t.fechaentregatarea || t.estado === 'Finalizado') return false;
+            const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
+            return f < hoy;
+        });
+        const avance = Math.round(tareas.reduce((a, t) => a + (Number(t.avance)||0), 0) / tareas.length);
+
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition';
+        card.onclick = () => window.filtrarPorClick('responsable', resp);
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-3">
+                <div>
+                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center mb-1">${resp[0]}</div>
+                    <p class="font-bold text-slate-700 text-sm">${resp}</p>
+                    <p class="text-[11px] text-slate-400">${tareas.length} tarea${tareas.length!==1?'s':''} · ${avance}% avance</p>
+                </div>
+                ${vencidas.length > 0 ? `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">⚠ ${vencidas.length} vencida${vencidas.length>1?'s':''}</span>` : ''}
+            </div>
+            <div class="w-full h-1.5 bg-slate-100 rounded-full mb-3">
+                <div class="h-full rounded-full ${avance >= 75 ? 'bg-green-500' : avance >= 40 ? 'bg-blue-500' : 'bg-amber-400'}" style="width:${avance}%"></div>
+            </div>
+            <div class="flex gap-2 flex-wrap">
+                ${enProgreso.length > 0 ? `<span class="bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">▶ ${enProgreso.length} en progreso</span>` : ''}
+                ${bloqueadas.length > 0 ? `<span class="bg-red-50 text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded-full">🔴 ${bloqueadas.length} bloqueada${bloqueadas.length>1?'s':''}</span>` : ''}
+                ${pendientes.length > 0 ? `<span class="bg-slate-100 text-slate-500 text-[10px] font-semibold px-2 py-0.5 rounded-full">○ ${pendientes.length} pendiente${pendientes.length>1?'s':''}</span>` : ''}
+                ${finalizadas.length > 0 ? `<span class="bg-green-50 text-green-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">✓ ${finalizadas.length} lista${finalizadas.length>1?'s':''}</span>` : ''}
+            </div>`;
+        cont.appendChild(card);
+    });
+}
+
+// ============================================================
+// 3. NOTIFICACIONES VENCIMIENTO (badge en header)
+// ============================================================
+function actualizarBadgeVencimiento() {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const enSiete = new Date(hoy); enSiete.setDate(enSiete.getDate() + 7);
+    const urgentes = cacheDatosRaw.filter(t => {
+        if (!t.tarea || !t.fechaentregatarea || t.estado === 'Finalizado') return false;
+        const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
+        return f <= enSiete;
+    });
+    let badge = document.getElementById('badgeVencimiento');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'badgeVencimiento';
+        badge.className = 'hidden absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center';
+        const btnNueva = document.getElementById('btnAbrirModalNuevos');
+        if (btnNueva) { btnNueva.style.position = 'relative'; btnNueva.appendChild(badge); }
+    }
+    if (urgentes.length > 0) {
+        badge.textContent = urgentes.length > 9 ? '9+' : urgentes.length;
+        badge.classList.remove('hidden');
+        badge.title = `${urgentes.length} tarea${urgentes.length>1?'s':''} vencen esta semana`;
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+// ============================================================
+// 4. ORDENAMIENTO INTELIGENTE (bloqueadas y vencidas primero)
+// ============================================================
+function ordenInteligente(grupos) {
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const prioridad = (g) => {
+        const estado = calcularEstadoIniciativa(g.hijos);
+        if (estado === 'Bloqueado') return 0;
+        const vencidas = g.hijos.filter(t => {
+            if (!t.fechaentregatarea || t.estado === 'Finalizado') return false;
+            const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
+            return f < hoy;
+        });
+        if (vencidas.length > 0) return 1;
+        if (estado === 'En Progreso') return 2;
+        if (estado === 'Pausado') return 3;
+        if (estado === 'Backlog') return 4;
+        return 5;
+    };
+    return [...grupos].sort((a, b) => prioridad(a) - prioridad(b));
+}
+
+// ============================================================
+// 5. MODO OSCURO
+// ============================================================
+let modoOscuro = localStorage.getItem('darkMode') === 'true';
+function aplicarModoOscuro() {
+    document.documentElement.classList.toggle('dark', modoOscuro);
+    const btn = document.getElementById('btnModoOscuro');
+    if (btn) btn.textContent = modoOscuro ? '☀️' : '🌙';
+}
+window.toggleModoOscuro = function() {
+    modoOscuro = !modoOscuro;
+    localStorage.setItem('darkMode', modoOscuro);
+    aplicarModoOscuro();
+};
 
 // GRÁFICAS
 function renderizarGraficasPrincipales(proyectos) {
@@ -1072,6 +1294,8 @@ function renderizarTablaJerarquica(proyectos) {
             if (vA > vB) return ordenAscendente ? 1 : -1;
             return 0;
         });
+    } else {
+        grupos = ordenInteligente(grupos);
         grupos.forEach(g => {
             g.hijos.sort((a, b) => {
                 let vA = obtenerValorParaOrden(a, columnaOrdenActual, false);
@@ -1081,6 +1305,8 @@ function renderizarTablaJerarquica(proyectos) {
                 return 0;
             });
         });
+    }
+
     }
 
     grupos.forEach(grupo => {
