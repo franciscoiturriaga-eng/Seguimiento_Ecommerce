@@ -177,26 +177,26 @@
                 <h3 class="font-bold text-slate-700 text-sm">Línea de Tiempo de Iniciativas</h3>
                 <span class="text-xs text-slate-400 font-mono">Vista de los próximos 6 meses</span>
             </div>
-            <div class="overflow-x-auto p-4">
+            <div style="overflow-x:auto; padding:16px;">
                 <div id="ganttContenido"></div>
             </div>
         </div>
 
         <!-- TABLA -->
-        <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200">
             <div class="p-4 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <h3 class="font-bold text-slate-700 text-sm">Iniciativas / Tareas</h3>
                     <button id="btnExpandirTodo" onclick="window.expandirTodo()" class="text-xs text-blue-600 hover:text-blue-800 font-medium border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition">⊞ Expandir todo</button>
                     <button id="btnColapsarTodo" onclick="window.colapsarTodo()" class="text-xs text-slate-500 hover:text-slate-700 font-medium border border-slate-200 bg-slate-50 px-2 py-1 rounded-md transition">⊟ Colapsar todo</button>
                 </div>
-                <span class="text-xs text-slate-400 font-mono">Amarillo: 16-30 días a Meta | Rojo: ≤15 días o Atraso</span>
+                <span class="hidden sm:block text-xs text-slate-400 font-mono">Amarillo: 16-30 días a Meta | Rojo: ≤15 días o Atraso</span>
             </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+            <div style="overflow-x:auto; border-radius:0 0 12px 12px;">
+                <table style="width:100%; min-width:700px; border-collapse:collapse; text-align:left;">
                     <thead>
                         <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
-                            <th class="p-3 pl-4 cursor-pointer hover:bg-slate-200 transition sticky left-0 z-20 bg-slate-100" style="min-width:180px;max-width:280px;" onclick="window.cambiarOrden('jerarquia')">Iniciativa / Tarea <span id="icon-sort-jerarquia" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;z-index:20;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 0 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3">Avance</th>
@@ -208,8 +208,8 @@
                     </thead>
                     <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200"></tbody>
                 </table>
-            </div>
-        </div>
+            </div><!-- end overflow-x -->
+        </div><!-- end contenedorTabla -->
     </div>
     </div><!-- end scrollable content -->
 </div>
@@ -1063,7 +1063,7 @@ function renderizarTablaJerarquica(proyectos) {
         const filaPadre = document.createElement('tr');
         filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
         filaPadre.innerHTML = `
-            <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none sticky left-0 z-20 bg-slate-50" style="min-width:180px;max-width:280px;" onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')">
+            <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:#f8fafc;min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px rgba(0,0,0,0.06);">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa} ${badgeImpacto(pMetas.impacto)}
             </td>
@@ -1095,7 +1095,7 @@ function renderizarTablaJerarquica(proyectos) {
                 const filaHijo = document.createElement('tr');
                 filaHijo.className = "hover:bg-slate-50/80 transition group fila-tarea-clickable";
                 filaHijo.innerHTML = `
-                    <td class="p-2 pl-6 text-slate-600 font-medium sticky left-0 z-20 bg-white" style="min-width:180px;max-width:280px;">↳ <span class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
+                    <td style="position:sticky;left:0;z-index:20;background:#ffffff;min-width:200px;padding:8px 8px 8px 24px;color:#475569;font-weight:500;box-shadow:2px 0 4px rgba(0,0,0,0.04);">↳ <span style="cursor:pointer;" class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
                     <td class="p-2">${barraAvance(avanceTarea, true)}</td>
