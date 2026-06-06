@@ -172,26 +172,6 @@
     <!-- VISTA TABLERO -->
     <div id="vistaTablero">
 
-        <!-- GRÁFICAS -->
-        <div id="contenedorGraficas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Impacto</h2>
-                <div class="h-40 sm:h-52"><canvas id="graficaImpacto"></canvas></div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
-                <div id="contenedorGraficaTemas" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaTemas"></canvas></div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
-                <div class="h-40 sm:h-52"><canvas id="graficaEstados"></canvas></div>
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Responsable</h2>
-                <div id="contenedorGraficaResp" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaResponsables"></canvas></div>
-            </div>
-        </div>
-
         <!-- RESUMEN EJECUTIVO -->
         <div id="contenedorResumen" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col gap-1">
@@ -214,7 +194,37 @@
                 <p id="resumenVencenNum" class="text-3xl font-extrabold text-amber-500">—</p>
                 <p class="text-[11px] text-amber-300">Clic para ver</p>
             </div>
+
+        <!-- GRÁFICAS -->
+        <div id="contenedorGraficas" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Impacto</h2>
+                <div class="h-40 sm:h-52"><canvas id="graficaImpacto"></canvas></div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
+                <div id="contenedorGraficaTemas" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaTemas"></canvas></div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
+                <div class="h-40 sm:h-52"><canvas id="graficaEstados"></canvas></div>
+            </div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Responsable</h2>
+                <div id="contenedorGraficaResp" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaResponsables"></canvas></div>
+            </div>
         </div>
+
+
+        <!-- VISTA RESPONSABLES -->
+        <div id="contenedorResponsables" class="hidden mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
+                <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
+            </div>
+            <div id="tarjetasResponsables" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
+        </div>
+
 
         <!-- GANTT -->
         <div id="contenedorGantt" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-4 overflow-hidden">
@@ -227,14 +237,6 @@
             </div>
         </div>
 
-        <!-- VISTA RESPONSABLES -->
-        <div id="contenedorResponsables" class="hidden mb-4">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
-                <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
-            </div>
-            <div id="tarjetasResponsables" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
-        </div>
 
         <!-- TABLA -->
         <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200">
@@ -305,7 +307,7 @@
                         <option value="Dena">Dena</option>
                         <option value="Maida">Maida</option>
                         <option value="Roberto">Roberto</option>
-                        <option value="Anto">Anto</option>
+                        <option value="Antony">Antony</option>
                         <option value="Itu">Itu</option>
                     </select>
                     </div>
@@ -846,7 +848,7 @@ window.toggleVistaResponsables = function() {
 };
 
 function renderizarTarjetasResponsables(datos) {
-    const ORDEN = ['Dani','Dena','Maida','Roberto','Anto','Itu'];
+    const ORDEN = ['Dani','Dena','Maida','Roberto','Antony','Itu'];
     const cont = document.getElementById('tarjetasResponsables');
     if (!vistaRespVisible) return;
     cont.innerHTML = '';
@@ -867,37 +869,34 @@ function renderizarTarjetasResponsables(datos) {
         const avance = Math.round(tareas.reduce((a, t) => a + (Number(t.avance)||0), 0) / tareas.length);
         const barColor = avance >= 75 ? '#10b981' : avance >= 40 ? '#3b82f6' : '#f59e0b';
         const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
-        const colorIdx = ['Dani','Dena','Maida','Roberto','Anto','Itu'].indexOf(resp);
+        const colorIdx = ['Dani','Dena','Maida','Roberto','Antony','Itu'].indexOf(resp);
         const avatarBg = avatarColors[colorIdx] || '#3b82f6';
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
-        card.style = 'min-width:220px;max-width:260px;flex-shrink:0;';
+        card.style = 'min-width:190px;max-width:220px;flex-shrink:0;';
         card.onclick = () => window.filtrarPorClick('responsable', resp);
         card.innerHTML = `
-            <div class="p-4">
-                <div class="flex items-center gap-3 mb-3">
-                    <div style="width:38px;height:38px;border-radius:50%;background:${avatarBg};color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${resp[0]}</div>
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span style="font-size:15px;font-weight:700;color:#1e293b;">${resp}</span>
-                            ${vencidas.length > 0 ? `<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;">⚠ ${vencidas.length} vencida${vencidas.length>1?'s':''}</span>` : ''}
-                            ${bloqueadas.length > 0 ? `<span style="background:#fef3c7;color:#d97706;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;">🔴 ${bloqueadas.length} bloqueada${bloqueadas.length>1?'s':''}</span>` : ''}
-                        </div>
-                        <div style="font-size:11px;color:#94a3b8;margin-top:1px;">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
+            <div style="padding:12px 14px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                    <div style="width:32px;height:32px;border-radius:50%;background:${avatarBg};color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${resp[0]}</div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${resp}</div>
+                        <div style="font-size:10px;color:#94a3b8;">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-size:22px;font-weight:800;color:${barColor};line-height:1;">${avance}%</div>
-                        <div style="font-size:10px;color:#94a3b8;">avance</div>
+                        <div style="font-size:18px;font-weight:800;color:${barColor};line-height:1;">${avance}%</div>
                     </div>
                 </div>
-                <div style="width:100%;height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
-                    <div style="height:100%;width:${avance}%;background:${barColor};border-radius:99px;transition:width 0.4s;"></div>
+                <div style="width:100%;height:4px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:8px;">
+                    <div style="height:100%;width:${avance}%;background:${barColor};border-radius:99px;"></div>
                 </div>
-                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
-                    ${enProgreso.length > 0 ? `<span style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">▶ ${enProgreso.length} en progreso</span>` : ''}
-                    ${pendientes.length > 0 ? `<span style="background:#f8fafc;color:#64748b;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">○ ${pendientes.length} pendiente${pendientes.length>1?'s':''}</span>` : ''}
-                    ${finalizadas.length > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">✓ ${finalizadas.length} lista${finalizadas.length>1?'s':''}</span>` : ''}
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    ${enProgreso.length > 0 ? `<span style="background:#eff6ff;color:#3b82f6;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">▶${enProgreso.length}</span>` : ''}
+                    ${pendientes.length > 0 ? `<span style="background:#f8fafc;color:#64748b;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">○${pendientes.length}</span>` : ''}
+                    ${bloqueadas.length > 0 ? `<span style="background:#fef2f2;color:#ef4444;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">🔴${bloqueadas.length}</span>` : ''}
+                    ${finalizadas.length > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">✓${finalizadas.length}</span>` : ''}
+                    ${vencidas.length > 0 ? `<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">⚠${vencidas.length}</span>` : ''}
                 </div>
             </div>`;
         cont.appendChild(card);
@@ -1085,7 +1084,7 @@ function renderizarGraficasPrincipales(proyectos) {
 
     // Responsables (barras horizontal, orden fijo, clic para filtrar)
     if (chartResponsables) chartResponsables.destroy();
-    const ORDEN_RESP = ['Dani','Dena','Maida','Roberto','Anto','Itu'];
+    const ORDEN_RESP = ['Dani','Dena','Maida','Roberto','Antony','Itu'];
     const respOrdenado = ORDEN_RESP.map(r => ({ nombre: r, valor: responsables[r] || 0 })).filter(r => r.valor > 0);
     const alturaBarResp = Math.max(220, respOrdenado.length * 36);
     const canvasResp = document.getElementById('graficaResponsables');
@@ -1651,7 +1650,7 @@ function agregarFilaTareaEstructura(vals = null) {
                     <option value="Dena">Dena</option>
                     <option value="Maida">Maida</option>
                     <option value="Roberto">Roberto</option>
-                    <option value="Anto">Anto</option>
+                    <option value="Antony">Antony</option>
                     <option value="Itu">Itu</option>
                 </select>
                 <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
