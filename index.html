@@ -233,7 +233,7 @@
                 <h3 class="font-bold text-slate-700 text-sm">Vista por Responsable</h3>
                 <button onclick="window.toggleVistaResponsables()" class="text-xs text-blue-600 hover:text-blue-800 border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition" id="btnToggleVistaResp">⊟ Ocultar</button>
             </div>
-            <div id="tarjetasResponsables" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            <div id="tarjetasResponsables" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin;"></div>
         </div>
 
         <!-- TABLA -->
@@ -858,27 +858,40 @@ function renderizarTarjetasResponsables(datos) {
             return f < hoy;
         });
         const avance = Math.round(tareas.reduce((a, t) => a + (Number(t.avance)||0), 0) / tareas.length);
+        const barColor = avance >= 75 ? '#10b981' : avance >= 40 ? '#3b82f6' : '#f59e0b';
+        const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
+        const colorIdx = ['Dani','Dena','Maida','Robert','Anto','Itu'].indexOf(resp);
+        const avatarBg = avatarColors[colorIdx] || '#3b82f6';
 
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 cursor-pointer hover:shadow-md transition';
+        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
+        card.style = 'min-width:220px;max-width:260px;flex-shrink:0;';
         card.onclick = () => window.filtrarPorClick('responsable', resp);
         card.innerHTML = `
-            <div class="flex justify-between items-start mb-3">
-                <div>
-                    <div class="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center mb-1">${resp[0]}</div>
-                    <p class="font-bold text-slate-700 text-sm">${resp}</p>
-                    <p class="text-[11px] text-slate-400">${tareas.length} tarea${tareas.length!==1?'s':''} · ${avance}% avance</p>
+            <div class="p-4">
+                <div class="flex items-center gap-3 mb-3">
+                    <div style="width:38px;height:38px;border-radius:50%;background:${avatarBg};color:#fff;font-weight:800;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${resp[0]}</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span style="font-size:15px;font-weight:700;color:#1e293b;">${resp}</span>
+                            ${vencidas.length > 0 ? `<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;">⚠ ${vencidas.length} vencida${vencidas.length>1?'s':''}</span>` : ''}
+                            ${bloqueadas.length > 0 ? `<span style="background:#fef3c7;color:#d97706;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;">🔴 ${bloqueadas.length} bloqueada${bloqueadas.length>1?'s':''}</span>` : ''}
+                        </div>
+                        <div style="font-size:11px;color:#94a3b8;margin-top:1px;">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                        <div style="font-size:22px;font-weight:800;color:${barColor};line-height:1;">${avance}%</div>
+                        <div style="font-size:10px;color:#94a3b8;">avance</div>
+                    </div>
                 </div>
-                ${vencidas.length > 0 ? `<span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-0.5 rounded-full">⚠ ${vencidas.length} vencida${vencidas.length>1?'s':''}</span>` : ''}
-            </div>
-            <div class="w-full h-1.5 bg-slate-100 rounded-full mb-3">
-                <div class="h-full rounded-full ${avance >= 75 ? 'bg-green-500' : avance >= 40 ? 'bg-blue-500' : 'bg-amber-400'}" style="width:${avance}%"></div>
-            </div>
-            <div class="flex gap-2 flex-wrap">
-                ${enProgreso.length > 0 ? `<span class="bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">▶ ${enProgreso.length} en progreso</span>` : ''}
-                ${bloqueadas.length > 0 ? `<span class="bg-red-50 text-red-600 text-[10px] font-semibold px-2 py-0.5 rounded-full">🔴 ${bloqueadas.length} bloqueada${bloqueadas.length>1?'s':''}</span>` : ''}
-                ${pendientes.length > 0 ? `<span class="bg-slate-100 text-slate-500 text-[10px] font-semibold px-2 py-0.5 rounded-full">○ ${pendientes.length} pendiente${pendientes.length>1?'s':''}</span>` : ''}
-                ${finalizadas.length > 0 ? `<span class="bg-green-50 text-green-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">✓ ${finalizadas.length} lista${finalizadas.length>1?'s':''}</span>` : ''}
+                <div style="width:100%;height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+                    <div style="height:100%;width:${avance}%;background:${barColor};border-radius:99px;transition:width 0.4s;"></div>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                    ${enProgreso.length > 0 ? `<span style="background:#eff6ff;color:#3b82f6;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">▶ ${enProgreso.length} en progreso</span>` : ''}
+                    ${pendientes.length > 0 ? `<span style="background:#f8fafc;color:#64748b;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">○ ${pendientes.length} pendiente${pendientes.length>1?'s':''}</span>` : ''}
+                    ${finalizadas.length > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;">✓ ${finalizadas.length} lista${finalizadas.length>1?'s':''}</span>` : ''}
+                </div>
             </div>`;
         cont.appendChild(card);
     });
