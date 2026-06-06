@@ -301,9 +301,12 @@
                 + Agregar otra tarea a esta iniciativa
             </button>
 
-            <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                <button type="button" id="btnCerrarModal" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cancelar</button>
-                <button type="submit" id="btnGuardar" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar Todo</button>
+            <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+                <button type="button" id="btnEliminarModal" class="hidden bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition text-sm font-medium">🗑️ Eliminar</button>
+                <div class="flex gap-3 ml-auto">
+                    <button type="button" id="btnCerrarModal" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cancelar</button>
+                    <button type="submit" id="btnGuardar" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Guardar Todo</button>
+                </div>
             </div>
         </form>
     </div>
@@ -353,7 +356,8 @@
                 <p id="detalleComentarios" class="text-slate-700 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed"></p>
             </div>
         </div>
-        <div class="mt-5 flex justify-end">
+        <div class="mt-5 flex justify-between items-center">
+            <button id="btnEliminarDesdeDetalle" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition text-sm font-medium">🗑️ Eliminar Tarea</button>
             <button id="btnEditarDesdDetalle" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">✏️ Editar Tarea</button>
         </div>
     </div>
@@ -362,7 +366,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyCDSwIRvDp2ltDNDUlx0l17B6gdI0O1oFk",
@@ -570,18 +574,46 @@ function construirChipsFiltros() {
     const renderChips = (containerId, items, tipo, coloresMap) => {
         const cont = document.getElementById(containerId);
         cont.innerHTML = '';
+
+        // Calcular qué valores tienen resultados dado los filtros ACTUALES (excluyendo el propio tipo)
+        const otrosFiltros = Object.entries(filtrosActivos).filter(([k]) => k !== tipo);
+        const datosConOtrosFiltros = cacheDatosRaw.filter(p => {
+            return otrosFiltros.every(([k, s]) => {
+                if (s.size === 0) return true;
+                if (k === 'estado') return s.has(p.estado);
+                if (k === 'impacto') return s.has(p.impacto);
+                if (k === 'responsable') return s.has(p.responsable) || s.has(p.respiniciativa);
+                if (k === 'iniciativa') return s.has(p.iniciativa);
+                return true;
+            });
+        });
+        const valoresDisponibles = new Set(datosConOtrosFiltros.map(p => {
+            if (tipo === 'estado') return p.estado;
+            if (tipo === 'impacto') return p.impacto;
+            if (tipo === 'responsable') return [p.responsable, p.respiniciativa];
+            if (tipo === 'iniciativa') return p.iniciativa;
+            return null;
+        }).flat().filter(Boolean));
+
         items.forEach(item => {
             const activo = filtrosActivos[tipo].has(item);
+            const disponible = valoresDisponibles.has(item) || activo;
             const colorClass = coloresMap ? (coloresMap[item] || 'bg-slate-100 text-slate-600') : 'bg-blue-50 text-blue-700';
             const chip = document.createElement('span');
-            chip.className = `filter-chip inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border-2 transition ${colorClass} ${activo ? 'border-blue-500 ring-1 ring-blue-400' : 'border-transparent'}`;
+            chip.className = `filter-chip inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border-2 transition ${
+                !disponible ? 'bg-slate-50 text-slate-300 border-transparent cursor-not-allowed opacity-40' :
+                activo ? `${colorClass} border-blue-500 ring-1 ring-blue-400` :
+                `${colorClass} border-transparent`
+            }`;
             chip.textContent = item;
-            chip.onclick = () => {
-                if (filtrosActivos[tipo].has(item)) filtrosActivos[tipo].delete(item);
-                else filtrosActivos[tipo].add(item);
-                construirChipsFiltros();
-                renderizarTodo();
-            };
+            if (disponible) {
+                chip.onclick = () => {
+                    if (filtrosActivos[tipo].has(item)) filtrosActivos[tipo].delete(item);
+                    else filtrosActivos[tipo].add(item);
+                    construirChipsFiltros();
+                    renderizarTodo();
+                };
+            }
             cont.appendChild(chip);
         });
     };
@@ -1071,11 +1103,12 @@ function renderizarTablaJerarquica(proyectos) {
             <td class="p-3">${badgeEstado(estadoIni)}</td>
             <td class="p-3">${barraAvance(avanceIni, true)}</td>
             <td class="p-3 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('iniciativa','${iniciativa.replace(/'/g,"\\'")}')">${pMetas.areainiciativa || '-'}</td>
-            <td class="p-3 text-slate-600 font-mono text-xs">Meta: ${fEntregaIni}</td>
+            <td class="p-3 text-slate-600 font-mono text-xs">${fEntregaIni}</td>
             <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIni}</td>
             <td class="p-3 text-center flex justify-center gap-2">
                 <button onclick="window.crearAlerta('${pMetas.id}')" class="text-slate-400 hover:text-amber-500 transition" title="Crear Alerta">🔔</button>
                 <button onclick="window.abrirModalEdicion('${pMetas.id}', 'INICIATIVA')" class="text-slate-400 hover:text-blue-600 transition" title="Editar Iniciativa">✏️</button>
+                <button onclick="window.confirmarEliminar('${pMetas.id}', 'INICIATIVA', '${iniciativa.replace(/'/g, "\'")}')" class="text-slate-400 hover:text-red-500 transition" title="Eliminar Iniciativa">🗑️</button>
             </td>`;
         cuerpo.appendChild(filaPadre);
 
@@ -1105,6 +1138,7 @@ function renderizarTablaJerarquica(proyectos) {
                     <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity flex justify-center gap-2">
                         <button onclick="event.stopPropagation(); window.crearAlerta('${t.id}')" class="text-slate-400 hover:text-amber-500 text-sm transition" title="Crear Alerta">🔔</button>
                         <button onclick="event.stopPropagation(); window.abrirModalEdicion('${t.id}', 'TAREA')" class="text-blue-500 hover:text-blue-700 text-sm font-medium bg-blue-50 px-2 py-1 rounded shadow-sm">Editar</button>
+                        <button onclick="event.stopPropagation(); window.confirmarEliminar('${t.id}', 'TAREA', '${(t.tarea||'').replace(/'/g,"\'")}')" class="text-slate-400 hover:text-red-500 text-sm transition" title="Eliminar">🗑️</button>
                     </td>`;
                 filaHijo.addEventListener('click', (e) => {
                     if (e.target.tagName === 'BUTTON') return;
@@ -1135,11 +1169,46 @@ window.abrirDetalleTarea = function(id) {
         document.getElementById('modalDetalleTarea').classList.add('hidden');
         window.abrirModalEdicion(id, 'TAREA');
     };
+    document.getElementById('btnEliminarDesdeDetalle').onclick = () => {
+        document.getElementById('modalDetalleTarea').classList.add('hidden');
+        window.confirmarEliminar(item.id, 'TAREA', item.tarea);
+    };
     document.getElementById('modalDetalleTarea').classList.remove('hidden');
 };
 
-// COLAPSO
-window.toggleColapso = function(iniciativa) {
+// ELIMINAR
+window.confirmarEliminar = async function(id, tipo, nombre) {
+    const msg = tipo === 'INICIATIVA'
+        ? `¿Eliminar la iniciativa "${nombre}" y TODAS sus tareas? Esta acción no se puede deshacer.`
+        : `¿Eliminar la tarea "${nombre}"?`;
+    if (!confirm(msg)) return;
+    try {
+        if (tipo === 'INICIATIVA') {
+            const docsIni = cacheDatosRaw.filter(p => p.iniciativa === nombre);
+            for (const d of docsIni) await promesaConLimite(deleteDoc(doc(db, "actividades", d.id)), 8000);
+            registrarAuditoria("Eliminó Iniciativa", `Iniciativa: [${nombre}] y ${docsIni.length} tarea(s)`);
+        } else {
+            const item = cacheDatosRaw.find(p => p.id === id);
+            await promesaConLimite(deleteDoc(doc(db, "actividades", id)), 8000);
+            registrarAuditoria("Eliminó Tarea", `Tarea: [${nombre}] de iniciativa [${item?.iniciativa||''}]`);
+        }
+        document.getElementById('modalFormulario').classList.add('hidden');
+        document.getElementById('modalDetalleTarea').classList.add('hidden');
+    } catch(e) {
+        alert("Error al eliminar: " + e.message);
+    }
+};
+
+// Mostrar botón eliminar en modal cuando es edición
+function actualizarBtnEliminarModal(modo, id, nombre, tipo) {
+    const btn = document.getElementById('btnEliminarModal');
+    if (modo.startsWith('EDITAR')) {
+        btn.classList.remove('hidden');
+        btn.onclick = () => window.confirmarEliminar(id, tipo, nombre);
+    } else {
+        btn.classList.add('hidden');
+    }
+}
     if (iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa);
     else iniciativasColapsadas.add(iniciativa);
     renderizarTodo();
@@ -1254,11 +1323,13 @@ window.abrirModalEdicion = function(idFila, tipo) {
             if (!isNaN(d2)) document.getElementById('inputFechaInicioIniciativa').value = d2.toISOString().split('T')[0];
         }
         aplicarRestriccionesBloques('EDITAR_INICIATIVA');
+        actualizarBtnEliminarModal('EDITAR_INICIATIVA', item.id, item.iniciativa, 'INICIATIVA');
     } else {
         document.getElementById('tituloModal').innerText = "Editar Tarea";
         agregarFilaTareaEstructura(item);
         document.querySelector('.btn-quitar-tarea')?.classList.add('hidden');
         aplicarRestriccionesBloques('EDITAR_TAREA');
+        actualizarBtnEliminarModal('EDITAR_TAREA', item.id, item.tarea, 'TAREA');
     }
     document.getElementById('modalFormulario').classList.remove('hidden');
 };
