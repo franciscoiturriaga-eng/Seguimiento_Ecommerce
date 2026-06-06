@@ -304,7 +304,7 @@
                         <option value="Dani">Dani</option>
                         <option value="Dena">Dena</option>
                         <option value="Maida">Maida</option>
-                        <option value="Robert">Robert</option>
+                        <option value="Roberto">Roberto</option>
                         <option value="Anto">Anto</option>
                         <option value="Itu">Itu</option>
                     </select>
@@ -596,7 +596,14 @@ function iniciarEscuchaFirestore() {
     const proyectosRef = collection(db, "actividades");
     onSnapshot(proyectosRef, (snapshot) => {
         cacheDatosRaw = [];
-        snapshot.forEach((d) => cacheDatosRaw.push({ id: d.id, ...d.data() }));
+        snapshot.forEach((d) => {
+            const data = d.data();
+            // Normalizar nombres de responsables
+            const normalizar = (v) => v === 'Roberto' ? 'Roberto' : v;
+            if (data.responsable) data.responsable = normalizar(data.responsable);
+            if (data.respiniciativa) data.respiniciativa = normalizar(data.respiniciativa);
+            cacheDatosRaw.push({ id: d.id, ...data });
+        });
         document.getElementById('txtCargando').classList.add('hidden');
         document.getElementById('contenedorGraficas').classList.remove('hidden');
         document.getElementById('contenedorResumen').classList.remove('hidden');
@@ -839,7 +846,7 @@ window.toggleVistaResponsables = function() {
 };
 
 function renderizarTarjetasResponsables(datos) {
-    const ORDEN = ['Dani','Dena','Maida','Robert','Anto','Itu'];
+    const ORDEN = ['Dani','Dena','Maida','Roberto','Anto','Itu'];
     const cont = document.getElementById('tarjetasResponsables');
     if (!vistaRespVisible) return;
     cont.innerHTML = '';
@@ -860,7 +867,7 @@ function renderizarTarjetasResponsables(datos) {
         const avance = Math.round(tareas.reduce((a, t) => a + (Number(t.avance)||0), 0) / tareas.length);
         const barColor = avance >= 75 ? '#10b981' : avance >= 40 ? '#3b82f6' : '#f59e0b';
         const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
-        const colorIdx = ['Dani','Dena','Maida','Robert','Anto','Itu'].indexOf(resp);
+        const colorIdx = ['Dani','Dena','Maida','Roberto','Anto','Itu'].indexOf(resp);
         const avatarBg = avatarColors[colorIdx] || '#3b82f6';
 
         const card = document.createElement('div');
@@ -1078,7 +1085,7 @@ function renderizarGraficasPrincipales(proyectos) {
 
     // Responsables (barras horizontal, orden fijo, clic para filtrar)
     if (chartResponsables) chartResponsables.destroy();
-    const ORDEN_RESP = ['Dani','Dena','Maida','Robert','Anto','Itu'];
+    const ORDEN_RESP = ['Dani','Dena','Maida','Roberto','Anto','Itu'];
     const respOrdenado = ORDEN_RESP.map(r => ({ nombre: r, valor: responsables[r] || 0 })).filter(r => r.valor > 0);
     const alturaBarResp = Math.max(220, respOrdenado.length * 36);
     const canvasResp = document.getElementById('graficaResponsables');
@@ -1643,7 +1650,7 @@ function agregarFilaTareaEstructura(vals = null) {
                     <option value="Dani">Dani</option>
                     <option value="Dena">Dena</option>
                     <option value="Maida">Maida</option>
-                    <option value="Robert">Robert</option>
+                    <option value="Roberto">Roberto</option>
                     <option value="Anto">Anto</option>
                     <option value="Itu">Itu</option>
                 </select>
