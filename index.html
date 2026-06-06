@@ -152,22 +152,22 @@
     <div id="vistaTablero">
 
         <!-- GRÁFICAS -->
-        <div id="contenedorGraficas" class="hidden grid gap-4 mb-4" style="grid-template-columns: 160px 1fr 1fr 1fr;">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div id="contenedorGraficas" class="hidden grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Impacto</h2>
-                <div class="h-52"><canvas id="graficaImpacto"></canvas></div>
+                <div class="h-40 sm:h-52"><canvas id="graficaImpacto"></canvas></div>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
-                <div id="contenedorGraficaTemas" style="height:220px; overflow-y:auto; scrollbar-width:thin;"><canvas id="graficaTemas"></canvas></div>
+                <div id="contenedorGraficaTemas" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaTemas"></canvas></div>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
                 <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
-                <div class="h-52"><canvas id="graficaEstados"></canvas></div>
+                <div class="h-40 sm:h-52"><canvas id="graficaEstados"></canvas></div>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Carga por Responsable</h2>
-                <div id="contenedorGraficaResp" style="height:220px; overflow-y:auto; scrollbar-width:thin;"><canvas id="graficaResponsables"></canvas></div>
+            <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Responsable</h2>
+                <div id="contenedorGraficaResp" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaResponsables"></canvas></div>
             </div>
         </div>
 
@@ -196,7 +196,7 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
-                            <th class="p-3 pl-4 w-[30%] cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('jerarquia')">Iniciativa / Tarea <span id="icon-sort-jerarquia" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 pl-4 w-[30%] cursor-pointer hover:bg-slate-200 transition sticky left-0 z-10 bg-slate-100/95 backdrop-blur" onclick="window.cambiarOrden('jerarquia')">Iniciativa / Tarea <span id="icon-sort-jerarquia" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3">Avance</th>
@@ -892,7 +892,7 @@ function renderizarGantt(proyectosFiltrados) {
 
     const headerHTML = `
         <div style="position:sticky; top:0; z-index:2; background:#fff; padding-bottom:6px;">
-            <div style="display:flex; position:relative; height:22px; margin-left:210px; border-bottom:1px solid #e2e8f0;">
+            <div style="display:flex; position:relative; height:22px; margin-left:160px; border-bottom:1px solid #e2e8f0;">
                 ${meses.map(m => `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`).join('')}
                 <div style="position:absolute; left:${hoyPct}%; top:0; bottom:-200px; width:1.5px; background:#3b82f6; opacity:0.35; pointer-events:none;"></div>
             </div>
@@ -939,7 +939,7 @@ function renderizarGantt(proyectosFiltrados) {
 
         filasHTML += `
         <div style="display:flex; align-items:center; margin-bottom:6px; height:${ROW_H - 8}px;">
-            <div style="width:210px; flex-shrink:0; padding-right:14px; overflow:hidden;">
+            <div style="width:160px; flex-shrink:0; padding-right:10px; overflow:hidden; position:sticky; left:0; background:#fff; z-index:2;">
                 <div style="font-size:11px; font-weight:600; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${iniciativa}">${iniciativa}</div>
                 <div style="font-size:10px; color:#94a3b8; margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio} → ${fmtMeta}</div>
             </div>
@@ -1063,7 +1063,7 @@ function renderizarTablaJerarquica(proyectos) {
         const filaPadre = document.createElement('tr');
         filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
         filaPadre.innerHTML = `
-            <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none" onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')">
+            <td class="p-3 pl-4 text-blue-700 flex items-center gap-1 font-semibold cursor-pointer select-none sticky left-0 z-10 bg-slate-100/95 backdrop-blur" onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa} ${badgeImpacto(pMetas.impacto)}
             </td>
@@ -1095,7 +1095,7 @@ function renderizarTablaJerarquica(proyectos) {
                 const filaHijo = document.createElement('tr');
                 filaHijo.className = "hover:bg-slate-50/80 transition group fila-tarea-clickable";
                 filaHijo.innerHTML = `
-                    <td class="p-2 pl-10 text-slate-600 font-medium">↳ <span class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
+                    <td class="p-2 pl-10 text-slate-600 font-medium sticky left-0 z-10 bg-white">↳ <span class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
                     <td class="p-2">${barraAvance(avanceTarea, true)}</td>
