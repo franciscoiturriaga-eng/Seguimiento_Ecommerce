@@ -187,7 +187,7 @@
                 <div class="h-40 sm:h-52"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Por Responsable</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Responsable</h2>
                 <div id="contenedorGraficaResp" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaResponsables"></canvas></div>
             </div>
         </div>
@@ -960,11 +960,12 @@ function renderizarGraficasPrincipales(proyectos) {
     proyectos.forEach(p => {
         if (estados[p.estado] !== undefined) estados[p.estado]++;
         if (temas[p.tema] !== undefined) temas[p.tema]++;
-        let resp = p.responsable || p.responsabletarea;
-        if (resp) responsables[resp] = (responsables[resp] || 0) + 1;
         if (p.iniciativa && !iniciativasProcesadas.has(p.iniciativa)) {
             iniciativasProcesadas.add(p.iniciativa);
             if (impactos[p.impacto] !== undefined) impactos[p.impacto]++;
+            // Contar iniciativas únicas por responsable de iniciativa
+            const resp = p.respiniciativa;
+            if (resp) responsables[resp] = (responsables[resp] || 0) + 1;
         }
     });
 
@@ -1074,14 +1075,14 @@ function renderizarGraficasPrincipales(proyectos) {
         type: 'bar',
         data: {
             labels: respOrdenado.map(r => r.nombre),
-            datasets: [{ label: 'Tareas', data: respOrdenado.map(r => r.valor),
+            datasets: [{ label: 'Iniciativas', data: respOrdenado.map(r => r.valor),
                 backgroundColor: respOrdenado.map(r => filtrosActivos.responsable.has(r.nombre) || filtrosActivos.responsable.size === 0 ? '#10b981' : '#cbd5e1'),
                 borderRadius: 4 }]
         },
         options: {
             indexAxis: 'y',
             maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} tarea${ctx.parsed.x !== 1 ? 's' : ''}` } } },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} iniciativa${ctx.parsed.x !== 1 ? 's' : ''}` } } },
             scales: {
                 x: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null }, grid: { display: false } },
                 y: { ticks: { font: { size: 11 } } }
