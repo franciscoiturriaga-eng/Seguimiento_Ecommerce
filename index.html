@@ -1209,6 +1209,7 @@ function actualizarBtnEliminarModal(modo, id, nombre, tipo) {
         btn.classList.add('hidden');
     }
 }
+window.toggleColapso = function(iniciativa) {
     if (iniciativasColapsadas.has(iniciativa)) iniciativasColapsadas.delete(iniciativa);
     else iniciativasColapsadas.add(iniciativa);
     renderizarTodo();
