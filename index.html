@@ -1133,21 +1133,35 @@ function renderizarGantt(proyectosFiltrados) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const coloresImpacto = { 'Crítico': ['#7c3aed','#ddd6fe'], 'Alto': ['#dc2626','#fee2e2'], 'Medio': ['#d97706','#fef3c7'], 'Bajo': ['#059669','#d1fae5'] };
 
-    // Ventana amplia: 3 meses atrás → 12 meses adelante (con scroll horizontal)
-    const fechaVentanaInicio = new Date(hoy);
-    fechaVentanaInicio.setMonth(fechaVentanaInicio.getMonth() - 3);
-    fechaVentanaInicio.setDate(1);
+    // Ventana dinámica: desde el proyecto más antiguo → 6 meses después del más lejano
+    let fechaVentanaInicio = new Date(hoy);
+    let fechaVentanaFin = new Date(hoy); fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 6);
 
-    const fechaVentanaFin = new Date(hoy);
-    fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 12);
+    Object.keys(desglose).forEach(iniciativa => {
+        const padre = desglose[iniciativa][0];
+        // Fecha inicio
+        let fs = padre.fechainicioiniciativa ? new Date(padre.fechainicioiniciativa) : null;
+        if (!fs) {
+            const ft = desglose[iniciativa].filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
+            fs = ft.length > 0 ? new Date(Math.min(...ft)) : null;
+        }
+        if (fs) { fs.setHours(0,0,0,0); if (fs < fechaVentanaInicio) fechaVentanaInicio = fs; }
+        // Fecha fin
+        if (padre.fechaentregainiciativa) {
+            const fe = new Date(padre.fechaentregainiciativa); fe.setHours(0,0,0,0);
+            if (fe > fechaVentanaFin) fechaVentanaFin = fe;
+        }
+    });
+
+    // Margen visual: 2 semanas antes del inicio, 1 mes después del fin
+    fechaVentanaInicio.setDate(fechaVentanaInicio.getDate() - 14);
+    fechaVentanaInicio.setDate(1); // alinear a inicio de mes
+    fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 1);
+
     const totalDias = Math.ceil((fechaVentanaFin - fechaVentanaInicio) / 86400000);
-
-    // Ancho total del canvas: ~80px por mes = 15 meses * 80 = 1200px mínimo
     const PX_POR_DIA = 3.2;
     const anchoTotal = Math.max(1100, totalDias * PX_POR_DIA);
     const anchoNombre = 170;
-
-    // Posición de "hoy" en píxeles
     const hoyPx = Math.round((hoy - fechaVentanaInicio) / 86400000 * PX_POR_DIA);
 
     // Meses header
@@ -1165,14 +1179,6 @@ function renderizarGantt(proyectosFiltrados) {
             <div style="display:flex;position:relative;height:24px;margin-left:${anchoNombre}px;border-bottom:1px solid #e2e8f0;width:${anchoTotal}px;">
                 ${meses.map(m => `<div style="position:absolute;left:${m.px}px;font-size:10px;color:#94a3b8;font-weight:600;white-space:nowrap;padding-left:4px;">${m.label}</div>`).join('')}
                 <div style="position:absolute;left:${hoyPx}px;top:0;bottom:-2000px;width:2px;background:#3b82f6;opacity:0.3;pointer-events:none;"></div>
-            </div>
-        </div>`;
-
-    const headerHTML = `
-        <div style="position:sticky; top:0; z-index:3; background:#fff; padding-bottom:6px;">
-            <div style="display:flex; position:relative; height:22px; margin-left:160px; border-bottom:1px solid #e2e8f0;">
-                ${meses.map(m => `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`).join('')}
-                <div style="position:absolute; left:${hoyPct}%; top:0; bottom:-200px; width:1.5px; background:#3b82f6; opacity:0.35; pointer-events:none;"></div>
             </div>
         </div>`;
 
