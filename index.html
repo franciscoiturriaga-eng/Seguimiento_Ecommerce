@@ -1716,7 +1716,11 @@ window.abrirModalEdicion = function(idFila, tipo) {
         document.getElementById('tituloModal').innerText = "Editar Iniciativa Padre";
         document.getElementById('inputOldIniciativaNombre').value = item.iniciativa;
         document.getElementById('inputIniciativa').value = item.iniciativa || '';
-        document.getElementById('inputRespIniciativa').value = item.respiniciativa || item.responsableiniciativa || '';
+        // Poblar select de responsable desde CONFIG antes de asignar valor
+        const selResp = document.getElementById('inputRespIniciativa');
+        selResp.innerHTML = '<option value="">Seleccionar...</option>' +
+            CONFIG.responsables.map(r => `<option value="${r}">${r}</option>`).join('');
+        selResp.value = item.respiniciativa || item.responsableiniciativa || '';
         document.getElementById('selectAreaIniciativa').value = item.areainiciativa || 'Tecnología';
         document.getElementById('selectImpacto').value = item.impacto || 'Medio';
         if (item.fechaentregainiciativa) {
