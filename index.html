@@ -1133,22 +1133,10 @@ function renderizarGantt(proyectosFiltrados) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const coloresImpacto = { 'Crítico': ['#7c3aed','#ddd6fe'], 'Alto': ['#dc2626','#fee2e2'], 'Medio': ['#d97706','#fef3c7'], 'Bajo': ['#059669','#d1fae5'] };
 
-    // Calcular ventana dinámica: desde la fecha de inicio más temprana hasta 6 meses desde hoy
-    let fechaVentanaInicio = new Date(hoy);
-    Object.keys(desglose).forEach(iniciativa => {
-        const padre = desglose[iniciativa][0];
-        let fs;
-        if (padre.fechainicioiniciativa) {
-            fs = new Date(padre.fechainicioiniciativa);
-        } else {
-            const fechasTareas = desglose[iniciativa].filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
-            fs = fechasTareas.length > 0 ? new Date(Math.min(...fechasTareas)) : new Date(hoy);
-        }
-        fs.setHours(0,0,0,0);
-        if (fs < fechaVentanaInicio) fechaVentanaInicio = fs;
-    });
-    // Retroceder un poco para margen visual
-    fechaVentanaInicio.setDate(fechaVentanaInicio.getDate() - 5);
+    // Ventana fija: 1 mes atrás → 6 meses adelante (evita header con decenas de meses)
+    const fechaVentanaInicio = new Date(hoy);
+    fechaVentanaInicio.setMonth(fechaVentanaInicio.getMonth() - 1);
+    fechaVentanaInicio.setDate(1);
 
     const fechaVentanaFin = new Date(hoy); fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 6);
     const totalDias = Math.ceil((fechaVentanaFin - fechaVentanaInicio) / 86400000);
@@ -1156,7 +1144,7 @@ function renderizarGantt(proyectosFiltrados) {
     // Posición de "hoy" en el eje
     const hoyPct = Math.max(0, Math.min(100, (Math.ceil((hoy - fechaVentanaInicio) / 86400000) / totalDias) * 100));
 
-    // Meses header
+    // Meses header — solo 7-8 meses, sin superposición
     const meses = [];
     let cur = new Date(fechaVentanaInicio); cur.setDate(1);
     while (cur <= fechaVentanaFin) {
