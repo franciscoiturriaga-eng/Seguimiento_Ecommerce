@@ -488,7 +488,7 @@ const observerLimpiar = new MutationObserver(() => {
 });
 observerLimpiar.observe(document.getElementById('btnLimpiarFiltros'), { attributes: true, childList: true, characterData: true, subtree: true });
 
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
     if (user && user.email.endsWith('@hites.cl')) {
         currentUserEmail = user.email;
         document.getElementById('pantallaLogin').classList.add('hidden');
