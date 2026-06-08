@@ -1315,7 +1315,7 @@ function renderizarGantt(proyectosFiltrados) {
     }
 
     const headerHTML = `
-        <div style="position:sticky;top:0;z-index:3;background:#fff;padding-bottom:6px;">
+        <div style="position:sticky;top:0;left:0;z-index:3;background:#fff;padding-bottom:6px;width:100%;">
             <div style="display:flex;position:relative;height:24px;margin-left:${anchoNombre}px;border-bottom:1px solid #e2e8f0;width:${anchoTotal}px;">
                 ${meses.map(m => `<div style="position:absolute;left:${m.px}px;font-size:10px;color:#94a3b8;font-weight:600;white-space:nowrap;padding-left:4px;">${m.label}</div>`).join('')}
                 <div style="position:absolute;left:${hoyPx}px;top:0;bottom:-2000px;width:2px;background:#3b82f6;opacity:0.3;pointer-events:none;"></div>
@@ -1380,13 +1380,11 @@ function renderizarGantt(proyectosFiltrados) {
     }
 
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow-x:auto;scrollbar-width:thin;">
-            <div style="min-width:${anchoTotal + anchoNombre}px;">
+        <div id="ganttScroll" style="overflow-x:auto;scrollbar-width:thin;max-height:${scrollable ? MAX_VISIBLE * ROW_H + 54 : 9999}px;overflow-y:auto;">
+            <div style="min-width:${anchoTotal + anchoNombre}px;position:relative;">
                 ${headerHTML}
-                <div style="max-height:${containerH}px;overflow-y:${scrollable?'auto':'visible'};padding-right:4px;scrollbar-width:thin;">
-                    ${filasHTML}
-                </div>
-                ${scrollable ? `<div style="text-align:center;padding-top:8px;font-size:10px;color:#94a3b8;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
+                ${filasHTML}
+                ${scrollable ? `<div style="text-align:center;padding-top:8px;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
             </div>
         </div>`;
 
