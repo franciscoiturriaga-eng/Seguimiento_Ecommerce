@@ -215,11 +215,11 @@
                 <div class="h-40 sm:h-52"><canvas id="graficaImpacto"></canvas></div>
             </div>
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Tareas por Área</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Área</h2>
                 <div id="contenedorGraficaTemas" style="height:160px; overflow-y:auto; scrollbar-width:thin;" class="sm:!h-[220px]"><canvas id="graficaTemas"></canvas></div>
             </div>
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
-                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estados</h2>
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativas por Estado</h2>
                 <div class="h-40 sm:h-52"><canvas id="graficaEstados"></canvas></div>
             </div>
             <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
@@ -1093,22 +1093,41 @@ window.toggleModoOscuro = function() {
 
 // GRÁFICAS
 function renderizarGraficasPrincipales(proyectos) {
-    const estados = { 'Backlog': 0, 'Pausado': 0, 'Bloqueado': 0, 'En Progreso': 0, 'Finalizado': 0 };
-    const temas = { 'Ecommerce': 0, 'Tecnología': 0, 'Electro': 0, 'Blandos': 0, 'Deco': 0, 'Calzado': 0, 'Belleza': 0, 'Infantil': 0, 'Mujer': 0, 'Hombre': 0, 'Marketing': 0, 'Operaciones': 0, 'Diseño': 0 };
+    const estados = {};
+    const temas = {};
     const responsables = {};
-    const impactos = { 'Crítico': 0, 'Alto': 0, 'Medio': 0, 'Bajo': 0 };
+    const impactos = {};
     const iniciativasProcesadas = new Set();
 
+    // Agrupar por iniciativa para calcular estado real
+    const desglose = {};
     proyectos.forEach(p => {
-        if (estados[p.estado] !== undefined) estados[p.estado]++;
-        if (temas[p.tema] !== undefined) temas[p.tema]++;
-        if (p.iniciativa && !iniciativasProcesadas.has(p.iniciativa)) {
-            iniciativasProcesadas.add(p.iniciativa);
-            if (impactos[p.impacto] !== undefined) impactos[p.impacto]++;
-            // Contar iniciativas únicas por responsable de iniciativa
-            const resp = p.respiniciativa;
-            if (resp) responsables[resp] = (responsables[resp] || 0) + 1;
+        if (p.iniciativa) {
+            if (!desglose[p.iniciativa]) desglose[p.iniciativa] = [];
+            desglose[p.iniciativa].push(p);
         }
+    });
+
+    Object.entries(desglose).forEach(([ini, hijos]) => {
+        if (iniciativasProcesadas.has(ini)) return;
+        iniciativasProcesadas.add(ini);
+        const padre = hijos[0];
+
+        // Estado calculado de la iniciativa
+        const estadoIni = calcularEstadoIniciativa(hijos);
+        estados[estadoIni] = (estados[estadoIni] || 0) + 1;
+
+        // Área de la iniciativa
+        const area = padre.areainiciativa || padre.tema || '';
+        if (area) temas[area] = (temas[area] || 0) + 1;
+
+        // Impacto
+        const imp = padre.impacto || '';
+        if (imp) impactos[imp] = (impactos[imp] || 0) + 1;
+
+        // Responsable
+        const resp = padre.respiniciativa || '';
+        if (resp) responsables[resp] = (responsables[resp] || 0) + 1;
     });
 
     const integerYAxis = { scales: { y: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null } } } };
@@ -1155,7 +1174,7 @@ function renderizarGraficasPrincipales(proyectos) {
         options: {
             indexAxis: 'y',
             maintainAspectRatio: false,
-            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} tarea${ctx.parsed.x !== 1 ? 's' : ''}` } } },
+            plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.parsed.x} iniciativa${ctx.parsed.x !== 1 ? 's' : ''}` } } },
             scales: {
                 x: { ticks: { stepSize: 1, callback: v => Number.isInteger(v) ? v : null }, grid: { display: false } },
                 y: { ticks: { font: { size: 10 } } }
