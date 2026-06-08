@@ -957,22 +957,42 @@ function renderizarTarjetasResponsables(datos) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
 
     ORDEN.forEach(resp => {
-        const tareas = datos.filter(p => p.tarea && p.responsable === resp);
-        if (tareas.length === 0) return;
-        const pendientes = tareas.filter(t => t.estado === 'Backlog' || t.estado === 'Pausado');
-        const enProgreso = tareas.filter(t => t.estado === 'En Progreso');
-        const bloqueadas = tareas.filter(t => t.estado === 'Bloqueado');
-        const finalizadas = tareas.filter(t => t.estado === 'Finalizado');
-        const vencidas = tareas.filter(t => {
-            if (!t.fechaentregatarea || t.estado === 'Finalizado') return false;
-            const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
-            return f < hoy;
+        // Iniciativas donde este responsable es el dueño
+        const misIniciativas = [...new Set(datos
+            .filter(p => p.respiniciativa === resp && p.iniciativa)
+            .map(p => p.iniciativa))];
+
+        if (misIniciativas.length === 0) return;
+
+        // Calcular métricas por iniciativa
+        const statsIni = misIniciativas.map(ini => {
+            const hijos = datos.filter(p => p.iniciativa === ini);
+            return {
+                nombre: ini,
+                estado: calcularEstadoIniciativa(hijos),
+                avance: calcularAvanceIniciativa(hijos),
+                tareas: hijos.filter(h => h.tarea).length,
+                fechaMeta: hijos[0]?.fechaentregainiciativa
+            };
         });
-        const avance = Math.round(tareas.reduce((a, t) => a + (Number(t.avance)||0), 0) / tareas.length);
-        const barColor = avance >= 75 ? '#10b981' : avance >= 40 ? '#3b82f6' : '#f59e0b';
-        const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444'];
+
+        const enProgreso  = statsIni.filter(i => i.estado === 'En Progreso').length;
+        const bloqueadas  = statsIni.filter(i => i.estado === 'Bloqueado').length;
+        const pausadas    = statsIni.filter(i => i.estado === 'Pausado').length;
+        const finalizadas = statsIni.filter(i => i.estado === 'Finalizado').length;
+        const backlog     = statsIni.filter(i => i.estado === 'Backlog').length;
+
+        const vencidas = statsIni.filter(i => {
+            if (!i.fechaMeta || i.estado === 'Finalizado') return false;
+            const f = new Date(i.fechaMeta); f.setHours(0,0,0,0);
+            return f < hoy;
+        }).length;
+
+        const avanceProm = Math.round(statsIni.reduce((a, i) => a + i.avance, 0) / statsIni.length);
+        const barColor = avanceProm >= 75 ? '#10b981' : avanceProm >= 40 ? '#3b82f6' : '#f59e0b';
+        const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4'];
         const colorIdx = CONFIG.responsables.indexOf(resp);
-        const avatarBg = avatarColors[colorIdx] || '#3b82f6';
+        const avatarBg = avatarColors[colorIdx % avatarColors.length] || '#3b82f6';
 
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
@@ -984,21 +1004,22 @@ function renderizarTarjetasResponsables(datos) {
                     <div style="width:32px;height:32px;border-radius:50%;background:${avatarBg};color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${resp[0]}</div>
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${resp}</div>
-                        <div style="font-size:10px;color:#94a3b8;">${tareas.length} tarea${tareas.length!==1?'s':''}</div>
+                        <div style="font-size:10px;color:#94a3b8;">${misIniciativas.length} iniciativa${misIniciativas.length!==1?'s':''}</div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-size:18px;font-weight:800;color:${barColor};line-height:1;">${avance}%</div>
+                        <div style="font-size:18px;font-weight:800;color:${barColor};line-height:1;">${avanceProm}%</div>
                     </div>
                 </div>
                 <div style="width:100%;height:4px;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:8px;">
-                    <div style="height:100%;width:${avance}%;background:${barColor};border-radius:99px;"></div>
+                    <div style="height:100%;width:${avanceProm}%;background:${barColor};border-radius:99px;"></div>
                 </div>
                 <div style="display:flex;gap:5px;flex-wrap:wrap;">
-                    ${enProgreso.length > 0 ? `<span style="background:#eff6ff;color:#3b82f6;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">▶${enProgreso.length}</span>` : ''}
-                    ${pendientes.length > 0 ? `<span style="background:#f8fafc;color:#64748b;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">○${pendientes.length}</span>` : ''}
-                    ${bloqueadas.length > 0 ? `<span style="background:#fef2f2;color:#ef4444;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">🔴${bloqueadas.length}</span>` : ''}
-                    ${finalizadas.length > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">✓${finalizadas.length}</span>` : ''}
-                    ${vencidas.length > 0 ? `<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">⚠${vencidas.length}</span>` : ''}
+                    ${enProgreso > 0  ? `<span style="background:#eff6ff;color:#3b82f6;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">▶${enProgreso}</span>` : ''}
+                    ${backlog > 0     ? `<span style="background:#f8fafc;color:#64748b;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">○${backlog}</span>` : ''}
+                    ${pausadas > 0    ? `<span style="background:#fffbeb;color:#d97706;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">⏸${pausadas}</span>` : ''}
+                    ${bloqueadas > 0  ? `<span style="background:#fef2f2;color:#ef4444;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">🔴${bloqueadas}</span>` : ''}
+                    ${finalizadas > 0 ? `<span style="background:#f0fdf4;color:#16a34a;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">✓${finalizadas}</span>` : ''}
+                    ${vencidas > 0    ? `<span style="background:#fef2f2;color:#dc2626;font-size:9px;font-weight:700;padding:2px 6px;border-radius:5px;">⚠${vencidas}</span>` : ''}
                 </div>
             </div>`;
         cont.appendChild(card);
