@@ -1133,52 +1133,32 @@ function renderizarGantt(proyectosFiltrados) {
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const coloresImpacto = { 'Crítico': ['#7c3aed','#ddd6fe'], 'Alto': ['#dc2626','#fee2e2'], 'Medio': ['#d97706','#fef3c7'], 'Bajo': ['#059669','#d1fae5'] };
 
-    // Ventana dinámica: desde el proyecto más antiguo → 6 meses después del más lejano
-    let fechaVentanaInicio = new Date(hoy);
-    let fechaVentanaFin = new Date(hoy); fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 6);
+    // Ventana fija: 1 mes atrás → 6 meses adelante (evita header con decenas de meses)
+    const fechaVentanaInicio = new Date(hoy);
+    fechaVentanaInicio.setMonth(fechaVentanaInicio.getMonth() - 1);
+    fechaVentanaInicio.setDate(1);
 
-    Object.keys(desglose).forEach(iniciativa => {
-        const padre = desglose[iniciativa][0];
-        // Fecha inicio
-        let fs = padre.fechainicioiniciativa ? new Date(padre.fechainicioiniciativa) : null;
-        if (!fs) {
-            const ft = desglose[iniciativa].filter(h => h.fechaentregatarea).map(h => new Date(h.fechaentregatarea));
-            fs = ft.length > 0 ? new Date(Math.min(...ft)) : null;
-        }
-        if (fs) { fs.setHours(0,0,0,0); if (fs < fechaVentanaInicio) fechaVentanaInicio = fs; }
-        // Fecha fin
-        if (padre.fechaentregainiciativa) {
-            const fe = new Date(padre.fechaentregainiciativa); fe.setHours(0,0,0,0);
-            if (fe > fechaVentanaFin) fechaVentanaFin = fe;
-        }
-    });
-
-    // Margen visual: 2 semanas antes del inicio, 1 mes después del fin
-    fechaVentanaInicio.setDate(fechaVentanaInicio.getDate() - 14);
-    fechaVentanaInicio.setDate(1); // alinear a inicio de mes
-    fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 1);
-
+    const fechaVentanaFin = new Date(hoy); fechaVentanaFin.setMonth(fechaVentanaFin.getMonth() + 6);
     const totalDias = Math.ceil((fechaVentanaFin - fechaVentanaInicio) / 86400000);
-    const PX_POR_DIA = 3.2;
-    const anchoTotal = Math.max(1100, totalDias * PX_POR_DIA);
-    const anchoNombre = 170;
-    const hoyPx = Math.round((hoy - fechaVentanaInicio) / 86400000 * PX_POR_DIA);
 
-    // Meses header
+    // Posición de "hoy" en el eje
+    const hoyPct = Math.max(0, Math.min(100, (Math.ceil((hoy - fechaVentanaInicio) / 86400000) / totalDias) * 100));
+
+    // Meses header — solo 7-8 meses, sin superposición
     const meses = [];
     let cur = new Date(fechaVentanaInicio); cur.setDate(1);
     while (cur <= fechaVentanaFin) {
         const label = cur.toLocaleDateString('es-CL', { month: 'short', year: '2-digit' });
-        const px = Math.round((cur - fechaVentanaInicio) / 86400000 * PX_POR_DIA);
-        meses.push({ label, px });
+        const diasDesdeInicio = Math.ceil((cur - fechaVentanaInicio) / 86400000);
+        meses.push({ label, pos: Math.max(0, (diasDesdeInicio / totalDias) * 100) });
         cur.setMonth(cur.getMonth() + 1);
     }
 
     const headerHTML = `
-        <div style="position:sticky;top:0;z-index:3;background:#fff;padding-bottom:6px;">
-            <div style="display:flex;position:relative;height:24px;margin-left:${anchoNombre}px;border-bottom:1px solid #e2e8f0;width:${anchoTotal}px;">
-                ${meses.map(m => `<div style="position:absolute;left:${m.px}px;font-size:10px;color:#94a3b8;font-weight:600;white-space:nowrap;padding-left:4px;">${m.label}</div>`).join('')}
-                <div style="position:absolute;left:${hoyPx}px;top:0;bottom:-2000px;width:2px;background:#3b82f6;opacity:0.3;pointer-events:none;"></div>
+        <div style="position:sticky; top:0; z-index:3; background:#fff; padding-bottom:6px;">
+            <div style="display:flex; position:relative; height:22px; margin-left:160px; border-bottom:1px solid #e2e8f0;">
+                ${meses.map(m => `<div style="position:absolute; left:${m.pos}%; font-size:10px; color:#94a3b8; font-weight:600; transform:translateX(-50%); white-space:nowrap;">${m.label}</div>`).join('')}
+                <div style="position:absolute; left:${hoyPct}%; top:0; bottom:-200px; width:1.5px; background:#3b82f6; opacity:0.35; pointer-events:none;"></div>
             </div>
         </div>`;
 
@@ -1210,44 +1190,43 @@ function renderizarGantt(proyectosFiltrados) {
         const colors = coloresImpacto[padre.impacto] || coloresImpacto['Medio'];
         const vencida = fechaMeta < hoy && estadoIni !== 'Finalizado';
 
-        const startPx = Math.round((fechaStart - fechaVentanaInicio) / 86400000 * PX_POR_DIA);
-        const endPx   = Math.round((fechaMeta  - fechaVentanaInicio) / 86400000 * PX_POR_DIA);
-        const barLeft = Math.max(0, startPx);
-        const barWidth = Math.max(4, endPx - barLeft);
-        const showEndLabel = endPx <= anchoTotal - 40;
+        const startDias = Math.ceil((fechaStart - fechaVentanaInicio) / 86400000);
+        const endDias = Math.ceil((fechaMeta - fechaVentanaInicio) / 86400000);
+        const startPct = Math.max(0, Math.min(100, (startDias / totalDias) * 100));
+        const endPct = Math.max(0, Math.min(100, (endDias / totalDias) * 100));
+        const widthPct = Math.max(0.8, endPct - startPct);
+        const showEndLabel = endPct <= 98;
 
         const fmtInicio = fechaStart.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
-        const fmtMeta   = fechaMeta.toLocaleDateString('es-CL',  { day:'2-digit', month:'short' });
+        const fmtMeta = fechaMeta.toLocaleDateString('es-CL', { day:'2-digit', month:'short' });
         const numTareas = hijos.filter(h => h.tarea).length;
 
         filasHTML += `
-        <div style="display:flex;align-items:center;margin-bottom:6px;height:${ROW_H - 8}px;">
-            <div style="width:${anchoNombre}px;flex-shrink:0;padding-right:12px;overflow:hidden;position:sticky;left:0;background:#ffffff;z-index:10;box-shadow:2px 0 4px rgba(0,0,0,0.04);">
-                <div style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${iniciativa}">${iniciativa}</div>
-                <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio}→${fmtMeta}</div>
+        <div style="display:flex; align-items:center; margin-bottom:6px; height:${ROW_H - 8}px;">
+            <div style="width:160px; flex-shrink:0; padding-right:10px; overflow:hidden; position:sticky; left:0; background:#ffffff; z-index:10; box-shadow:2px 0 4px rgba(0,0,0,0.04);">
+                <div style="font-size:11px; font-weight:600; color:#334155; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${iniciativa}">${iniciativa}</div>
+                <div style="font-size:10px; color:#94a3b8; margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio} → ${fmtMeta}</div>
             </div>
-            <div style="position:relative;height:26px;width:${anchoTotal}px;flex-shrink:0;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
-                <div class="gantt-bar" style="position:absolute;left:${barLeft}px;width:${barWidth}px;height:100%;background:${vencida?'#ef4444':colors[0]};border-radius:6px;overflow:hidden;" title="${iniciativa}">
-                    <div style="height:100%;width:${avance}%;background:rgba(255,255,255,0.28);"></div>
+            <div style="flex:1; position:relative; height:26px; background:#f8fafc; border-radius:6px; border:1px solid #e2e8f0; overflow:visible;">
+                <div class="gantt-bar" style="position:absolute; left:${startPct}%; width:${widthPct}%; height:100%; background:${vencida?'#ef4444':colors[0]}; border-radius:6px; overflow:hidden; cursor:default;" title="${iniciativa}: ${fmtInicio} → ${fmtMeta}">
+                    <div style="height:100%; width:${avance}%; background:rgba(255,255,255,0.28);"></div>
                 </div>
-                ${showEndLabel ? `<div style="position:absolute;left:${endPx+5}px;top:50%;transform:translateY(-50%);font-size:10px;color:${vencida?'#ef4444':'#64748b'};font-weight:600;white-space:nowrap;">${vencida?'⚠ ':''}${fmtMeta}</div>` : ''}
+                ${showEndLabel ? `<div style="position:absolute; left:calc(${endPct}% + 5px); top:50%; transform:translateY(-50%); font-size:10px; color:${vencida?'#ef4444':'#64748b'}; font-weight:600; white-space:nowrap;">${vencida?'⚠ ':''}${fmtMeta}</div>` : ''}
             </div>
         </div>`;
     });
 
     if (!filasHTML) {
-        filasHTML = `<div style="text-align:center;padding:24px;font-size:13px;color:#94a3b8;">Sin iniciativas para mostrar con los filtros actuales.</div>`;
+        filasHTML = `<div style="text-align:center; padding:24px; font-size:13px; color:#94a3b8;">Sin iniciativas para mostrar con los filtros actuales.</div>`;
     }
 
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow-x:auto;scrollbar-width:thin;">
-            <div style="min-width:${anchoTotal + anchoNombre}px;">
-                ${headerHTML}
-                <div style="max-height:${containerH}px;overflow-y:${scrollable?'auto':'visible'};padding-right:4px;scrollbar-width:thin;">
-                    ${filasHTML}
-                </div>
-                ${scrollable ? `<div style="text-align:center;padding-top:8px;font-size:10px;color:#94a3b8;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
+        <div style="min-width:700px;">
+            ${headerHTML}
+            <div style="max-height:${containerH}px; overflow-y:${scrollable?'auto':'visible'}; padding-right:4px; scrollbar-width:thin;">
+                ${filasHTML}
             </div>
+            ${scrollable ? `<div style="text-align:center; padding-top:8px; font-size:10px; color:#94a3b8;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
         </div>`;
 
     const leyendaHTML = `
@@ -1258,15 +1237,6 @@ function renderizarGantt(proyectosFiltrados) {
         </div>`;
 
     document.getElementById('ganttContenido').innerHTML = ganttHTML + leyendaHTML;
-
-    // Auto-scroll para centrar "hoy" en la vista
-    requestAnimationFrame(() => {
-        const el = document.getElementById('ganttScroll');
-        if (el) {
-            const scrollTarget = Math.max(0, hoyPx - el.clientWidth / 2 + anchoNombre);
-            el.scrollLeft = scrollTarget;
-        }
-    });
 }
 
 // TABLA JERÁRQUICA
