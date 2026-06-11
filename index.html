@@ -35,6 +35,7 @@
         .filter-chip.active { ring: 2px; }
         .progress-bar-inner { transition: width 0.4s ease; }
         .fila-tarea-clickable { cursor: pointer; }
+        .fila-tarea-clickable[draggable="true"]:active { cursor: grabbing; }
         .fila-tarea-clickable:hover td { background: #f0f6ff !important; }
     </style>
 </head>
@@ -440,6 +441,7 @@ const db = getFirestore(app);
 let cacheDatosRaw = [];
 let CONFIG = {
     responsables: ['Dani','Dena','Maida','Roberto','Antony','Itu','Marisu'],
+    responsablesTarea: ['Dani','Dena','Maida','Roberto','Antony','Itu','Marisu'],
     estados: ['Backlog','En Progreso','Pausado','Bloqueado','Finalizado'],
     areas: ['Ecommerce','Tecnología','Electro','Blandos','Deco','Calzado','Belleza','Infantil','Mujer','Hombre','Marketing','Operaciones','Diseño'],
     impactos: ['Crítico','Alto','Medio','Bajo'],
@@ -449,7 +451,7 @@ let CONFIG = {
 function responsablesDeTarea(jefe) {
     const equipo = (CONFIG.equipos && CONFIG.equipos[jefe]) ? CONFIG.equipos[jefe] : [];
     const lista = [...new Set([jefe, ...equipo].filter(Boolean))];
-    return lista.length > 0 ? lista : CONFIG.responsables;
+    return lista.length > 0 ? lista : (CONFIG.responsablesTarea || CONFIG.responsables);
 }
 let filtrosActivos = { estado: new Set(), impacto: new Set(), responsable: new Set(), iniciativa: new Set() };
 let terminoBusqueda = '';
@@ -611,7 +613,7 @@ document.getElementById('inputBuscadorAuditoria').addEventListener('input', (e) 
 // FIRESTORE
 async function cargarConfiguracion() {
     try {
-        const docs = ['responsables','estados','areas','impactos'];
+        const docs = ['responsables','responsablesTarea','estados','areas','impactos'];
         for (const nombre of docs) {
             const snap = await getDoc(doc(db, "configuracion", nombre));
             if (snap.exists() && snap.data().lista) {
@@ -841,6 +843,7 @@ window.abrirModalConfig = function() {
 function renderizarListasConfig() {
     const secciones = {
         responsables: 'listaConfigResponsables',
+        responsablesTarea: 'listaConfigResponsablesTarea',
         estados: 'listaConfigEstados',
         areas: 'listaConfigAreas',
         impactos: 'listaConfigImpactos'
@@ -869,7 +872,8 @@ function renderizarEquiposConfig() {
     cont.innerHTML = '';
     CONFIG.responsables.forEach(jefe => {
         const equipo = (CONFIG.equipos && CONFIG.equipos[jefe]) ? CONFIG.equipos[jefe] : [];
-        const disponibles = CONFIG.responsables.filter(r => r !== jefe && !equipo.includes(r));
+        const poolTarea = CONFIG.responsablesTarea || CONFIG.responsables;
+        const disponibles = poolTarea.filter(r => r !== jefe && !equipo.includes(r));
         const bloque = document.createElement('div');
         bloque.className = 'bg-white rounded-lg border border-slate-200 p-3';
         bloque.innerHTML = `
@@ -1590,6 +1594,19 @@ function renderizarTablaJerarquica(proyectos) {
             </td>`;
         cuerpo.appendChild(filaPadre);
 
+        // Drop zone: soltar una tarea sobre la iniciativa la mueve a esta
+        filaPadre.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            filaPadre.style.background = '#dbeafe';
+        });
+        filaPadre.addEventListener('dragleave', () => { filaPadre.style.background = ''; });
+        filaPadre.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            filaPadre.style.background = '';
+            const tareaId = e.dataTransfer.getData('text/plain');
+            await window.moverTareaAIniciativa(tareaId, iniciativa);
+        });
+
         if (!colapso) {
             grupo.hijos.forEach(t => {
                 if (!t.tarea) return;
@@ -1605,6 +1622,14 @@ function renderizarTablaJerarquica(proyectos) {
                 const avanceTarea = Number(t.avance) || 0;
                 const filaHijo = document.createElement('tr');
                 filaHijo.className = "hover:bg-slate-50/80 transition group fila-tarea-clickable";
+                filaHijo.setAttribute('draggable', 'true');
+                filaHijo.dataset.tareaId = t.id;
+                filaHijo.dataset.iniciativa = iniciativa;
+                filaHijo.addEventListener('dragstart', (e) => {
+                    e.dataTransfer.setData('text/plain', t.id);
+                    filaHijo.style.opacity = '0.4';
+                });
+                filaHijo.addEventListener('dragend', () => { filaHijo.style.opacity = '1'; });
                 filaHijo.innerHTML = `
                     <td style="position:sticky;left:0;z-index:20;background:#ffffff;min-width:200px;padding:8px 8px 8px 24px;color:#475569;font-weight:500;box-shadow:2px 0 4px rgba(0,0,0,0.04);">↳ <span style="cursor:pointer;" class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
@@ -1623,6 +1648,25 @@ function renderizarTablaJerarquica(proyectos) {
                     window.abrirDetalleTarea(t.id);
                 });
                 cuerpo.appendChild(filaHijo);
+
+                // Subtareas
+                if (Array.isArray(t.subtareas) && t.subtareas.length > 0) {
+                    t.subtareas.forEach(st => {
+                        const avSub = Number(st.avance) || 0;
+                        const filaSub = document.createElement('tr');
+                        filaSub.className = "bg-slate-50/40 text-xs";
+                        filaSub.innerHTML = `
+                            <td style="position:sticky;left:0;z-index:20;background:#fafbfc;min-width:200px;padding:5px 8px 5px 44px;color:#64748b;box-shadow:2px 0 4px rgba(0,0,0,0.03);">↳ <span style="opacity:0.85;">${st.nombre}</span></td>
+                            <td class="p-1.5 text-slate-500 text-xs">${st.responsable || '-'}</td>
+                            <td class="p-1.5"></td>
+                            <td class="p-1.5">${barraAvance(avSub, true)}</td>
+                            <td class="p-1.5"></td>
+                            <td class="p-1.5"></td>
+                            <td class="p-1.5"></td>
+                            <td class="p-1.5"></td>`;
+                        cuerpo.appendChild(filaSub);
+                    });
+                }
             });
         }
     });
@@ -1652,6 +1696,27 @@ window.abrirDetalleTarea = function(id) {
         window.confirmarEliminar(item.id, 'TAREA', item.tarea);
     };
     document.getElementById('modalDetalleTarea').classList.remove('hidden');
+};
+
+// DRAG & DROP: mover tarea a otra iniciativa
+window.moverTareaAIniciativa = async function(tareaId, nuevaIniciativa) {
+    const tarea = cacheDatosRaw.find(p => p.id === tareaId);
+    if (!tarea || tarea.iniciativa === nuevaIniciativa) return;
+    const destino = cacheDatosRaw.find(p => p.iniciativa === nuevaIniciativa);
+    if (!destino) return;
+    try {
+        await promesaConLimite(updateDoc(doc(db, "actividades", tareaId), {
+            iniciativa: nuevaIniciativa,
+            respiniciativa: destino.respiniciativa || '',
+            areainiciativa: destino.areainiciativa || '',
+            impacto: destino.impacto || 'Medio',
+            fechaentregainiciativa: destino.fechaentregainiciativa || '',
+            fechainicioiniciativa: destino.fechainicioiniciativa || ''
+        }), 8000);
+        registrarAuditoria("Movió Tarea", `Tarea: [${tarea.tarea}] de [${tarea.iniciativa}] → [${nuevaIniciativa}]`);
+    } catch(e) {
+        alert("Error al mover la tarea: " + e.message);
+    }
 };
 
 // DUPLICAR INICIATIVA
@@ -1950,6 +2015,40 @@ window.crearAlerta = function() {
     alert("Módulo de alertas en construcción. Próximamente podrás suscribirte a notificaciones.");
 };
 
+function leerSubtareasDeFila(filaUi) {
+    const subs = [];
+    filaUi.querySelectorAll('.subtarea-fila').forEach(f => {
+        const nombre = f.querySelector('.sub-nombre').value.trim();
+        if (!nombre) return;
+        subs.push({
+            nombre,
+            responsable: f.querySelector('.sub-resp').value,
+            avance: Number(f.querySelector('.sub-avance').value) || 0
+        });
+    });
+    return subs;
+}
+
+function agregarFilaSubtarea(contenedor, vals = null) {
+    const jefe = obtenerJefeActualModal();
+    const respValidos = jefe ? responsablesDeTarea(jefe) : (CONFIG.responsablesTarea || CONFIG.responsables);
+    const fila = document.createElement('div');
+    fila.className = 'subtarea-fila flex items-center gap-2 bg-slate-50 rounded-md p-2';
+    fila.innerHTML = `
+        <input type="text" class="sub-nombre flex-1 text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500" placeholder="Nombre subtarea" value="${vals?.nombre ? vals.nombre.replace(/"/g,'&quot;') : ''}">
+        <select class="sub-resp text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500" style="max-width:110px;">
+            <option value="">Resp...</option>
+            ${respValidos.map(r => `<option value="${r}" ${vals?.responsable === r ? 'selected' : ''}>${r}</option>`).join('')}
+        </select>
+        <select class="sub-avance text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500">
+            ${[0,25,50,75,100].map(v => `<option value="${v}" ${Number(vals?.avance||0)===v?'selected':''}>${v}%</option>`).join('')}
+        </select>
+        <button type="button" class="sub-quitar text-slate-400 hover:text-red-500 font-bold text-xs px-1">✕</button>
+    `;
+    fila.querySelector('.sub-quitar').addEventListener('click', () => fila.remove());
+    contenedor.appendChild(fila);
+}
+
 function agregarFilaTareaEstructura(vals = null) {
     contadorTareasUi++;
     const idFila = `tarea_row_${contadorTareasUi}`;
@@ -2037,6 +2136,13 @@ function agregarFilaTareaEstructura(vals = null) {
         <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Comentarios <span class="text-slate-400 font-normal">(opcional)</span></label>
             <textarea class="input-tarea-comentarios w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none" rows="2" placeholder="Notas, bloqueos, contexto adicional..."></textarea>
+        </div>
+        <div class="bg-white rounded-lg border border-slate-200 p-3">
+            <div class="flex items-center justify-between mb-2">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Subtareas</label>
+                <button type="button" class="btn-agregar-subtarea text-xs text-blue-600 hover:text-blue-800 font-semibold border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition">+ Subtarea</button>
+            </div>
+            <div class="lista-subtareas space-y-2"></div>
         </div>`;
     contenedor.appendChild(div);
 
@@ -2062,6 +2168,11 @@ function agregarFilaTareaEstructura(vals = null) {
         }
     });
 
+    // Subtareas
+    const listaSub = div.querySelector('.lista-subtareas');
+    const btnAddSub = div.querySelector('.btn-agregar-subtarea');
+    btnAddSub.addEventListener('click', () => agregarFilaSubtarea(listaSub));
+
     if (vals) {
         div.querySelector('.input-tarea-nombre').value = vals.tarea || '';
         div.querySelector('.input-tarea-descripcion').value = vals.descripcion || '';
@@ -2070,6 +2181,10 @@ function agregarFilaTareaEstructura(vals = null) {
         div.querySelector('.input-tarea-avance').value = String(vals.avance || 0);
         div.querySelector('.input-tarea-tema').value = vals.tema || 'Tecnología';
         div.querySelector('.input-tarea-alertas').value = vals.alertas || 'Sin alertas';
+        // Cargar subtareas existentes
+        if (Array.isArray(vals.subtareas)) {
+            vals.subtareas.forEach(st => agregarFilaSubtarea(listaSub, st));
+        }
         if (vals.fechainicio) {
             const di = new Date(vals.fechainicio);
             if (!isNaN(di)) div.querySelector('.input-tarea-fechainicio').value = di.toISOString().split('T')[0];
@@ -2146,7 +2261,8 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                 fechainicio: filaUi.querySelector('.input-tarea-fechainicio').value,
                 fechaentregatarea: filaUi.querySelector('.input-tarea-fecha').value,
                 alertas: filaUi.querySelector('.input-tarea-alertas').value,
-                comentarios: filaUi.querySelector('.input-tarea-comentarios').value
+                comentarios: filaUi.querySelector('.input-tarea-comentarios').value,
+                subtareas: leerSubtareasDeFila(filaUi)
             };
             await promesaConLimite(updateDoc(doc(db, "actividades", idRegistro), updateData), 8000);
             const det = generarDetalleCambios(oldDocData, updateData);
@@ -2194,7 +2310,8 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                     fechainicio: f.querySelector('.input-tarea-fechainicio').value,
                     fechaentregatarea: f.querySelector('.input-tarea-fecha').value,
                     alertas: f.querySelector('.input-tarea-alertas').value,
-                    comentarios: f.querySelector('.input-tarea-comentarios').value
+                    comentarios: f.querySelector('.input-tarea-comentarios').value,
+                    subtareas: leerSubtareasDeFila(f)
                 }), 8000);
                 numNuevas++;
             }
@@ -2222,13 +2339,22 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
             <button onclick="document.getElementById('modalConfig').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl font-bold">✕</button>
         </div>
         <div class="p-6 space-y-6">
-            <!-- Responsables -->
+            <!-- Responsables Iniciativa -->
             <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                <h3 class="text-sm font-bold text-slate-700 mb-3">👤 Responsables</h3>
+                <h3 class="text-sm font-bold text-slate-700 mb-3">👤 Responsables Iniciativa</h3>
                 <div id="listaConfigResponsables" class="flex flex-wrap gap-2 mb-3"></div>
                 <div class="flex gap-2">
-                    <input type="text" id="inputNuevoResponsable" placeholder="Nuevo responsable..." class="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <input type="text" id="inputNuevoResponsable" placeholder="Nuevo responsable iniciativa..." class="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                     <button onclick="window.agregarConfigItem('responsables','inputNuevoResponsable')" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">+ Agregar</button>
+                </div>
+            </div>
+            <!-- Responsables Tarea -->
+            <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+                <h3 class="text-sm font-bold text-slate-700 mb-3">🧑‍💻 Responsables Tarea</h3>
+                <div id="listaConfigResponsablesTarea" class="flex flex-wrap gap-2 mb-3"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="inputNuevoResponsableTarea" placeholder="Nuevo responsable tarea..." class="flex-1 text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <button onclick="window.agregarConfigItem('responsablesTarea','inputNuevoResponsableTarea')" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">+ Agregar</button>
                 </div>
             </div>
             <!-- Estados -->
