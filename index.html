@@ -965,9 +965,20 @@ function renderizarKPIs() {
     kpisCharts = [];
 
     const ventana = parseInt(document.getElementById('kpisVentana').value);
-    const totalMeses = kpisData.meses.length;
-    const desde = Math.max(0, totalMeses - ventana);
-    const mesesVisibles = kpisData.meses.slice(desde);
+
+    // Encontrar el último mes con datos reales (algún KPI con valor no-null y no-cero)
+    let ultimoMesConDatos = 0;
+    Object.values(kpisData.categorias).forEach(kpis => {
+        kpis.forEach(kpi => {
+            kpi.valores.forEach((v, i) => {
+                if (v !== null && v !== undefined && v !== 0 && i > ultimoMesConDatos) ultimoMesConDatos = i;
+            });
+        });
+    });
+
+    const finVentana = ultimoMesConDatos + 1; // exclusivo
+    const desde = Math.max(0, finVentana - ventana);
+    const mesesVisibles = kpisData.meses.slice(desde, finVentana);
 
     const cont = document.getElementById('kpisContenido');
     cont.innerHTML = '';
@@ -995,10 +1006,23 @@ function renderizarKPIs() {
         grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3';
 
         kpis.forEach((kpi, kIdx) => {
-            const valoresVentana = kpi.valores.slice(desde);
-            const ultimo = [...valoresVentana].reverse().find(v => v !== null);
-            const idxUltimo = valoresVentana.length - 1 - [...valoresVentana].reverse().findIndex(v => v !== null);
-            const anterior = idxUltimo > 0 ? [...valoresVentana.slice(0, idxUltimo)].reverse().find(v => v !== null) : null;
+            const valoresVentana = kpi.valores.slice(desde, finVentana);
+
+            // Encontrar índices con valor válido (no null). Cero SÍ es válido salvo que sea relleno final.
+            const indicesValidos = [];
+            valoresVentana.forEach((v, i) => { if (v !== null && v !== undefined) indicesValidos.push(i); });
+
+            // Quitar ceros de relleno al final (meses futuros sin datos cargados como 0)
+            while (indicesValidos.length > 0) {
+                const ultIdx = indicesValidos[indicesValidos.length - 1];
+                if (valoresVentana[ultIdx] === 0) indicesValidos.pop();
+                else break;
+            }
+
+            const idxUltimo = indicesValidos.length > 0 ? indicesValidos[indicesValidos.length - 1] : -1;
+            const idxAnterior = indicesValidos.length > 1 ? indicesValidos[indicesValidos.length - 2] : -1;
+            const ultimo = idxUltimo >= 0 ? valoresVentana[idxUltimo] : null;
+            const anterior = idxAnterior >= 0 ? valoresVentana[idxAnterior] : null;
 
             let variacion = '';
             let varColor = '#94a3b8';
