@@ -474,7 +474,8 @@ let CONFIG = {
     estados: ['Backlog','En Progreso','Pausado','Bloqueado','Finalizado'],
     areas: ['Ecommerce','Tecnología','Electro','Blandos','Deco','Calzado','Belleza','Infantil','Mujer','Hombre','Marketing','Operaciones','Diseño'],
     impactos: ['Crítico','Alto','Medio','Bajo'],
-    equipos: {}
+    equipos: {},
+    emails: {}
 };
 // Devuelve los responsables de tarea válidos para un jefe (su equipo + él mismo)
 function responsablesDeTarea(jefe) {
@@ -655,6 +656,11 @@ async function cargarConfiguracion() {
         const snapEquipos = await getDoc(doc(db, "configuracion", "equipos"));
         if (snapEquipos.exists() && snapEquipos.data().mapa) {
             CONFIG.equipos = snapEquipos.data().mapa;
+        }
+        // Emails: estructura { nombre: email }
+        const snapEmails = await getDoc(doc(db, "configuracion", "emails"));
+        if (snapEmails.exists() && snapEmails.data().mapa) {
+            CONFIG.emails = snapEmails.data().mapa;
         }
         console.log("✅ Configuración cargada desde Firestore:", CONFIG);
     } catch(e) {
@@ -872,6 +878,36 @@ function renderizarTodo() {
 // VISTA KPIS — lee del Web App de Google Sheets
 // ============================================================
 const KPIS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzyalFlJF1nmf0I7exQXL0dU8GV3oH2GDp_7_YH7QCn6OqMPUMP0b4lxECI0vahE7bi/exec";
+const NOTIF_EMAIL_URL = "https://script.google.com/macros/s/AKfycbwtuHSSwLCv-zaIbntYx9rMETDjAmmzsDLOeDxzMmtZKNdB60ewQuLNEzrw6_Ap9tzyxA/exec";
+
+// Envía notificación de tarea asignada vía JSONP (sin CORS)
+function notificarTareaAsignada(responsable, tarea, iniciativa, jefe, fecha) {
+    if (NOTIF_EMAIL_URL === "PEGAR_URL_WEBAPP_NOTIF_AQUI") return;
+    const email = CONFIG.emails && CONFIG.emails[responsable] ? CONFIG.emails[responsable] : '';
+    if (!email) { console.warn('Sin email configurado para', responsable); return; }
+
+    const params = new URLSearchParams({
+        accion: 'notificar',
+        email: email,
+        responsable: responsable,
+        tarea: tarea || '',
+        iniciativa: iniciativa || '',
+        jefe: jefe || '',
+        fecha: fecha || ''
+    });
+    const cb = 'notifCb_' + Date.now() + Math.floor(Math.random()*1000);
+    window[cb] = function(resp) {
+        if (resp && resp.ok) console.log('📧 Notificación enviada a', email);
+        else console.warn('Notificación falló:', resp && resp.error);
+        delete window[cb];
+        const s = document.getElementById(cb); if (s) s.remove();
+    };
+    const script = document.createElement('script');
+    script.id = cb;
+    script.src = NOTIF_EMAIL_URL + '?' + params.toString() + '&callback=' + cb;
+    script.onerror = () => { delete window[cb]; const s = document.getElementById(cb); if (s) s.remove(); };
+    document.body.appendChild(script);
+}
 let kpisData = null;
 let kpisCharts = [];
 
@@ -1121,7 +1157,40 @@ function renderizarListasConfig() {
         }
     });
     renderizarEquiposConfig();
+    renderizarEmailsConfig();
 }
+
+function renderizarEmailsConfig() {
+    const cont = document.getElementById('listaConfigEmails');
+    if (!cont) return;
+    cont.innerHTML = '';
+    const poolTarea = CONFIG.responsablesTarea || CONFIG.responsables;
+    poolTarea.forEach(nombre => {
+        const email = (CONFIG.emails && CONFIG.emails[nombre]) ? CONFIG.emails[nombre] : '';
+        const fila = document.createElement('div');
+        fila.className = 'flex items-center gap-2 bg-white rounded-lg border border-slate-200 p-2';
+        fila.innerHTML = `
+            <span class="text-sm font-semibold text-slate-700 w-24 flex-shrink-0">${nombre}</span>
+            <input type="email" value="${email}" placeholder="correo@hites.cl"
+                onchange="window.guardarEmailResponsable('${nombre}', this.value)"
+                class="flex-1 text-sm border border-slate-300 rounded-md px-2 py-1.5 focus:outline-none focus:border-emerald-500">
+        `;
+        cont.appendChild(fila);
+    });
+}
+
+window.guardarEmailResponsable = async function(nombre, email) {
+    if (!CONFIG.emails) CONFIG.emails = {};
+    CONFIG.emails[nombre] = email.trim();
+    try {
+        const { setDoc } = await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js");
+        await setDoc(doc(db, "configuracion", "emails"), { mapa: CONFIG.emails });
+        console.log(`✅ Email de ${nombre} guardado`);
+    } catch(e) {
+        console.error("Error guardando email:", e);
+        alert("Error guardando email: " + e.message);
+    }
+};
 
 function renderizarEquiposConfig() {
     const cont = document.getElementById('listaConfigEquipos');
@@ -2585,6 +2654,14 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                     comentarios: f.querySelector('.input-tarea-comentarios').value,
                     subtareas: leerSubtareasDeFila(f)
                 }), 8000);
+                // Notificar al responsable de la tarea por email
+                if (r) notificarTareaAsignada(
+                    r,
+                    f.querySelector('.input-tarea-nombre').value,
+                    baseData.iniciativa,
+                    baseData.respiniciativa,
+                    f.querySelector('.input-tarea-fecha').value
+                );
                 numNuevas++;
             }
             registrarAuditoria("Creación", `Agregó ${numNuevas} tarea(s) en: ${baseData.iniciativa}`);
@@ -2661,6 +2738,12 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                 <h3 class="text-sm font-bold text-slate-700 mb-1">👥 Equipos (Jefe → Miembros)</h3>
                 <p class="text-xs text-slate-400 mb-3">Define qué responsables de tarea dependen de cada jefe de iniciativa. El jefe siempre puede tomar tareas propias.</p>
                 <div id="listaConfigEquipos" class="space-y-3"></div>
+            </div>
+            <!-- Emails -->
+            <div class="bg-emerald-50/50 rounded-xl p-4 border border-emerald-200">
+                <h3 class="text-sm font-bold text-slate-700 mb-1">📧 Correos (para notificaciones)</h3>
+                <p class="text-xs text-slate-400 mb-3">Email de cada responsable de tarea. Se usa para notificar cuando se le asigna una tarea nueva.</p>
+                <div id="listaConfigEmails" class="space-y-2"></div>
             </div>
         </div>
     </div>
