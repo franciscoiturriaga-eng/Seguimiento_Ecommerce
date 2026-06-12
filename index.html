@@ -77,13 +77,14 @@
             <!-- Desktop: botones visibles directamente -->
             <div class="hidden sm:flex items-center gap-2">
                 <div class="relative">
-                    <input id="inputBuscador" type="text" placeholder="🔍 Buscar..." class="text-sm border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 w-48 focus:outline-none focus:border-blue-400 bg-slate-50 focus:bg-white transition" oninput="window.aplicarBuscador(this.value)">
+                    <input id="inputBuscador" type="text" placeholder="🔍 Buscar..." class="text-sm border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 w-72 focus:outline-none focus:border-blue-400 bg-slate-50 focus:bg-white transition" oninput="window.aplicarBuscador(this.value)">
                     <button id="btnLimpiarBuscador" onclick="window.limpiarBuscador()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
                 </div>
-                <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1.5 rounded-md hover:bg-indigo-100 transition text-xs font-bold">👁️ Historial</button>
+                <button id="btnVerKPIs" class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-4 py-2 rounded-lg hover:bg-emerald-100 transition text-sm font-semibold whitespace-nowrap">📊 KPIs</button>
+                <button id="btnVerAuditoria" class="hidden bg-indigo-50 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-lg hover:bg-indigo-100 transition text-sm font-semibold whitespace-nowrap">👁️ Historial</button>
                 <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-200 transition text-xs font-bold">← Volver</button>
                 <div id="controlesFiltro" class="flex gap-2 items-center">
-                    <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition" disabled>✕ Limpiar Filtros</button>
+                    <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed transition whitespace-nowrap" disabled>✕ Limpiar Filtros</button>
                     <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm text-sm">+ Nueva Actividad</button>
                 </div>
                 <button id="btnModoOscuro" onclick="window.toggleModoOscuro()" class="bg-slate-100 text-slate-500 px-2.5 py-2 rounded-lg hover:bg-slate-200 transition text-sm" title="Modo oscuro">🌙</button>
@@ -174,6 +175,30 @@
                 <tbody id="cuerpoTablaAuditoria" class="text-sm divide-y divide-slate-200 bg-white"></tbody>
             </table>
         </div>
+    </div>
+
+    <!-- VISTA KPIS -->
+    <div id="vistaKPIs" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800">📊 KPIs Comerciales</h2>
+                <p id="kpisActualizado" class="text-xs text-slate-400">Cargando datos...</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-xs text-slate-500 font-medium">Ventana:</label>
+                <select id="kpisVentana" class="text-sm border border-slate-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-emerald-500">
+                    <option value="6" selected>Últimos 6 meses</option>
+                    <option value="12">Últimos 12 meses</option>
+                    <option value="999">Todo el histórico</option>
+                </select>
+            </div>
+        </div>
+        <div id="kpisCargando" class="text-center py-16 text-slate-400">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-2 border-emerald-200 border-t-emerald-600 mb-3"></div>
+            <p class="text-sm">Conectando con el dashboard de KPIs...</p>
+        </div>
+        <div id="kpisError" class="hidden bg-red-50 border border-red-200 text-red-700 p-4 rounded-xl text-sm"></div>
+        <div id="kpisContenido"></div>
     </div>
 
     <!-- VISTA TABLERO -->
@@ -568,6 +593,7 @@ function irAuditoria() {
 }
 function volverTablero() {
     document.getElementById('vistaAuditoria').classList.add('hidden');
+    document.getElementById('vistaKPIs').classList.add('hidden');
     document.getElementById('btnVolverTablero').classList.add('hidden');
     document.getElementById('btnVolverTableroMobile').classList.add('hidden');
     document.getElementById('vistaTablero').classList.remove('hidden');
@@ -578,6 +604,7 @@ function volverTablero() {
 }
 document.getElementById('btnVerAuditoria').addEventListener('click', irAuditoria);
 document.getElementById('btnVerAuditoriaMobile').addEventListener('click', irAuditoria);
+document.getElementById('btnVerKPIs').addEventListener('click', window.abrirVistaKPIs);
 document.getElementById('btnVolverTablero').addEventListener('click', volverTablero);
 document.getElementById('btnVolverTableroMobile').addEventListener('click', volverTablero);
 
@@ -810,12 +837,12 @@ function calcularAvanceIniciativa(hijos) {
 function renderizarTodo() {
     const btnFiltro = document.getElementById('btnLimpiarFiltros');
     if (!hayFiltrosActivos()) {
-        btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-3 py-2 rounded-lg text-sm font-medium cursor-not-allowed transition";
+        btnFiltro.className = "bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed transition whitespace-nowrap";
         btnFiltro.disabled = true;
         btnFiltro.innerText = '✕ Limpiar Filtros';
     } else {
         const total = Object.values(filtrosActivos).reduce((a,s) => a+s.size, 0);
-        btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-lg text-sm font-medium hover:bg-amber-100 cursor-pointer transition shadow-sm";
+        btnFiltro.className = "bg-amber-50 text-amber-700 border border-amber-200 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-amber-100 cursor-pointer transition shadow-sm whitespace-nowrap";
         btnFiltro.innerText = `✕ Limpiar (${total})`;
         btnFiltro.disabled = false;
     }
@@ -839,6 +866,171 @@ function renderizarTodo() {
     renderizarTarjetasResponsables(datosFiltrados);
     renderizarGantt(datosFiltrados);
     renderizarTablaJerarquica(datosFiltrados);
+}
+
+// ============================================================
+// VISTA KPIS — lee del Web App de Google Sheets
+// ============================================================
+const KPIS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbx4VaxXcCF--ZqxhWiYexWcP9-PSi_nurhx8KWIabWUSnkYDiePOasts0L17JIawBzalA/exec"; // ⬅️ reemplazar con la URL de la Web App publicada
+let kpisData = null;
+let kpisCharts = [];
+
+window.abrirVistaKPIs = function() {
+    document.getElementById('vistaTablero').classList.add('hidden');
+    document.getElementById('vistaAuditoria').classList.add('hidden');
+    document.getElementById('controlesFiltro').classList.add('hidden');
+    document.getElementById('vistaKPIs').classList.remove('hidden');
+    document.getElementById('btnVolverTablero').classList.remove('hidden');
+    if (!kpisData) cargarKPIs();
+};
+
+async function cargarKPIs() {
+    const cargando = document.getElementById('kpisCargando');
+    const errorDiv = document.getElementById('kpisError');
+    cargando.classList.remove('hidden');
+    errorDiv.classList.add('hidden');
+    try {
+        if (KPIS_WEBAPP_URL === "PEGAR_URL_WEBAPP_AQUI") {
+            throw new Error("Falta configurar la URL del Web App de KPIs en el código.");
+        }
+        const resp = await fetch(KPIS_WEBAPP_URL);
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        kpisData = data;
+        document.getElementById('kpisActualizado').textContent =
+            'Actualizado: ' + new Date(data.actualizado).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
+        renderizarKPIs();
+    } catch(e) {
+        errorDiv.textContent = "No se pudieron cargar los KPIs: " + e.message;
+        errorDiv.classList.remove('hidden');
+    } finally {
+        cargando.classList.add('hidden');
+    }
+}
+
+document.getElementById('kpisVentana').addEventListener('change', () => { if (kpisData) renderizarKPIs(); });
+
+function formatearValorKPI(nombre, valor) {
+    if (valor === null || valor === undefined) return '—';
+    const n = nombre.toLowerCase();
+    // Porcentajes
+    if (n.includes('share') || n.includes('%') || n.includes('margen') || n.includes('mg') || n.includes('tasa') || n.includes('conv') || n.includes('part') || n.includes('rechazo') || n.includes('reclamo') || n.includes('aban')) {
+        return (valor * 100).toFixed(1) + '%';
+    }
+    // ROAS y multiplicadores
+    if (n.includes('roas') || n.includes('mix')) return valor.toFixed(1) + 'x';
+    // NPS / NS (índices)
+    if (n.includes('nps') || n.includes('ns ')) return Math.round(valor);
+    // Montos grandes ($)
+    if (Math.abs(valor) >= 1000000) return '$' + (valor / 1000000).toFixed(0) + 'M';
+    if (Math.abs(valor) >= 1000) return (valor / 1000).toFixed(0) + 'K';
+    return Math.round(valor).toLocaleString('es-CL');
+}
+
+function renderizarKPIs() {
+    // Limpiar charts previos
+    kpisCharts.forEach(c => { try { c.destroy(); } catch(e){} });
+    kpisCharts = [];
+
+    const ventana = parseInt(document.getElementById('kpisVentana').value);
+    const totalMeses = kpisData.meses.length;
+    const desde = Math.max(0, totalMeses - ventana);
+    const mesesVisibles = kpisData.meses.slice(desde);
+
+    const cont = document.getElementById('kpisContenido');
+    cont.innerHTML = '';
+
+    const coloresCategoria = {
+        'Comercial': '#004bc0', 'Marketing': '#8b5cf6', 'Operaciones': '#f59e0b',
+        'Tarjeta Hites': '#ec4899', 'Financieros': '#10b981', 'CX': '#06b6d4'
+    };
+
+    Object.entries(kpisData.categorias).forEach(([categoria, kpis], idx) => {
+        const color = coloresCategoria[categoria] || '#64748b';
+        const seccion = document.createElement('div');
+        seccion.className = 'mb-8';
+
+        // Header de categoría
+        seccion.innerHTML = `
+            <div class="flex items-center gap-2 mb-4">
+                <div style="width:4px;height:20px;background:${color};border-radius:2px;"></div>
+                <h3 class="text-base font-bold text-slate-700">${categoria}</h3>
+                <span class="text-xs text-slate-400">${kpis.length} indicadores</span>
+            </div>`;
+
+        // Grid de tarjetas con mini-tendencia
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3';
+
+        kpis.forEach((kpi, kIdx) => {
+            const valoresVentana = kpi.valores.slice(desde);
+            const ultimo = [...valoresVentana].reverse().find(v => v !== null);
+            const idxUltimo = valoresVentana.length - 1 - [...valoresVentana].reverse().findIndex(v => v !== null);
+            const anterior = idxUltimo > 0 ? [...valoresVentana.slice(0, idxUltimo)].reverse().find(v => v !== null) : null;
+
+            let variacion = '';
+            let varColor = '#94a3b8';
+            if (ultimo !== null && anterior !== null && anterior !== 0) {
+                const pct = ((ultimo - anterior) / Math.abs(anterior)) * 100;
+                const signo = pct >= 0 ? '▲' : '▼';
+                varColor = pct >= 0 ? '#16a34a' : '#dc2626';
+                variacion = `${signo} ${Math.abs(pct).toFixed(1)}%`;
+            }
+
+            const canvasId = `kpichart_${idx}_${kIdx}`;
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-2">
+                    <p class="text-xs font-semibold text-slate-500 leading-tight flex-1">${kpi.nombre}</p>
+                </div>
+                <div class="flex items-end justify-between gap-2">
+                    <div>
+                        <p class="text-xl font-extrabold text-slate-800">${formatearValorKPI(kpi.nombre, ultimo)}</p>
+                        <p class="text-[11px] font-semibold" style="color:${varColor}">${variacion || '—'}</p>
+                    </div>
+                    <div style="width:90px;height:36px;"><canvas id="${canvasId}"></canvas></div>
+                </div>`;
+            grid.appendChild(card);
+
+            // Crear sparkline después de insertar en DOM
+            setTimeout(() => {
+                const ctx = document.getElementById(canvasId);
+                if (!ctx) return;
+                const ch = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: mesesVisibles,
+                        datasets: [{
+                            data: valoresVentana,
+                            borderColor: color,
+                            backgroundColor: color + '20',
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            tension: 0.35,
+                            fill: true,
+                            spanGaps: true
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { display: false }, tooltip: {
+                            callbacks: {
+                                title: (items) => mesesVisibles[items[0].dataIndex],
+                                label: (item) => formatearValorKPI(kpi.nombre, item.raw)
+                            }
+                        } },
+                        scales: { x: { display: false }, y: { display: false } },
+                        animation: false
+                    }
+                });
+                kpisCharts.push(ch);
+            }, 0);
+        });
+
+        seccion.appendChild(grid);
+        cont.appendChild(seccion);
+    });
 }
 
 // ============================================================
