@@ -991,16 +991,23 @@ function renderizarResumenEjecutivo(datos) {
         ? Math.round(tareas.reduce((a, t) => a + (Number(t.avance) || 0), 0) / tareas.length)
         : 0;
 
-    // Vencen esta semana
+    // Vencen esta semana — INICIATIVAS (no tareas)
     const hoy = new Date(); hoy.setHours(0,0,0,0);
     const enSieteDias = new Date(hoy); enSieteDias.setDate(enSieteDias.getDate() + 7);
-    const vencenSemana = tareas.filter(t => {
-        if (!t.fechaentregatarea || t.estado === 'Finalizado') return false;
-        const f = new Date(t.fechaentregatarea); f.setHours(0,0,0,0);
+    const vencenSemana = iniciativasUnicas.filter(ini => {
+        const hijos = datos.filter(p => p.iniciativa === ini);
+        const padre = hijos[0];
+        if (!padre || !padre.fechaentregainiciativa) return false;
+        if (calcularEstadoIniciativa(hijos) === 'Finalizado') return false;
+        const f = new Date(padre.fechaentregainiciativa); f.setHours(0,0,0,0);
         return f >= hoy && f <= enSieteDias;
     });
 
-    const bloqueadas = tareas.filter(t => t.estado === 'Bloqueado');
+    // Bloqueadas — INICIATIVAS con estado calculado Bloqueado
+    const bloqueadas = iniciativasUnicas.filter(ini => {
+        const hijos = datos.filter(p => p.iniciativa === ini);
+        return calcularEstadoIniciativa(hijos) === 'Bloqueado';
+    });
 
     document.getElementById('resumenAvanceNum').textContent = avanceTotal + '%';
     document.getElementById('resumenAvanceBar').style.width = avanceTotal + '%';
