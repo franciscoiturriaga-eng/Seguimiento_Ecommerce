@@ -884,28 +884,60 @@ window.abrirVistaKPIs = function() {
     if (!kpisData) cargarKPIs();
 };
 
-async function cargarKPIs() {
+function cargarKPIs() {
     const cargando = document.getElementById('kpisCargando');
     const errorDiv = document.getElementById('kpisError');
     cargando.classList.remove('hidden');
     errorDiv.classList.add('hidden');
-    try {
-        if (KPIS_WEBAPP_URL === "PEGAR_URL_WEBAPP_AQUI") {
-            throw new Error("Falta configurar la URL del Web App de KPIs en el código.");
+
+    if (KPIS_WEBAPP_URL === "PEGAR_URL_WEBAPP_AQUI") {
+        errorDiv.textContent = "Falta configurar la URL del Web App de KPIs en el código.";
+        errorDiv.classList.remove('hidden');
+        cargando.classList.add('hidden');
+        return;
+    }
+
+    // JSONP: evita CORS completamente. El Web App responde callback(json).
+    const callbackName = 'kpisCallback_' + Date.now();
+    const timeout = setTimeout(() => {
+        errorDiv.textContent = "No se pudieron cargar los KPIs: tiempo de espera agotado. Verifica que el Web App esté publicado con acceso 'Cualquier usuario'.";
+        errorDiv.classList.remove('hidden');
+        cargando.classList.add('hidden');
+        limpiar();
+    }, 15000);
+
+    function limpiar() {
+        delete window[callbackName];
+        const s = document.getElementById(callbackName);
+        if (s) s.remove();
+    }
+
+    window[callbackName] = function(data) {
+        clearTimeout(timeout);
+        cargando.classList.add('hidden');
+        limpiar();
+        if (!data || data.error) {
+            errorDiv.textContent = "No se pudieron cargar los KPIs: " + (data && data.error ? data.error : 'respuesta vacía');
+            errorDiv.classList.remove('hidden');
+            return;
         }
-        const resp = await fetch(KPIS_WEBAPP_URL);
-        const data = await resp.json();
-        if (data.error) throw new Error(data.error);
         kpisData = data;
         document.getElementById('kpisActualizado').textContent =
             'Actualizado: ' + new Date(data.actualizado).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' });
         renderizarKPIs();
-    } catch(e) {
-        errorDiv.textContent = "No se pudieron cargar los KPIs: " + e.message;
+    };
+
+    const script = document.createElement('script');
+    script.id = callbackName;
+    script.src = KPIS_WEBAPP_URL + (KPIS_WEBAPP_URL.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+    script.onerror = () => {
+        clearTimeout(timeout);
+        errorDiv.textContent = "No se pudieron cargar los KPIs: error de red al contactar el Web App.";
         errorDiv.classList.remove('hidden');
-    } finally {
         cargando.classList.add('hidden');
-    }
+        limpiar();
+    };
+    document.body.appendChild(script);
 }
 
 document.getElementById('kpisVentana').addEventListener('change', () => { if (kpisData) renderizarKPIs(); });
