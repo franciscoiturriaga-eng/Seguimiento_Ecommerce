@@ -123,7 +123,7 @@
                 <span id="iconToggleFiltros" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
             </button>
             <div id="cuerpoPanelFiltros" class="hidden border-t border-slate-100 p-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Estado</p>
                         <div id="chipsEstado" class="flex flex-wrap gap-1.5"></div>
@@ -135,6 +135,10 @@
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Responsable</p>
                         <div id="chipsResponsable" class="flex flex-wrap gap-1.5"></div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Área</p>
+                        <div id="chipsArea" class="flex flex-wrap gap-1.5 max-h-[110px] overflow-y-auto pr-1" style="scrollbar-width:thin;"></div>
                     </div>
                     <div>
                         <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Iniciativa</p>
@@ -251,7 +255,7 @@
                     <button id="btnColapsarTodo" onclick="window.colapsarTodo()" class="text-xs text-slate-500 hover:text-slate-700 font-medium border border-slate-200 bg-slate-50 px-2 py-1 rounded-md transition">⊟ Colapsar todo</button>
                     <button onclick="window.exportarTabla()" class="text-xs text-green-700 hover:text-green-800 font-medium border border-green-200 bg-green-50 px-2 py-1 rounded-md transition">⬇ Exportar Excel</button>
                 </div>
-                <span class="hidden sm:block text-xs text-slate-400 font-mono">Amarillo: 16-30 días a Meta | Rojo: ≤15 días o Atraso</span>
+                <span class="hidden sm:block text-xs text-slate-400 font-mono">Amarillo: vence en 16-30 días | Rojo: vence en ≤15 días o atrasada</span>
             </div>
             <div style="overflow-x:auto; border-radius:0 0 12px 12px;">
                 <table style="width:100%; min-width:700px; border-collapse:collapse; text-align:left;">
@@ -453,7 +457,7 @@ function responsablesDeTarea(jefe) {
     const lista = [...new Set([jefe, ...equipo].filter(Boolean))];
     return lista.length > 0 ? lista : (CONFIG.responsablesTarea || CONFIG.responsables);
 }
-let filtrosActivos = { estado: new Set(), impacto: new Set(), responsable: new Set(), iniciativa: new Set() };
+let filtrosActivos = { estado: new Set(), impacto: new Set(), responsable: new Set(), iniciativa: new Set(), area: new Set() };
 let terminoBusqueda = '';
 let iniciativasColapsadas = new Set();
 let columnaOrdenActual = null;
@@ -670,6 +674,7 @@ function construirChipsFiltros() {
     const impactos = CONFIG.impactos;
     const responsables = CONFIG.responsables.filter(r => cacheDatosRaw.some(p => p.responsable === r || p.respiniciativa === r));
     const iniciativas = [...new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean))].sort();
+    const areas = [...new Set(cacheDatosRaw.map(p => p.areainiciativa).filter(Boolean))].sort();
 
     const coloresEstado = { 'Backlog':'bg-slate-100 text-slate-600', 'En Progreso':'bg-blue-100 text-blue-700', 'Pausado':'bg-amber-100 text-amber-700', 'Bloqueado':'bg-red-100 text-red-700', 'Finalizado':'bg-green-100 text-green-700' };
     const coloresImpacto = { 'Crítico':'bg-purple-100 text-purple-700', 'Alto':'bg-red-100 text-red-700', 'Medio':'bg-yellow-100 text-yellow-700', 'Bajo':'bg-green-100 text-green-700' };
@@ -687,6 +692,7 @@ function construirChipsFiltros() {
                 if (k === 'impacto') return s.has(p.impacto);
                 if (k === 'responsable') return s.has(p.responsable) || s.has(p.respiniciativa);
                 if (k === 'iniciativa') return s.has(p.iniciativa);
+                if (k === 'area') return s.has(p.areainiciativa) || s.has(p.tema);
                 return true;
             });
         });
@@ -695,6 +701,7 @@ function construirChipsFiltros() {
             if (tipo === 'impacto') return p.impacto;
             if (tipo === 'responsable') return [p.responsable, p.respiniciativa];
             if (tipo === 'iniciativa') return p.iniciativa;
+            if (tipo === 'area') return [p.areainiciativa, p.tema];
             return null;
         }).flat().filter(Boolean));
 
@@ -724,6 +731,7 @@ function construirChipsFiltros() {
     renderChips('chipsEstado', estados, 'estado', coloresEstado);
     renderChips('chipsImpacto', impactos, 'impacto', coloresImpacto);
     renderChips('chipsResponsable', responsables, 'responsable', null);
+    renderChips('chipsArea', areas, 'area', null);
     renderChips('chipsIniciativa', iniciativas, 'iniciativa', null);
 }
 
@@ -818,6 +826,7 @@ function renderizarTodo() {
     if (filtrosActivos.impacto.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.impacto.has(p.impacto));
     if (filtrosActivos.responsable.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.responsable.has(p.responsable) || filtrosActivos.responsable.has(p.respiniciativa));
     if (filtrosActivos.iniciativa.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.iniciativa.has(p.iniciativa));
+    if (filtrosActivos.area.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.area.has(p.areainiciativa) || filtrosActivos.area.has(p.tema));
     if (terminoBusqueda) {
         datosFiltrados = datosFiltrados.filter(p =>
             [p.iniciativa, p.tarea, p.responsable, p.respiniciativa, p.estado, p.tema, p.areainiciativa, p.descripcion, p.comentarios]
@@ -1017,11 +1026,18 @@ function renderizarResumenEjecutivo(datos) {
     document.getElementById('resumenBloqueadas').textContent = bloqueadas.length;
     document.getElementById('resumenVencenNum').textContent = vencenSemana.length;
 
-    // Card vencen semana: click filtra por En Progreso + Backlog con fecha próxima
+    // Card vencen semana: click filtra esas iniciativas
     document.getElementById('cardVencenSemana').onclick = () => {
         if (vencenSemana.length === 0) return;
-        // Resaltar visualmente en la tabla
-        document.getElementById('contenedorTabla').scrollIntoView({ behavior: 'smooth' });
+        filtrosActivos.iniciativa.clear();
+        vencenSemana.forEach(ini => filtrosActivos.iniciativa.add(ini));
+        construirChipsFiltros();
+        renderizarTodo();
+        const cuerpo = document.getElementById('cuerpoPanelFiltros');
+        if (cuerpo.classList.contains('hidden')) {
+            cuerpo.classList.remove('hidden');
+            document.getElementById('iconToggleFiltros').style.transform = 'rotate(180deg)';
+        }
     };
 }
 
@@ -1268,8 +1284,8 @@ function renderizarGraficasPrincipales(proyectos) {
             onClick: (e, els) => {
                 if (els.length > 0) {
                     const area = temasActivos[els[0].index][0];
-                    if (filtrosActivos.iniciativa.has(area)) filtrosActivos.iniciativa.delete(area);
-                    else filtrosActivos.iniciativa.add(area);
+                    if (filtrosActivos.area.has(area)) filtrosActivos.area.delete(area);
+                    else filtrosActivos.area.add(area);
                     construirChipsFiltros(); renderizarTodo();
                 }
             }
@@ -1590,7 +1606,7 @@ function renderizarTablaJerarquica(proyectos) {
             <td class="p-3 text-slate-700 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('responsable','${pMetas.respiniciativa || ''}')">${pMetas.respiniciativa || '-'}</td>
             <td class="p-3">${badgeEstado(estadoIni)}</td>
             <td class="p-3">${barraAvance(avanceIni, true)}</td>
-            <td class="p-3 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('iniciativa','${iniciativa.replace(/'/g,"\\'")}')">${pMetas.areainiciativa || '-'}</td>
+            <td class="p-3 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('area','${(pMetas.areainiciativa||'').replace(/'/g,"\\'")}')">${pMetas.areainiciativa || '-'}</td>
             <td class="p-3 text-slate-600 font-mono text-xs">${fEntregaIni}</td>
             <td class="p-3 text-right pr-6 font-mono text-xs text-slate-400">${fCreacionIni}</td>
             <td class="p-3 text-center flex justify-center gap-2">
@@ -1618,12 +1634,13 @@ function renderizarTablaJerarquica(proyectos) {
             grupo.hijos.forEach(t => {
                 if (!t.tarea) return;
                 const fET = t.fechaentregatarea ? new Date(t.fechaentregatarea) : null;
-                const fEI = pMetas.fechaentregainiciativa ? new Date(pMetas.fechaentregainiciativa) : null;
                 let cFecha = "text-slate-600 font-mono";
-                if (fET && fEI && t.estado !== "Finalizado") {
-                    fET.setHours(0,0,0,0); fEI.setHours(0,0,0,0);
-                    const diffDias = Math.ceil((fEI - fET) / 86400000);
-                    if (diffDias <= 15) cFecha = "text-red-700 bg-red-100 font-bold px-2 py-0.5 rounded border border-red-200";
+                if (fET && t.estado !== "Finalizado") {
+                    fET.setHours(0,0,0,0);
+                    const hoyTabla = new Date(); hoyTabla.setHours(0,0,0,0);
+                    const diffDias = Math.ceil((fET - hoyTabla) / 86400000);
+                    if (diffDias < 0) cFecha = "text-red-700 bg-red-100 font-bold px-2 py-0.5 rounded border border-red-200"; // atrasada
+                    else if (diffDias <= 15) cFecha = "text-red-700 bg-red-100 font-bold px-2 py-0.5 rounded border border-red-200";
                     else if (diffDias <= 30) cFecha = "text-yellow-700 bg-yellow-100 font-bold px-2 py-0.5 rounded border border-yellow-300";
                 }
                 const avanceTarea = Number(t.avance) || 0;
@@ -1642,7 +1659,7 @@ function renderizarTablaJerarquica(proyectos) {
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
                     <td class="p-2">${barraAvance(avanceTarea, true)}</td>
-                    <td class="p-2 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('iniciativa',cacheDatosRaw.find(x=>x.id==='${t.id}')?.iniciativa||'')">${t.tema || '-'}</td>
+                    <td class="p-2 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('area','${(t.tema||'').replace(/'/g,"\\'")}')">${t.tema || '-'}</td>
                     <td class="p-2 text-xs"><span class="${cFecha}">${fET ? fET.toLocaleDateString('es-CL') : '-'}</span></td>
                     <td class="p-2 text-right pr-6 font-mono text-xs text-slate-400">${t.fechacreacion ? new Date(t.fechacreacion).toLocaleDateString('es-CL') : '-'}</td>
                     <td class="p-2 text-center opacity-0 group-hover:opacity-100 transition-opacity flex justify-center gap-2">
