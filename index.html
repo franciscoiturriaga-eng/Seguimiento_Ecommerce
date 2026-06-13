@@ -2127,11 +2127,9 @@ function renderizarGantt(proyectosFiltrados) {
     const filasPx = Math.min(numIniciativas, MAX_VISIBLE) * ROW_H_TOTAL;
     const headerPx = 32;
 
-    // Sticky funciona con un solo contenedor de overflow.
-    // Usamos height fija = filas visibles para evitar espacio vacío.
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow:auto;scrollbar-width:thin;height:${filasPx + headerPx}px;">
-            <div style="min-width:${anchoTotal + anchoNombre}px;height:${filasPx + headerPx}px;">
+        <div id="ganttScroll" style="overflow:auto;scrollbar-width:thin;">
+            <div id="ganttInner" style="min-width:${anchoTotal + anchoNombre}px;">
                 ${headerHTML}
                 ${filasHTML}
                 ${necesitaScrollY ? `<div style="text-align:center;padding:4px 0;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ ${numIniciativas - MAX_VISIBLE} iniciativas más</div>` : ''}
@@ -2147,13 +2145,18 @@ function renderizarGantt(proyectosFiltrados) {
 
     document.getElementById('ganttContenido').innerHTML = ganttHTML + leyendaHTML;
 
-    // Auto-scroll para centrar "hoy" en la vista
+    // Ajustar altura del scroll container al contenido real (sin espacio vacío)
     requestAnimationFrame(() => {
-        const el = document.getElementById('ganttScroll');
-        if (el) {
-            const scrollTarget = Math.max(0, hoyPx - el.clientWidth / 2 + anchoNombre);
-            el.scrollLeft = scrollTarget;
-        }
+        const scrollEl = document.getElementById('ganttScroll');
+        const innerEl  = document.getElementById('ganttInner');
+        if (!scrollEl || !innerEl) return;
+        const alturaContenido = innerEl.scrollHeight;
+        const alturaMax = MAX_VISIBLE * ROW_H_TOTAL + headerPx + 20;
+        scrollEl.style.height = Math.min(alturaContenido, alturaMax) + 'px';
+
+        // Auto-scroll a hoy
+        const scrollTarget = Math.max(0, hoyPx - scrollEl.clientWidth / 2 + anchoNombre);
+        scrollEl.scrollLeft = scrollTarget;
     });
 }
 
