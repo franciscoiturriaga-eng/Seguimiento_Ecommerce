@@ -3089,10 +3089,23 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
 <!-- SKELETON LOADER (reemplaza el spinner) -->
 <div id="skeletonLoader" class="hidden px-6 pb-6">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        ${[1,2,3,4].map(()=>`<div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-16 mb-2"></div><div class="skeleton h-2 w-full"></div></div>`).join('')}
+        <div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-16 mb-2"></div><div class="skeleton h-2 w-full"></div></div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-16 mb-2"></div><div class="skeleton h-2 w-full"></div></div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-16 mb-2"></div><div class="skeleton h-2 w-full"></div></div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-3 w-20 mb-3"></div><div class="skeleton h-8 w-16 mb-2"></div><div class="skeleton h-2 w-full"></div></div>
     </div>
-    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4"><div class="skeleton h-4 w-40 mb-4"></div><div class="skeleton h-32 w-full"></div></div>
-    <div class="bg-white rounded-xl border border-slate-200 p-4"><div class="skeleton h-4 w-32 mb-4"></div>${[1,2,3,4,5].map(()=>`<div class="skeleton h-8 w-full mb-2"></div>`).join('')}</div>
+    <div class="bg-white rounded-xl border border-slate-200 p-4 mb-4">
+        <div class="skeleton h-4 w-40 mb-4"></div>
+        <div class="skeleton h-32 w-full"></div>
+    </div>
+    <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="skeleton h-4 w-32 mb-4"></div>
+        <div class="skeleton h-8 w-full mb-2"></div>
+        <div class="skeleton h-8 w-full mb-2"></div>
+        <div class="skeleton h-8 w-full mb-2"></div>
+        <div class="skeleton h-8 w-full mb-2"></div>
+        <div class="skeleton h-8 w-full"></div>
+    </div>
 </div>
 
 </body>
