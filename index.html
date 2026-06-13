@@ -1043,7 +1043,96 @@ function renderizarKPIs() {
         const grid = document.createElement('div');
         grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3';
 
+        // KPIs especiales a excluir del grid individual (se grafican aparte)
+        const KPI_EXCLUIR_COMERCIAL = ['Vta Ecom', 'Vta 1p', 'Vta 3p'];
+
+        // Gráfico apilado 1p + 3p para categoría Comercial
+        if (categoria === 'Comercial') {
+            const kpi1p  = kpis.find(k => k.nombre === 'Vta 1p');
+            const kpi3p  = kpis.find(k => k.nombre === 'Vta 3p');
+            const kpiTot = kpis.find(k => k.nombre === 'Vta Ecom');
+
+            if (kpi1p && kpi3p) {
+                const vals1p  = (kpi1p.valores.slice(desde, finVentana)).map(v => v != null && v !== 0 ? Math.round(v/1000000) : null);
+                const vals3p  = (kpi3p.valores.slice(desde, finVentana)).map(v => v != null && v !== 0 ? Math.round(v/1000000) : null);
+                const valsTot = kpiTot ? (kpiTot.valores.slice(desde, finVentana)).map(v => v != null && v !== 0 ? Math.round(v/1000000) : null) : [];
+
+                const canvasId = `kpi_stacked_comercial`;
+                const chartWrapper = document.createElement('div');
+                chartWrapper.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4';
+                chartWrapper.innerHTML = `
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <p class="text-sm font-bold text-slate-700">Ventas Ecommerce (1P + 3P)</p>
+                            <p class="text-xs text-slate-400">Miles de millones CLP · últimos ${mesesVisibles.length} meses</p>
+                        </div>
+                        <div class="flex gap-4 text-xs">
+                            <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;"></span>1P</span>
+                            <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10b981;"></span>3P</span>
+                        </div>
+                    </div>
+                    <div style="height:220px;"><canvas id="${canvasId}"></canvas></div>`;
+                seccion.appendChild(chartWrapper);
+
+                setTimeout(() => {
+                    const ctx = document.getElementById(canvasId);
+                    if (!ctx) return;
+                    const ch = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: mesesVisibles,
+                            datasets: [
+                                {
+                                    label: 'Vta 1P ($M)',
+                                    data: vals1p,
+                                    backgroundColor: '#2563eb',
+                                    borderRadius: 3,
+                                    stack: 'venta'
+                                },
+                                {
+                                    label: 'Vta 3P ($M)',
+                                    data: vals3p,
+                                    backgroundColor: '#10b981',
+                                    borderRadius: 3,
+                                    stack: 'venta'
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        afterBody: (items) => {
+                                            const idx = items[0]?.dataIndex;
+                                            const tot = valsTot[idx];
+                                            return tot ? [`Total: $${tot}M`] : [];
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+                                y: {
+                                    stacked: true,
+                                    ticks: {
+                                        font: { size: 10 },
+                                        callback: v => '$' + (v/1000).toFixed(0) + 'B'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    kpisCharts.push(ch);
+                }, 0);
+            }
+        }
+
         kpis.forEach((kpi, kIdx) => {
+            // Saltar los KPIs que ya están en el gráfico apilado
+            if (categoria === 'Comercial' && KPI_EXCLUIR_COMERCIAL.includes(kpi.nombre)) return;
             const valoresVentana = kpi.valores.slice(desde, finVentana);
 
             // Encontrar índices con valor válido (no null). Cero SÍ es válido salvo que sea relleno final.
