@@ -260,7 +260,7 @@
 
 
         <!-- GANTT -->
-        <div id="contenedorGantt" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-4 overflow-hidden">
+        <div id="contenedorGantt" class="hidden bg-white rounded-xl shadow-sm border border-slate-200 mb-4">
             <div class="p-4 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
                 <h3 class="font-bold text-slate-700 text-sm">Línea de Tiempo de Iniciativas</h3>
                 <span class="text-xs text-slate-400 font-mono">Vista de los próximos 6 meses</span>
@@ -1801,15 +1801,19 @@ function renderizarGantt(proyectosFiltrados) {
     }
 
     const numIniciativas = iniciativas.length;
-    const alturaFilas = numIniciativas * ROW_H + 30; // altura exacta sin espacio vacío
-    const maxHeight = Math.min(alturaFilas, MAX_VISIBLE * ROW_H + 54);
+    const ROW_H_TOTAL = ROW_H; // height per row including margin
+    const alturaFilas = numIniciativas * ROW_H_TOTAL + 54; // exact height for all rows + header
+    const maxAlturaScroll = MAX_VISIBLE * ROW_H_TOTAL + 54;
+    const necesitaScrollY = numIniciativas > MAX_VISIBLE;
 
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow-x:auto;overflow-y:auto;scrollbar-width:thin;max-height:${maxHeight}px;">
+        <div id="ganttScroll" style="overflow-x:auto;scrollbar-width:thin;">
             <div style="min-width:${anchoTotal + anchoNombre}px;position:relative;">
                 ${headerHTML}
-                ${filasHTML}
-                ${scrollable ? `<div style="text-align:center;padding-top:8px;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ Scroll para ver ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
+                <div style="overflow-y:${necesitaScrollY ? 'auto' : 'visible'};max-height:${necesitaScrollY ? maxAlturaScroll + 'px' : 'none'};scrollbar-width:thin;">
+                    ${filasHTML}
+                    ${necesitaScrollY ? `<div style="text-align:center;padding-top:8px;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ ${iniciativas.length - MAX_VISIBLE} iniciativas más</div>` : ''}
+                </div>
             </div>
         </div>`;
 
