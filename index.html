@@ -2124,18 +2124,17 @@ function renderizarGantt(proyectosFiltrados) {
     const alturaFilas = numIniciativas * ROW_H_TOTAL + 54; // exact height for all rows + header
     const maxAlturaScroll = MAX_VISIBLE * ROW_H_TOTAL + 54;
     const necesitaScrollY = numIniciativas > MAX_VISIBLE;
-    const alturaRows = numIniciativas * ROW_H_TOTAL;
-    const alturaHeader = 30;
-    const alturaGantt = necesitaScrollY
-        ? Math.min(alturaRows + alturaHeader, MAX_VISIBLE * ROW_H_TOTAL + alturaHeader)
-        : alturaRows + alturaHeader;
+    const filasPx = Math.min(numIniciativas, MAX_VISIBLE) * ROW_H_TOTAL;
+    const headerPx = 32;
 
+    // Sticky funciona con un solo contenedor de overflow.
+    // Usamos height fija = filas visibles para evitar espacio vacío.
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow:auto;scrollbar-width:thin;max-height:${alturaGantt}px;">
-            <div style="min-width:${anchoTotal + anchoNombre}px;width:max-content;">
+        <div id="ganttScroll" style="overflow:auto;scrollbar-width:thin;height:${filasPx + headerPx}px;">
+            <div style="min-width:${anchoTotal + anchoNombre}px;height:${filasPx + headerPx}px;">
                 ${headerHTML}
                 ${filasHTML}
-                ${necesitaScrollY ? `<div style="text-align:center;padding:6px 0;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ ${numIniciativas - MAX_VISIBLE} iniciativas más</div>` : ''}
+                ${necesitaScrollY ? `<div style="text-align:center;padding:4px 0;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ ${numIniciativas - MAX_VISIBLE} iniciativas más</div>` : ''}
             </div>
         </div>`;
 
