@@ -1044,7 +1044,8 @@ function renderizarKPIs() {
         grid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3';
 
         // KPIs especiales a excluir del grid individual (se grafican aparte)
-        const KPI_EXCLUIR_COMERCIAL = ['Vta Ecom', 'Vta 1p', 'Vta 3p'];
+        const KPI_EXCLUIR_COMERCIAL = ['Vta Ecom', 'Vta 1p', 'Vta 3p', 'Vta Cadena 1p',
+            'Share Ecom', 'Share 1p', 'Share 3p/Ecom', '# skus 1p', '# skus 3p'];
 
         // Gráfico apilado 1p + 3p para categoría Comercial
         if (categoria === 'Comercial') {
@@ -1073,6 +1074,116 @@ function renderizarKPIs() {
                     </div>
                     <div style="height:220px;"><canvas id="${canvasId}"></canvas></div>`;
                 seccion.appendChild(chartWrapper);
+
+                // 3 gráficos de línea independientes para cada Share — en fila de 3 columnas
+                const sharesConfig = [
+                    { kpiNombre: 'Share Ecom',    label: 'Share Ecom',    color: '#2563eb', canvasId: 'kpi_share_ecom' },
+                    { kpiNombre: 'Share 1p',      label: 'Share 1P',      color: '#10b981', canvasId: 'kpi_share_1p'   },
+                    { kpiNombre: 'Share 3p/Ecom', label: 'Share 3P/Ecom', color: '#f59e0b', canvasId: 'kpi_share_3p'   },
+                ];
+
+                const shareRow = document.createElement('div');
+                shareRow.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+
+                sharesConfig.forEach(cfg => {
+                    const kpi = kpis.find(k => k.nombre === cfg.kpiNombre);
+                    if (!kpi) return;
+                    const vals = kpi.valores.slice(desde, finVentana).map(v =>
+                        v != null && v !== 0 ? parseFloat((v * 100).toFixed(1)) : null);
+
+                    // Último valor válido y variación
+                    const ultIdx = [...vals].map((v,i)=>({v,i})).filter(x=>x.v!=null).pop();
+                    const antIdx = ultIdx ? [...vals].map((v,i)=>({v,i})).filter(x=>x.v!=null && x.i < ultIdx.i).pop() : null;
+                    const ultimo  = ultIdx ? ultIdx.v : null;
+                    const anterior = antIdx ? antIdx.v : null;
+                    let varText = '—', varColor = '#94a3b8';
+                    if (ultimo !== null && anterior !== null && anterior !== 0) {
+                        const diff = ultimo - anterior;
+                        varColor = diff >= 0 ? '#16a34a' : '#dc2626';
+                        varText = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toFixed(1) + 'pp';
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+                    card.innerHTML = `
+                        <p class="text-xs font-semibold text-slate-500 mb-1">${cfg.label}</p>
+                        <p class="text-xl font-extrabold text-slate-800">${ultimo !== null ? ultimo + '%' : '—'}</p>
+                        <p class="text-[11px] font-semibold mb-2" style="color:${varColor}">${varText}</p>
+                        <div style="height:60px;"><canvas id="${cfg.canvasId}"></canvas></div>`;
+                    shareRow.appendChild(card);
+
+                    setTimeout(() => {
+                        const ctx = document.getElementById(cfg.canvasId);
+                        if (!ctx) return;
+                        const ch = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: mesesVisibles,
+                                datasets: [{ data: vals, borderColor: cfg.color, backgroundColor: cfg.color + '20',
+                                    borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true, spanGaps: true }]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false, animation: false,
+                                plugins: { legend: { display: false }, tooltip: { callbacks: {
+                                    title: items => mesesVisibles[items[0].dataIndex],
+                                    label: item => `${cfg.label}: ${item.raw}%`
+                                }}},
+                                scales: { x: { display: false }, y: { display: false } }
+                            }
+                        });
+                        kpisCharts.push(ch);
+                    }, 0);
+                });
+                seccion.appendChild(shareRow);
+
+                // Gráfico de barras apiladas: SKUs 1p + SKUs 3p
+                const kpiSkus1p = kpis.find(k => k.nombre === '# skus 1p');
+                const kpiSkus3p = kpis.find(k => k.nombre === '# skus 3p');
+
+                if (kpiSkus1p && kpiSkus3p) {
+                    const vSkus1p = kpiSkus1p.valores.slice(desde, finVentana).map(v => v != null && v !== 0 ? Math.round(v/1000) : null);
+                    const vSkus3p = kpiSkus3p.valores.slice(desde, finVentana).map(v => v != null && v !== 0 ? Math.round(v/1000) : null);
+
+                    const skusWrapper = document.createElement('div');
+                    skusWrapper.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4';
+                    skusWrapper.innerHTML = `
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-bold text-slate-700">SKUs Activos (1P + 3P)</p>
+                                <p class="text-xs text-slate-400">Miles de SKUs · últimos ${mesesVisibles.length} meses</p>
+                            </div>
+                            <div class="flex gap-4 text-xs">
+                                <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;"></span>1P</span>
+                                <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10b981;"></span>3P</span>
+                            </div>
+                        </div>
+                        <div style="height:200px;"><canvas id="kpi_skus_comercial"></canvas></div>`;
+                    seccion.appendChild(skusWrapper);
+
+                    setTimeout(() => {
+                        const ctx = document.getElementById('kpi_skus_comercial');
+                        if (!ctx) return;
+                        const ch = new Chart(ctx, {
+                            type: 'bar',
+                            data: {
+                                labels: mesesVisibles,
+                                datasets: [
+                                    { label: 'SKUs 1P', data: vSkus1p, backgroundColor: '#2563eb', borderRadius: 3, stack: 'skus' },
+                                    { label: 'SKUs 3P', data: vSkus3p, backgroundColor: '#10b981', borderRadius: 3, stack: 'skus' }
+                                ]
+                            },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: item => `${item.dataset.label}: ${item.raw}K SKUs` } } },
+                                scales: {
+                                    x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+                                    y: { stacked: true, ticks: { font: { size: 10 }, callback: v => v + 'K' } }
+                                }
+                            }
+                        });
+                        kpisCharts.push(ch);
+                    }, 0);
+                }
 
                 setTimeout(() => {
                     const ctx = document.getElementById(canvasId);
