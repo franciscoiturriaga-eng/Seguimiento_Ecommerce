@@ -2124,16 +2124,18 @@ function renderizarGantt(proyectosFiltrados) {
     const alturaFilas = numIniciativas * ROW_H_TOTAL + 54; // exact height for all rows + header
     const maxAlturaScroll = MAX_VISIBLE * ROW_H_TOTAL + 54;
     const necesitaScrollY = numIniciativas > MAX_VISIBLE;
-    const alturaContenido = necesitaScrollY ? (MAX_VISIBLE * ROW_H_TOTAL + 54) + 'px' : 'auto';
+    const alturaRows = numIniciativas * ROW_H_TOTAL;
+    const alturaHeader = 30;
+    const alturaGantt = necesitaScrollY
+        ? Math.min(alturaRows + alturaHeader, MAX_VISIBLE * ROW_H_TOTAL + alturaHeader)
+        : alturaRows + alturaHeader;
 
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;width:100%;">
-            <div style="display:block;min-width:${anchoTotal + anchoNombre}px;">
+        <div id="ganttScroll" style="overflow:auto;scrollbar-width:thin;max-height:${alturaGantt}px;">
+            <div style="min-width:${anchoTotal + anchoNombre}px;width:max-content;">
                 ${headerHTML}
-                <div style="overflow-y:${necesitaScrollY ? 'auto' : 'visible'};max-height:${necesitaScrollY ? MAX_VISIBLE * ROW_H_TOTAL + 'px' : 'none'};scrollbar-width:thin;">
-                    ${filasHTML}
-                </div>
-                ${necesitaScrollY ? `<div style="text-align:center;padding:6px 0;font-size:10px;color:#94a3b8;">↕ ${numIniciativas - MAX_VISIBLE} iniciativas más con scroll</div>` : ''}
+                ${filasHTML}
+                ${necesitaScrollY ? `<div style="text-align:center;padding:6px 0;font-size:10px;color:#94a3b8;position:sticky;left:0;">↕ ${numIniciativas - MAX_VISIBLE} iniciativas más</div>` : ''}
             </div>
         </div>`;
 
