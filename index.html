@@ -85,7 +85,7 @@
                 <button id="btnVolverTablero" class="hidden bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-md hover:bg-slate-200 transition text-xs font-bold">← Volver</button>
                 <div id="controlesFiltro" class="flex gap-2 items-center">
                     <button id="btnLimpiarFiltros" class="bg-slate-100 text-slate-400 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold cursor-not-allowed transition whitespace-nowrap" disabled>✕ Limpiar Filtros</button>
-                    <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm text-sm">+ Nueva Actividad</button>
+                    <button id="btnAbrirModalNuevos" class="bg-blue-600 text-white px-3 py-1.5 rounded-lg hover:bg-blue-700 transition font-semibold shadow-sm text-sm whitespace-nowrap">+ Nueva</button>
                 </div>
                 <button id="btnModoOscuro" onclick="window.toggleModoOscuro()" class="bg-slate-100 text-slate-500 px-2.5 py-2 rounded-lg hover:bg-slate-200 transition text-sm" title="Modo oscuro">🌙</button>
                 <button id="btnConfigAdmin" class="hidden bg-slate-100 text-slate-500 px-2.5 py-2 rounded-lg hover:bg-slate-200 transition text-sm" title="Configuración" onclick="window.abrirModalConfig()">⚙️</button>
@@ -800,16 +800,18 @@ window.limpiarBuscador = function() {
     renderizarTodo();
 };
 
-window.filtrarPorClick = function(tipo, valor) {
+window.filtrarPorClick = function(tipo, valor, abrirPanel = true) {
     if (filtrosActivos[tipo].has(valor)) filtrosActivos[tipo].delete(valor);
     else filtrosActivos[tipo].add(valor);
     construirChipsFiltros();
     renderizarTodo();
-    // Abrir panel filtros si está cerrado
-    const cuerpo = document.getElementById('cuerpoPanelFiltros');
-    if (cuerpo.classList.contains('hidden')) {
-        cuerpo.classList.remove('hidden');
-        document.getElementById('iconToggleFiltros').style.transform = 'rotate(180deg)';
+    // Abrir panel filtros solo si se pide explícitamente
+    if (abrirPanel) {
+        const cuerpo = document.getElementById('cuerpoPanelFiltros');
+        if (cuerpo.classList.contains('hidden')) {
+            cuerpo.classList.remove('hidden');
+            document.getElementById('iconToggleFiltros').style.transform = 'rotate(180deg)';
+        }
     }
 };
 
@@ -1416,7 +1418,7 @@ function renderizarTarjetasResponsables(datos) {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
         card.style = 'min-width:190px;max-width:220px;flex-shrink:0;';
-        card.onclick = () => window.filtrarPorClick('responsable', resp);
+        card.onclick = () => window.filtrarPorClick('responsable', resp, false);
         card.innerHTML = `
             <div style="padding:12px 14px;">
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
@@ -1798,8 +1800,12 @@ function renderizarGantt(proyectosFiltrados) {
         filasHTML = `<div style="text-align:center;padding:24px;font-size:13px;color:#94a3b8;">Sin iniciativas para mostrar con los filtros actuales.</div>`;
     }
 
+    const numIniciativas = iniciativas.length;
+    const alturaFilas = numIniciativas * ROW_H + 30; // altura exacta sin espacio vacío
+    const maxHeight = Math.min(alturaFilas, MAX_VISIBLE * ROW_H + 54);
+
     const ganttHTML = `
-        <div id="ganttScroll" style="overflow-x:auto;scrollbar-width:thin;max-height:${scrollable ? MAX_VISIBLE * ROW_H + 54 : 9999}px;overflow-y:auto;">
+        <div id="ganttScroll" style="overflow-x:auto;overflow-y:auto;scrollbar-width:thin;max-height:${maxHeight}px;">
             <div style="min-width:${anchoTotal + anchoNombre}px;position:relative;">
                 ${headerHTML}
                 ${filasHTML}
