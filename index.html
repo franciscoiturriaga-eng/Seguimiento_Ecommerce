@@ -1109,7 +1109,7 @@ function renderizarKPIs() {
                         <p class="text-xs font-semibold text-slate-500 mb-1">${cfg.label}</p>
                         <p class="text-xl font-extrabold text-slate-800">${ultimo !== null ? ultimo + '%' : '—'}</p>
                         <p class="text-[11px] font-semibold mb-2" style="color:${varColor}">${varText}</p>
-                        <div style="height:60px;"><canvas id="${cfg.canvasId}"></canvas></div>`;
+                        <div style="height:100px;"><canvas id="${cfg.canvasId}"></canvas></div>`;
                     shareRow.appendChild(card);
 
                     setTimeout(() => {
@@ -1120,7 +1120,9 @@ function renderizarKPIs() {
                             data: {
                                 labels: mesesVisibles,
                                 datasets: [{ data: vals, borderColor: cfg.color, backgroundColor: cfg.color + '20',
-                                    borderWidth: 1.5, pointRadius: 0, tension: 0.3, fill: true, spanGaps: true }]
+                                    borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 4,
+                                    pointBackgroundColor: cfg.color,
+                                    tension: 0.3, fill: true, spanGaps: true }]
                             },
                             options: {
                                 responsive: true, maintainAspectRatio: false, animation: false,
@@ -1128,7 +1130,18 @@ function renderizarKPIs() {
                                     title: items => mesesVisibles[items[0].dataIndex],
                                     label: item => `${cfg.label}: ${item.raw}%`
                                 }}},
-                                scales: { x: { display: false }, y: { display: false } }
+                                scales: {
+                                    x: {
+                                        display: true,
+                                        ticks: { font: { size: 9 }, maxRotation: 45, color: '#94a3b8' },
+                                        grid: { display: false }
+                                    },
+                                    y: {
+                                        display: true,
+                                        ticks: { font: { size: 9 }, color: '#94a3b8', callback: v => v + '%' },
+                                        grid: { color: '#f1f5f9' }
+                                    }
+                                }
                             }
                         });
                         kpisCharts.push(ch);
