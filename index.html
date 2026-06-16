@@ -2683,10 +2683,15 @@ window.abrirModalEdicion = function(idFila, tipo) {
         aplicarRestriccionesBloques('EDITAR_INICIATIVA');
         actualizarBtnEliminarModal('EDITAR_INICIATIVA', item.id, item.iniciativa, 'INICIATIVA');
     } else {
+        // Limpiar selector anterior si existe (evita acumulación)
+        const selPrevio = document.getElementById('selectorCambioIniciativa');
+        if (selPrevio) selPrevio.closest('.bg-amber-50')?.remove();
+
         // Mostrar nombre de la iniciativa en el encabezado
         const nombreIni = item.iniciativa || '';
         document.getElementById('tituloModal').innerHTML =
             `Editar Tarea <span class="text-sm font-normal text-slate-400 ml-2">en: <span class="text-blue-600 font-semibold">${nombreIni}</span></span>`;
+        document.getElementById('contenedorListaTareas').innerHTML = '';
         agregarFilaTareaEstructura(item);
         document.querySelector('.btn-quitar-tarea')?.classList.add('hidden');
 
