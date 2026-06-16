@@ -306,10 +306,11 @@
             <div style="overflow-x:auto; border-radius:0 0 12px 12px;">
                 <table style="width:100%; min-width:700px; border-collapse:collapse; text-align:left;">
                     <thead>
-                        <tr class="bg-slate-100/80 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
+                        <tr class="bg-slate-100/95 backdrop-blur text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none" style="position:sticky;top:0;z-index:30;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
                             <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;z-index:20;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 0 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('impacto')">Impacto <span id="icon-sort-impacto" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3">Avance</th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
                             <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
@@ -2167,6 +2168,10 @@ function obtenerValorParaOrden(item, col, esPadre) {
     if (col === 'jerarquia') return esPadre ? (item.iniciativa||'').toLowerCase() : (item.tarea||'').toLowerCase();
     if (col === 'responsable') return esPadre ? (item.respiniciativa||'').toLowerCase() : (item.responsable||'').toLowerCase();
     if (col === 'estado') return esPadre ? 'z' : (item.estado||'').toLowerCase();
+    if (col === 'impacto') {
+        const prioridad = { 'Crítico': 1, 'Alto': 2, 'Medio': 3, 'Bajo': 4 };
+        return prioridad[item.impacto] || 5;
+    }
     if (col === 'tema') return esPadre ? 'z' : (item.tema||'').toLowerCase();
     if (col === 'fechaentrega') return esPadre ? new Date(item.fechaentregainiciativa||'2099') : new Date(item.fechaentregatarea||'2099');
     if (col === 'fechacreacion') return new Date(item.fechacreacion||item.fecha||'1970');
@@ -2254,10 +2259,11 @@ function renderizarTablaJerarquica(proyectos) {
         filaPadre.innerHTML = `
             <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:#f8fafc;min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px rgba(0,0,0,0.06);">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
-                📂 ${iniciativa} ${badgeImpacto(pMetas.impacto)}
+                📂 ${iniciativa}
             </td>
             <td class="p-3 text-slate-700 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('responsable','${pMetas.respiniciativa || ''}')">${pMetas.respiniciativa || '-'}</td>
             <td class="p-3">${badgeEstado(estadoIni)}</td>
+            <td class="p-3">${badgeImpacto(pMetas.impacto) || '<span class="text-slate-300 text-xs">—</span>'}</td>
             <td class="p-3">${barraAvance(avanceIni, true)}</td>
             <td class="p-3 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('area','${(pMetas.areainiciativa||'').replace(/'/g,"\\'")}')">${pMetas.areainiciativa || '-'}</td>
             <td class="p-3 text-slate-600 font-mono text-xs">${fEntregaIni}</td>
@@ -2311,6 +2317,7 @@ function renderizarTablaJerarquica(proyectos) {
                     <td style="position:sticky;left:0;z-index:20;background:#ffffff;min-width:200px;padding:8px 8px 8px 24px;color:#475569;font-weight:500;box-shadow:2px 0 4px rgba(0,0,0,0.04);">↳ <span style="cursor:pointer;" class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
+                    <td class="p-2">${badgeImpacto(t.impacto) || '<span class="text-slate-300 text-xs">—</span>'}</td>
                     <td class="p-2">${barraAvance(avanceTarea, true)}</td>
                     <td class="p-2 text-slate-500 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('area','${(t.tema||'').replace(/'/g,"\\'")}')">${t.tema || '-'}</td>
                     <td class="p-2 text-xs"><span class="${cFecha}">${fET ? fET.toLocaleDateString('es-CL') : '-'}</span></td>
@@ -2517,7 +2524,7 @@ window.colapsarTodo = function() {
 window.cambiarOrden = function(columna) {
     if (columnaOrdenActual === columna) ordenAscendente = !ordenAscendente;
     else { columnaOrdenActual = columna; ordenAscendente = true; }
-    ['jerarquia','responsable','estado','tema','fechaentrega','fechacreacion'].forEach(c => {
+    ['jerarquia','responsable','estado','impacto','tema','fechaentrega','fechacreacion'].forEach(c => {
         document.getElementById('icon-sort-'+c).innerText = '↕';
         document.getElementById('icon-sort-'+c).className = 'text-slate-400 text-[10px] ml-1';
     });
@@ -2642,9 +2649,8 @@ document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
     document.getElementById('inputOldIniciativaNombre').value = "";
     document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
     document.getElementById('contenedorListaTareas').innerHTML = "";
-    // Limpiar selector de cambio de iniciativa si quedó de una edición anterior
-    const selCambio = document.getElementById('selectorCambioIniciativa');
-    if (selCambio) selCambio.closest('.bg-amber-50')?.remove();
+    // Limpiar selectores de cambio de iniciativa que pudieran haber quedado
+    document.querySelectorAll('.wrapper-cambio-iniciativa').forEach(el => el.remove());
     aplicarRestriccionesBloques('NUEVO_INICIATIVA');
     agregarFilaTareaEstructura();
     document.getElementById('modalFormulario').classList.remove('hidden');
@@ -2684,8 +2690,7 @@ window.abrirModalEdicion = function(idFila, tipo) {
         actualizarBtnEliminarModal('EDITAR_INICIATIVA', item.id, item.iniciativa, 'INICIATIVA');
     } else {
         // Limpiar selector anterior si existe (evita acumulación)
-        const selPrevio = document.getElementById('selectorCambioIniciativa');
-        if (selPrevio) selPrevio.closest('.bg-amber-50')?.remove();
+        document.querySelectorAll('.wrapper-cambio-iniciativa').forEach(el => el.remove());
 
         // Mostrar nombre de la iniciativa en el encabezado
         const nombreIni = item.iniciativa || '';
@@ -2698,7 +2703,7 @@ window.abrirModalEdicion = function(idFila, tipo) {
         // Agregar selector de iniciativa (para cambiar a cuál pertenece)
         const contenedorListaTareas = document.getElementById('contenedorListaTareas');
         const selectorIni = document.createElement('div');
-        selectorIni.className = 'bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3';
+        selectorIni.className = 'wrapper-cambio-iniciativa bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3';
         selectorIni.innerHTML = `
             <label class="block text-xs font-bold text-amber-700 mb-1.5">🔀 Mover a otra Iniciativa <span class="font-normal text-amber-500">(opcional)</span></label>
             <select id="selectorCambioIniciativa" class="w-full text-sm border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 bg-white">
