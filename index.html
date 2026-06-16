@@ -564,6 +564,8 @@ onAuthStateChanged(auth, async (user) => {
             document.getElementById('btnConfigAdminMobile').classList.remove('hidden');
         }
         mostrarSkeleton();
+        // Fallback: si en 10 segundos no llegan datos, ocultar skeleton igual
+        setTimeout(() => ocultarSkeleton(), 10000);
         await cargarConfiguracion();
         restaurarOrden();
         iniciarEscuchaFirestore();
@@ -2640,6 +2642,9 @@ document.getElementById('btnAbrirModalNuevos').addEventListener('click', () => {
     document.getElementById('inputOldIniciativaNombre').value = "";
     document.getElementById('tituloModal').innerText = "Registrar Nueva Actividad";
     document.getElementById('contenedorListaTareas').innerHTML = "";
+    // Limpiar selector de cambio de iniciativa si quedó de una edición anterior
+    const selCambio = document.getElementById('selectorCambioIniciativa');
+    if (selCambio) selCambio.closest('.bg-amber-50')?.remove();
     aplicarRestriccionesBloques('NUEVO_INICIATIVA');
     agregarFilaTareaEstructura();
     document.getElementById('modalFormulario').classList.remove('hidden');
@@ -2678,9 +2683,36 @@ window.abrirModalEdicion = function(idFila, tipo) {
         aplicarRestriccionesBloques('EDITAR_INICIATIVA');
         actualizarBtnEliminarModal('EDITAR_INICIATIVA', item.id, item.iniciativa, 'INICIATIVA');
     } else {
-        document.getElementById('tituloModal').innerText = "Editar Tarea";
+        // Mostrar nombre de la iniciativa en el encabezado
+        const nombreIni = item.iniciativa || '';
+        document.getElementById('tituloModal').innerHTML =
+            `Editar Tarea <span class="text-sm font-normal text-slate-400 ml-2">en: <span class="text-blue-600 font-semibold">${nombreIni}</span></span>`;
         agregarFilaTareaEstructura(item);
         document.querySelector('.btn-quitar-tarea')?.classList.add('hidden');
+
+        // Agregar selector de iniciativa (para cambiar a cuál pertenece)
+        const contenedorListaTareas = document.getElementById('contenedorListaTareas');
+        const selectorIni = document.createElement('div');
+        selectorIni.className = 'bg-amber-50 border border-amber-200 rounded-xl p-3 mb-3';
+        selectorIni.innerHTML = `
+            <label class="block text-xs font-bold text-amber-700 mb-1.5">🔀 Mover a otra Iniciativa <span class="font-normal text-amber-500">(opcional)</span></label>
+            <select id="selectorCambioIniciativa" class="w-full text-sm border border-amber-300 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-500 bg-white">
+                <option value="">— Mantener en "${nombreIni}" —</option>
+            </select>`;
+        contenedorListaTareas.parentNode.insertBefore(selectorIni, contenedorListaTareas);
+
+        // Poblar con iniciativas existentes
+        const unicas = [...new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean))].sort();
+        const sel = document.getElementById('selectorCambioIniciativa');
+        unicas.forEach(ini => {
+            if (ini !== nombreIni) {
+                const opt = document.createElement('option');
+                opt.value = ini;
+                opt.textContent = ini;
+                sel.appendChild(opt);
+            }
+        });
+
         aplicarRestriccionesBloques('EDITAR_TAREA');
         actualizarBtnEliminarModal('EDITAR_TAREA', item.id, item.tarea, 'TAREA');
     }
@@ -2767,6 +2799,16 @@ function agregarFilaTareaEstructura(vals = null) {
         </div>
         <div class="grid grid-cols-2 gap-3">
             <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">Impacto <span class="text-slate-400 font-normal">(opcional)</span></label>
+                <select class="input-tarea-impacto w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+                    <option value="">— Sin definir —</option>
+                    <option value="Crítico">Crítico</option>
+                    <option value="Alto">Alto</option>
+                    <option value="Medio">Medio</option>
+                    <option value="Bajo">Bajo</option>
+                </select>
+            </div>
+            <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Área / Tema</label>
                 <select class="input-tarea-tema w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
                         <option value="Ecommerce">Ecommerce</option>
@@ -2784,6 +2826,8 @@ function agregarFilaTareaEstructura(vals = null) {
                         <option value="Diseño">Diseño</option>
                 </select>
             </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
             <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Responsable</label>
                 <select class="input-tarea-resp-select w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
@@ -2791,16 +2835,14 @@ function agregarFilaTareaEstructura(vals = null) {
                 </select>
                 <input type="text" class="input-tarea-resp-otro hidden mt-2 w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
-        </div>
-        <div class="grid grid-cols-2 gap-3">
             <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Inicio <span class="text-slate-400 font-normal">(opcional)</span></label>
                 <input type="date" class="input-tarea-fechainicio w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
             </div>
-            <div>
-                <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega</label>
-                <input type="date" class="input-tarea-fecha w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
-            </div>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Fecha Entrega</label>
+            <input type="date" class="input-tarea-fecha w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500" required>
         </div>
         <div>
             <label class="block text-xs font-medium text-slate-600 mb-1">Alertas</label>
@@ -2828,6 +2870,13 @@ function agregarFilaTareaEstructura(vals = null) {
     const respValidos = jefeActual ? responsablesDeTarea(jefeActual) : CONFIG.responsables;
     respSelect.innerHTML = '<option value="">Seleccionar...</option>' +
         respValidos.map(r => `<option value="${r}">${r}${r === jefeActual ? ' (jefe)' : ''}</option>`).join('');
+
+    // Poblar select de impacto desde CONFIG
+    const impactoSelect = div.querySelector('.input-tarea-impacto');
+    if (impactoSelect) {
+        impactoSelect.innerHTML = '<option value="">— Sin definir —</option>' +
+            CONFIG.impactos.map(i => `<option value="${i}">${i}</option>`).join('');
+    }
 
     // Poblar select de área desde CONFIG
     const temaSelect = div.querySelector('.input-tarea-tema');
@@ -2857,6 +2906,7 @@ function agregarFilaTareaEstructura(vals = null) {
         div.querySelector('.input-tarea-avance').value = String(vals.avance || 0);
         div.querySelector('.input-tarea-tema').value = vals.tema || 'Tecnología';
         div.querySelector('.input-tarea-alertas').value = vals.alertas || 'Sin alertas';
+        if (div.querySelector('.input-tarea-impacto')) div.querySelector('.input-tarea-impacto').value = vals.impacto || '';
         // Cargar subtareas existentes
         if (Array.isArray(vals.subtareas)) {
             vals.subtareas.forEach(st => agregarFilaSubtarea(listaSub, st));
@@ -2928,12 +2978,18 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
             let avanceVal = Number(filaUi.querySelector('.input-tarea-avance').value);
             let estadoVal = filaUi.querySelector('.input-tarea-estado').value;
             if (avanceVal === 100) estadoVal = 'Finalizado';
+
+            // Verificar si se cambió de iniciativa
+            const selCambioIni = document.getElementById('selectorCambioIniciativa');
+            const nuevaIniciativa = selCambioIni ? selCambioIni.value : '';
+
             const updateData = {
                 tarea: filaUi.querySelector('.input-tarea-nombre').value,
                 descripcion: filaUi.querySelector('.input-tarea-descripcion').value,
                 estado: estadoVal,
                 avance: avanceVal,
                 tema: filaUi.querySelector('.input-tarea-tema').value,
+                impacto: filaUi.querySelector('.input-tarea-impacto')?.value || '',
                 responsable: r,
                 fechainicio: filaUi.querySelector('.input-tarea-fechainicio').value,
                 fechaentregatarea: filaUi.querySelector('.input-tarea-fecha').value,
@@ -2941,10 +2997,22 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                 comentarios: filaUi.querySelector('.input-tarea-comentarios').value,
                 subtareas: leerSubtareasDeFila(filaUi)
             };
+
+            // Si se eligió otra iniciativa, heredar sus metadatos
+            if (nuevaIniciativa) {
+                const destino = cacheDatosRaw.find(p => p.iniciativa === nuevaIniciativa);
+                if (destino) {
+                    updateData.iniciativa = nuevaIniciativa;
+                    updateData.respiniciativa = destino.respiniciativa || '';
+                    updateData.areainiciativa = destino.areainiciativa || '';
+                    updateData.fechaentregainiciativa = destino.fechaentregainiciativa || '';
+                }
+            }
+
             await promesaConLimite(updateDoc(doc(db, "actividades", idRegistro), updateData), 8000);
             const det = generarDetalleCambios(oldDocData, updateData);
-            registrarAuditoria("Modificó Tarea", `Tarea: [${oldDocData.tarea}]. ${det}`);
-            showToast('Tarea actualizada correctamente');
+            registrarAuditoria("Modificó Tarea", `Tarea: [${oldDocData.tarea}]. ${det}${nuevaIniciativa ? ` → Movida a [${nuevaIniciativa}]` : ''}`);
+            showToast(nuevaIniciativa ? `Tarea movida a "${nuevaIniciativa}"` : 'Tarea actualizada correctamente');
         } else {
             const actRef = collection(db, "actividades");
             let baseData = {};
@@ -2984,6 +3052,7 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
                     estado: estadoVal,
                     avance: avanceVal,
                     tema: f.querySelector('.input-tarea-tema').value,
+                    impacto: f.querySelector('.input-tarea-impacto')?.value || baseData.impacto || '',
                     responsable: r,
                     fechainicio: f.querySelector('.input-tarea-fechainicio').value,
                     fechaentregatarea: f.querySelector('.input-tarea-fecha').value,
