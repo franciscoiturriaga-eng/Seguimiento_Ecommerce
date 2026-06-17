@@ -306,16 +306,16 @@
             <div style="overflow-x:auto; border-radius:0 0 12px 12px;">
                 <table style="width:100%; min-width:700px; border-collapse:collapse; text-align:left;">
                     <thead>
-                        <tr class="bg-slate-100/95 backdrop-blur text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none" style="position:sticky;top:0;z-index:30;box-shadow:0 2px 4px rgba(0,0,0,0.04);">
-                            <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;z-index:20;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 0 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('impacto')">Impacto <span id="icon-sort-impacto" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3">Avance</th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-center">Acciones</th>
+                        <tr class="text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
+                            <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;top:0;z-index:31;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 2px 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('impacto')">Impacto <span id="icon-sort-impacto" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3" style="position:sticky;top:0;z-index:30;background:#f1f5f9;">Avance</th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 text-center" style="position:sticky;top:0;z-index:30;background:#f1f5f9;">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200"></tbody>
