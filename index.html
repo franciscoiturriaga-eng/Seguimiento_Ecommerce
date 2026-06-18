@@ -815,6 +815,8 @@ window.togglePanelFiltros = function() {
     const abierto = !cuerpo.classList.contains('hidden');
     cuerpo.classList.toggle('hidden', abierto);
     icon.style.transform = abierto ? '' : 'rotate(180deg)';
+    // Reconstruir chips al abrir, por si los datos llegaron después del primer render
+    if (!abierto) construirChipsFiltros();
 };
 
 window.aplicarBuscador = function(val) {
@@ -2337,7 +2339,7 @@ function renderizarTablaJerarquica(proyectos) {
             <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:#f8fafc;min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px rgba(0,0,0,0.06);">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa}
-                <span class="ml-1.5 text-[10px] font-semibold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">${tareas.length} tarea${tareas.length !== 1 ? 's' : ''}</span>
+                <span class="ml-1.5 text-[10px] font-semibold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">${grupo.hijos.filter(h=>h.tarea).length} tarea${grupo.hijos.filter(h=>h.tarea).length !== 1 ? 's' : ''}</span>
             </td>
             <td class="p-3 text-slate-700 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('responsable','${pMetas.respiniciativa || ''}')">${pMetas.respiniciativa || '-'}</td>
             <td class="p-3">${badgeEstado(estadoIni)}</td>
