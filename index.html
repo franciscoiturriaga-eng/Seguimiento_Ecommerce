@@ -296,26 +296,30 @@
         <div id="contenedorTabla" class="hidden bg-white rounded-xl shadow-sm border border-slate-200">
             <div class="p-4 border-b border-slate-100 bg-slate-50/70 flex justify-between items-center">
                 <div class="flex items-center gap-3">
-                    <h3 class="font-bold text-slate-700 text-sm">Iniciativas / Tareas</h3>
+                    <h3 class="font-bold text-slate-700 text-sm">
+                        Iniciativas <span id="contadorIniciativas" class="text-xs font-semibold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full ml-1">0</span>
+                        <span class="text-slate-300 mx-1">/</span>
+                        Tareas <span id="contadorTareas" class="text-xs font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full ml-1">0</span>
+                    </h3>
                     <button id="btnExpandirTodo" onclick="window.expandirTodo()" class="text-xs text-blue-600 hover:text-blue-800 font-medium border border-blue-200 bg-blue-50 px-2 py-1 rounded-md transition">⊞ Expandir todo</button>
                     <button id="btnColapsarTodo" onclick="window.colapsarTodo()" class="text-xs text-slate-500 hover:text-slate-700 font-medium border border-slate-200 bg-slate-50 px-2 py-1 rounded-md transition">⊟ Colapsar todo</button>
                     <button onclick="window.exportarTabla()" class="text-xs text-green-700 hover:text-green-800 font-medium border border-green-200 bg-green-50 px-2 py-1 rounded-md transition">⬇ Exportar Excel</button>
                 </div>
                 <span class="hidden sm:block text-xs text-slate-400 font-mono">Amarillo: vence en 16-30 días | Rojo: vence en ≤15 días o atrasada</span>
             </div>
-            <div style="overflow-x:auto; overflow-y:clip; border-radius:0 0 12px 12px;">
+            <div style="overflow-x:auto; border-radius:0 0 12px 12px;">
                 <table style="width:100%; min-width:700px; border-collapse:collapse; text-align:left;">
                     <thead>
-                        <tr class="text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
-                            <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;top:0;z-index:31;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 2px 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('impacto')">Impacto <span id="icon-sort-impacto" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3" style="position:sticky;top:0;z-index:30;background:#f1f5f9;">Avance</th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" style="position:sticky;top:0;z-index:30;background:#f1f5f9;" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
-                            <th class="p-3 text-center" style="position:sticky;top:0;z-index:30;background:#f1f5f9;">Acciones</th>
+                        <tr class="bg-slate-100 text-slate-600 text-xs font-bold uppercase tracking-wider border-b border-slate-200 select-none">
+                            <th onclick="window.cambiarOrden('jerarquia')" style="position:sticky;left:0;z-index:20;background:#f1f5f9;min-width:200px;padding:10px 8px 10px 16px;cursor:pointer;white-space:nowrap;box-shadow:2px 0 4px rgba(0,0,0,0.06);">Iniciativa / Tarea <span id="icon-sort-jerarquia" style="color:#94a3b8;font-size:10px;margin-left:4px;">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('responsable')">Responsable <span id="icon-sort-responsable" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('estado')">Estado <span id="icon-sort-estado" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('impacto')">Impacto <span id="icon-sort-impacto" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3">Avance</th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('tema')">Área <span id="icon-sort-tema" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechaentrega')">Fecha Entrega <span id="icon-sort-fechaentrega" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.cambiarOrden('fechacreacion')">Creado <span id="icon-sort-fechacreacion" class="text-slate-400 text-[10px] ml-1">↕</span></th>
+                            <th class="p-3 text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpoTabla" class="text-sm divide-y divide-slate-200"></tbody>
@@ -900,6 +904,7 @@ function renderizarTodo() {
     renderizarTarjetasResponsables(datosFiltrados);
     renderizarGantt(datosFiltrados);
     renderizarTablaJerarquica(datosFiltrados);
+    requestAnimationFrame(() => inicializarStickyHeaderTabla());
 }
 
 // ============================================================
@@ -1447,6 +1452,70 @@ function renderizarKPIs() {
         seccion.appendChild(grid);
         cont.appendChild(seccion);
     });
+}
+
+// ============================================================
+// STICKY HEADER DE TABLA (vía JS, compatible con scroll horizontal)
+// ============================================================
+let stickyHeaderClone = null;
+function inicializarStickyHeaderTabla() {
+    const tablaOriginal = document.querySelector('#contenedorTabla table');
+    const wrapperScroll = document.querySelector('#contenedorTabla > div[style*="overflow-x"]');
+    if (!tablaOriginal || !wrapperScroll) return;
+
+    window.removeEventListener('scroll', onScrollStickyHeader);
+    wrapperScroll.removeEventListener('scroll', onScrollStickyHeaderX);
+    if (stickyHeaderClone) { stickyHeaderClone.remove(); stickyHeaderClone = null; }
+
+    function onScrollStickyHeaderX() {
+        if (stickyHeaderClone) stickyHeaderClone.scrollLeft = wrapperScroll.scrollLeft;
+    }
+
+    function onScrollStickyHeader() {
+        const contenedor = document.getElementById('contenedorTabla');
+        if (!contenedor || contenedor.classList.contains('hidden')) {
+            if (stickyHeaderClone) stickyHeaderClone.style.display = 'none';
+            return;
+        }
+        const theadOriginal = tablaOriginal.querySelector('thead');
+        if (!theadOriginal) return;
+        const rectThead = theadOriginal.getBoundingClientRect();
+        const rectTabla = tablaOriginal.getBoundingClientRect();
+
+        // Mostrar clon solo si el header original salió por arriba Y la tabla sigue visible
+        const debeFlotar = rectThead.top < 0 && rectTabla.bottom > 40;
+
+        if (debeFlotar) {
+            if (!stickyHeaderClone) {
+                stickyHeaderClone = document.createElement('div');
+                stickyHeaderClone.style.position = 'fixed';
+                stickyHeaderClone.style.top = '0';
+                stickyHeaderClone.style.zIndex = '40';
+                stickyHeaderClone.style.overflow = 'hidden';
+                stickyHeaderClone.style.background = '#f1f5f9';
+                stickyHeaderClone.style.boxShadow = '0 2px 6px rgba(0,0,0,0.08)';
+                document.body.appendChild(stickyHeaderClone);
+                wrapperScroll.addEventListener('scroll', onScrollStickyHeaderX);
+            }
+            const rectWrapper = wrapperScroll.getBoundingClientRect();
+            stickyHeaderClone.style.left = rectWrapper.left + 'px';
+            stickyHeaderClone.style.width = rectWrapper.width + 'px';
+            stickyHeaderClone.style.display = 'block';
+            // Reconstruir tabla clonada con mismo ancho de columnas
+            const tablaClon = tablaOriginal.cloneNode(false);
+            tablaClon.style.width = tablaOriginal.offsetWidth + 'px';
+            tablaClon.style.minWidth = tablaOriginal.offsetWidth + 'px';
+            const theadClon = theadOriginal.cloneNode(true);
+            tablaClon.appendChild(theadClon);
+            stickyHeaderClone.innerHTML = '';
+            stickyHeaderClone.appendChild(tablaClon);
+            stickyHeaderClone.scrollLeft = wrapperScroll.scrollLeft;
+        } else if (stickyHeaderClone) {
+            stickyHeaderClone.style.display = 'none';
+        }
+    }
+
+    window.addEventListener('scroll', onScrollStickyHeader, { passive: true });
 }
 
 // ============================================================
@@ -2218,6 +2287,14 @@ function renderizarTablaJerarquica(proyectos) {
         }
     });
 
+    // Actualizar contadores del header
+    const numIniciativas = Object.keys(desglose).length;
+    const numTareas = proyectos.filter(p => p.tarea).length;
+    const elContIni = document.getElementById('contadorIniciativas');
+    const elContTar = document.getElementById('contadorTareas');
+    if (elContIni) elContIni.textContent = numIniciativas;
+    if (elContTar) elContTar.textContent = numTareas;
+
     let grupos = Object.keys(desglose).map(iniciativa => ({
         nombre: iniciativa,
         padre: desglose[iniciativa][0],
@@ -2260,6 +2337,7 @@ function renderizarTablaJerarquica(proyectos) {
             <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:#f8fafc;min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px rgba(0,0,0,0.06);">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa}
+                <span class="ml-1.5 text-[10px] font-semibold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">${tareas.length} tarea${tareas.length !== 1 ? 's' : ''}</span>
             </td>
             <td class="p-3 text-slate-700 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="window.filtrarPorClick('responsable','${pMetas.respiniciativa || ''}')">${pMetas.respiniciativa || '-'}</td>
             <td class="p-3">${badgeEstado(estadoIni)}</td>
