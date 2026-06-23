@@ -936,7 +936,12 @@ function mostrarSkeleton() {
 }
 function ocultarSkeleton() {
     document.getElementById('skeletonLoader').classList.add('hidden');
-    document.getElementById('vistaTablero').classList.remove('hidden');
+    // Solo mostrar el tablero si no estamos en otra vista (KPIs o Historial)
+    const enKPIs = !document.getElementById('vistaKPIs').classList.contains('hidden');
+    const enAuditoria = !document.getElementById('vistaAuditoria').classList.contains('hidden');
+    if (!enKPIs && !enAuditoria) {
+        document.getElementById('vistaTablero').classList.remove('hidden');
+    }
 }
 
 // 3. DYNAMIC TITLE & FAVICON
@@ -1566,7 +1571,12 @@ function renderizarKPIs() {
                 seccion.appendChild(filaSegunda);
                 renders2.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
 
-                // Margen (línea) con Vta Ecom en otro eje
+                // Fila: Margen vs Venta Ecommerce + Comisión Marketplace (lado a lado)
+                const filaMargenComision = document.createElement('div');
+                filaMargenComision.className = 'grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4';
+                const rendersMC = [];
+
+                // Margen (línea) con Vta Ecom en otro eje — barras en azul
                 const kpiMargen = kpis.find(k => k.nombre === 'Margen');
                 if (kpiMargen && kpiTot) {
                     const vMargen = serieKPI(kpiMargen, desde, finVentana, v => parseFloat((v*100).toFixed(1)));
@@ -1574,19 +1584,19 @@ function renderizarKPIs() {
                     const wrapperMargen = crearWrapperGrafico({
                         titulo: 'Margen vs Venta Ecommerce',
                         subtitulo: `% margen y $M venta · últimos ${mesesVisibles.length} meses`,
-                        leyendaHTML: leyendaItem('#f59e0b', 'Margen %', true) + leyendaItem('#94a3b8', 'Vta Ecom', false),
+                        leyendaHTML: leyendaItem('#2563eb', 'Vta Ecom', false) + leyendaItem('#f59e0b', 'Margen %', true),
                         canvasId: 'kpi_margen_comercial'
                     });
-                    seccion.appendChild(wrapperMargen);
-                    setTimeout(() => {
+                    filaMargenComision.appendChild(wrapperMargen);
+                    rendersMC.push(() => {
                         const ctx = document.getElementById('kpi_margen_comercial');
-                        if (!ctx) return;
-                        const ch = new Chart(ctx, {
+                        if (!ctx) return null;
+                        return new Chart(ctx, {
                             data: {
                                 labels: mesesVisibles,
                                 datasets: [
-                                    { type: 'bar', label: 'Vta Ecom', data: vVentaEcomB, backgroundColor: '#e2e8f0', borderRadius: 3, yAxisID: 'yMonto', order: 1 },
-                                    { type: 'line', label: 'Margen %', data: vMargen, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct', order: 0 }
+                                    { type: 'bar', label: 'Vta Ecom', data: vVentaEcomB, backgroundColor: '#2563eb', borderRadius: 3, yAxisID: 'yMonto', order: 2 },
+                                    { type: 'line', label: 'Margen %', data: vMargen, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct', order: 0 }
                                 ]
                             },
                             options: {
@@ -1600,11 +1610,10 @@ function renderizarKPIs() {
                                 }
                             }
                         });
-                        kpisCharts.push(ch);
-                    }, 0);
+                    });
                 }
 
-                // Comisión MKP: monto en barras + % en otro eje
+                // Comisión MKP: monto en barras + % en otro eje (línea ENCIMA de las barras)
                 const kpiComisionMKP = kpis.find(k => k.nombre === 'Comisión MKP');
                 const kpiPctComisionMKP = kpis.find(k => k.nombre === '% Comisión MKP');
                 if (kpiComisionMKP) {
@@ -1616,13 +1625,13 @@ function renderizarKPIs() {
                         leyendaHTML: leyendaItem('#10b981', 'Comisión $M', false) + (kpiPctComisionMKP ? leyendaItem('#dc2626', '% Comisión', true) : ''),
                         canvasId: 'kpi_comision_comercial'
                     });
-                    seccion.appendChild(wrapperCom);
-                    setTimeout(() => {
+                    filaMargenComision.appendChild(wrapperCom);
+                    rendersMC.push(() => {
                         const ctx = document.getElementById('kpi_comision_comercial');
-                        if (!ctx) return;
-                        const datasets = [{ type: 'bar', label: 'Comisión $M', data: vComMonto, backgroundColor: '#10b981', borderRadius: 3, yAxisID: 'yMonto' }];
-                        if (kpiPctComisionMKP) datasets.push({ type: 'line', label: '% Comisión', data: vComPct, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct' });
-                        const ch = new Chart(ctx, {
+                        if (!ctx) return null;
+                        const datasets = [{ type: 'bar', label: 'Comisión $M', data: vComMonto, backgroundColor: '#10b981', borderRadius: 3, yAxisID: 'yMonto', order: 2 }];
+                        if (kpiPctComisionMKP) datasets.push({ type: 'line', label: '% Comisión', data: vComPct, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct', order: 0 });
+                        return new Chart(ctx, {
                             data: { labels: mesesVisibles, datasets },
                             options: {
                                 responsive: true, maintainAspectRatio: false,
@@ -1635,8 +1644,12 @@ function renderizarKPIs() {
                                 }
                             }
                         });
-                        kpisCharts.push(ch);
-                    }, 0);
+                    });
+                }
+
+                if (rendersMC.length > 0) {
+                    seccion.appendChild(filaMargenComision);
+                    rendersMC.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
                 }
             }
         }
