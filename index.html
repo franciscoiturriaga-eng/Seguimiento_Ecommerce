@@ -1021,7 +1021,7 @@ window.abrirVistaKPIs = function() {
     if (!kpisData) cargarKPIs();
 };
 
-function cargarKPIs() {
+function cargarKPIs(intento = 1) {
     const cargando = document.getElementById('kpisCargando');
     const errorDiv = document.getElementById('kpisError');
     cargando.classList.remove('hidden');
@@ -1034,14 +1034,29 @@ function cargarKPIs() {
         return;
     }
 
-    // JSONP: evita CORS completamente. El Web App responde callback(json).
-    const callbackName = 'kpisCallback_' + Date.now();
-    const timeout = setTimeout(() => {
-        errorDiv.textContent = "No se pudieron cargar los KPIs: tiempo de espera agotado. Verifica que el Web App esté publicado con acceso 'Cualquier usuario'.";
+    const MAX_INTENTOS = 3;
+
+    function mostrarErrorFinal(msg) {
+        errorDiv.innerHTML = `${msg} <button onclick="cargarKPIs()" class="ml-2 underline font-semibold text-red-700 hover:text-red-900">Reintentar</button>`;
         errorDiv.classList.remove('hidden');
         cargando.classList.add('hidden');
+    }
+
+    function reintentarOFallar(msg) {
+        if (intento < MAX_INTENTOS) {
+            cargando.querySelector('p') && (cargando.querySelector('p').textContent = `Reintentando conexión (${intento}/${MAX_INTENTOS - 1})...`);
+            setTimeout(() => cargarKPIs(intento + 1), 1200 * intento);
+        } else {
+            mostrarErrorFinal(msg);
+        }
+    }
+
+    // JSONP: evita CORS completamente. El Web App responde callback(json).
+    const callbackName = 'kpisCallback_' + Date.now() + '_' + intento;
+    const timeout = setTimeout(() => {
         limpiar();
-    }, 15000);
+        reintentarOFallar("No se pudieron cargar los KPIs: tiempo de espera agotado.");
+    }, 12000);
 
     function limpiar() {
         delete window[callbackName];
@@ -1054,7 +1069,7 @@ function cargarKPIs() {
         cargando.classList.add('hidden');
         limpiar();
         if (!data || data.error) {
-            errorDiv.textContent = "No se pudieron cargar los KPIs: " + (data && data.error ? data.error : 'respuesta vacía');
+            errorDiv.innerHTML = `No se pudieron cargar los KPIs: ${(data && data.error) ? data.error : 'respuesta vacía'} <button onclick="cargarKPIs()" class="ml-2 underline font-semibold text-red-700 hover:text-red-900">Reintentar</button>`;
             errorDiv.classList.remove('hidden');
             return;
         }
@@ -1069,13 +1084,12 @@ function cargarKPIs() {
     script.src = KPIS_WEBAPP_URL + (KPIS_WEBAPP_URL.includes('?') ? '&' : '?') + 'callback=' + callbackName;
     script.onerror = () => {
         clearTimeout(timeout);
-        errorDiv.textContent = "No se pudieron cargar los KPIs: error de red al contactar el Web App.";
-        errorDiv.classList.remove('hidden');
-        cargando.classList.add('hidden');
         limpiar();
+        reintentarOFallar("No se pudieron cargar los KPIs: error de red al contactar el Web App.");
     };
     document.body.appendChild(script);
 }
+window.cargarKPIs = cargarKPIs;
 
 document.getElementById('kpisVentana').addEventListener('change', () => { if (kpisData) renderizarKPIs(); });
 
@@ -1094,6 +1108,112 @@ function formatearValorKPI(nombre, valor) {
     if (Math.abs(valor) >= 1000000) return '$' + (valor / 1000000).toFixed(0) + 'M';
     if (Math.abs(valor) >= 1000) return (valor / 1000).toFixed(0) + 'K';
     return Math.round(valor).toLocaleString('es-CL');
+}
+
+// ============================================================
+// HELPERS REUTILIZABLES PARA GRÁFICOS DE KPIs
+// ============================================================
+
+// Extrae serie de valores en la ventana, con transformación opcional (ej. *100 para %)
+function serieKPI(kpi, desde, finVentana, transform) {
+    if (!kpi) return [];
+    return kpi.valores.slice(desde, finVentana).map(v => {
+        if (v == null || v === 0) return null;
+        return transform ? transform(v) : v;
+    });
+}
+
+// Último valor válido + anterior válido (para variación)
+function ultimoYAnterior(vals) {
+    const idx = vals.map((v,i)=>({v,i})).filter(x=>x.v!=null);
+    const ultimo = idx.length ? idx[idx.length-1] : null;
+    const anterior = idx.length > 1 ? idx[idx.length-2] : null;
+    return { ultimo: ultimo?.v ?? null, anterior: anterior?.v ?? null };
+}
+
+// Tarjeta de línea simple (tipo Share Ecom) — retorna {card, render}
+function crearTarjetaLinea({ label, color, canvasId, vals, mesesVisibles, formato, sufijo }) {
+    const { ultimo, anterior } = ultimoYAnterior(vals);
+    let varText = '—', varColor = '#94a3b8';
+    if (ultimo !== null && anterior !== null && anterior !== 0) {
+        const diff = ultimo - anterior;
+        varColor = diff >= 0 ? '#16a34a' : '#dc2626';
+        varText = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff).toFixed(1) + (sufijo || '');
+    }
+    const valorMostrado = ultimo !== null ? (formato ? formato(ultimo) : ultimo) : '—';
+
+    const card = document.createElement('div');
+    card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+    card.innerHTML = `
+        <p class="text-xs font-semibold text-slate-500 mb-1">${label}</p>
+        <p class="text-xl font-extrabold text-slate-800">${valorMostrado}</p>
+        <p class="text-[11px] font-semibold mb-2" style="color:${varColor}">${varText}</p>
+        <div style="height:100px;"><canvas id="${canvasId}"></canvas></div>`;
+
+    const render = () => {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return null;
+        const ch = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: mesesVisibles,
+                datasets: [{ data: vals, borderColor: color, backgroundColor: color + '20',
+                    borderWidth: 2, pointRadius: 3, pointHoverRadius: 6,
+                    pointBackgroundColor: color, tension: 0.3, fill: true, spanGaps: true }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        enabled: true, backgroundColor: '#1e293b', titleColor: '#94a3b8', bodyColor: '#f1f5f9', padding: 8,
+                        callbacks: {
+                            title: items => mesesVisibles[items[0].dataIndex],
+                            label: item => ` ${label}: ${formato ? formato(item.raw) : item.raw}`
+                        }
+                    }
+                },
+                scales: {
+                    x: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
+                    y: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8', callback: v => formato ? formato(v) : v }, grid: { color: '#f1f5f9' } }
+                }
+            }
+        });
+        return ch;
+    };
+    return { card, render };
+}
+
+// Wrapper estándar (título + leyenda + canvas) para gráficos grandes (barras, combo, etc.)
+function crearWrapperGrafico({ titulo, subtitulo, leyendaHTML, canvasId, alturaPx }) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4';
+    wrapper.innerHTML = `
+        <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div>
+                <p class="text-sm font-bold text-slate-700">${titulo}</p>
+                ${subtitulo ? `<p class="text-xs text-slate-400">${subtitulo}</p>` : ''}
+            </div>
+            ${leyendaHTML ? `<div class="flex gap-4 text-xs">${leyendaHTML}</div>` : ''}
+        </div>
+        <div style="height:${alturaPx || 220}px;"><canvas id="${canvasId}"></canvas></div>`;
+    return wrapper;
+}
+
+function leyendaItem(color, label, esLinea) {
+    if (esLinea) return `<span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:3px;background:${color};border-radius:2px;"></span>${label}</span>`;
+    return `<span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${color};"></span>${label}</span>`;
+}
+
+function formatoPct(v) { return v == null ? '—' : (typeof v === 'number' && Math.abs(v) <= 1 ? (v*100).toFixed(1) : v.toFixed(1)) + '%'; }
+function formatoMonto(v) {
+    if (v == null) return '—';
+    const abs = Math.abs(v);
+    if (abs >= 1000000000) return '$' + (v/1000000000).toFixed(1) + 'B';
+    if (abs >= 1000000) return '$' + (v/1000000).toFixed(0) + 'M';
+    if (abs >= 1000) return '$' + (v/1000).toFixed(0) + 'K';
+    return '$' + Math.round(v);
 }
 
 function renderizarKPIs() {
@@ -1148,7 +1268,21 @@ function renderizarKPIs() {
 
         // KPIs especiales a excluir del grid individual (se grafican aparte)
         const KPI_EXCLUIR_COMERCIAL = ['Vta Ecom', 'Vta 1p', 'Vta 3p', 'Vta Cadena 1p',
-            'Share Ecom', 'Share 1p', 'Share 3p/Ecom', '# skus 1p', '# skus 3p'];
+            'Share Ecom', 'Share 1p', 'Share 3p/Ecom', '# skus 1p', '# skus 3p',
+            '# Sellers c/vta', 'Ticket Promedio', 'Margen', 'Comisión MKP', '% Comisión MKP',
+            'Boletas 1P', 'Boletas MKP', 'Contribución (+ Rebate)'];
+
+        const KPI_EXCLUIR_MARKETING = ['Sesiones', 'Tasa conv', 'Inversión PDM'];
+
+        const KPI_EXCLUIR_OPERACIONES = ['$ Vta DAD CD', '$ Vta VeV', '$ Vta RET', '$ Vta STS',
+            '$ Vta SFS', '$ Vta PUP', '$ Vta Kiosco (1p)', '% Rechazo RET'];
+
+        const KPI_EXCLUIR_TARJETA_HITES = ['% Part TH', '$ Vta Contado', '$ Vta TH', 'Vta TH Cadena'];
+
+        const KPI_EXCLUIR_FINANCIEROS = ['GAV / VTA', 'GAV/VTA', 'EBITDA'];
+
+        const KPI_EXCLUIR_CX = ['NPS Total', 'NPS Despachos', 'NPS RET',
+            'NS Total', 'NS MKP', 'NS DAD', 'NS SD', 'NS RET', 'NS VeV', 'NS STS', 'NS SFS', 'NS PUP'];
 
         // Gráfico apilado 1p + 3p para categoría Comercial
         if (categoria === 'Comercial') {
@@ -1194,6 +1328,52 @@ function renderizarKPIs() {
                     </div>
                     <div style="height:220px;"><canvas id="${canvasId}"></canvas></div>`;
                 seccion.appendChild(chartWrapper);
+
+                setTimeout(() => {
+                    const ctx = document.getElementById(canvasId);
+                    if (!ctx) return;
+                    const datasetsVentas = [
+                        { label: 'Vta 1P ($M)', data: vals1p, backgroundColor: '#2563eb', borderRadius: 3, stack: 'venta', yAxisID: 'y' },
+                        { label: 'Vta 3P ($M)', data: vals3p, backgroundColor: '#10b981', borderRadius: 3, stack: 'venta', yAxisID: 'y' }
+                    ];
+                    if (hayDatosYoY) {
+                        datasetsVentas.push({
+                            type: 'line', label: 'Crecimiento YoY (%)', data: valsYoY,
+                            borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2,
+                            pointRadius: 3, pointHoverRadius: 5, pointBackgroundColor: '#dc2626',
+                            tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yYoY', order: 0
+                        });
+                    }
+                    const ch = new Chart(ctx, {
+                        type: 'bar',
+                        data: { labels: mesesVisibles, datasets: datasetsVentas },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: (item) => item.dataset.label === 'Crecimiento YoY (%)'
+                                            ? `Crecimiento YoY: ${item.raw > 0 ? '+' : ''}${item.raw}%`
+                                            : `${item.dataset.label}: $${item.raw}M`,
+                                        afterBody: (items) => {
+                                            const idx = items[0]?.dataIndex;
+                                            const tot = valsTot[idx];
+                                            return tot ? [`Total: $${tot}M`] : [];
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
+                                y: { stacked: true, position: 'left', ticks: { font: { size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'B' } },
+                                yYoY: { display: hayDatosYoY, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#dc2626', callback: v => v + '%' } }
+                            }
+                        }
+                    });
+                    kpisCharts.push(ch);
+                }, 0);
 
                 // 3 gráficos de línea independientes para cada Share — en fila de 3 columnas
                 const sharesConfig = [
@@ -1286,48 +1466,137 @@ function renderizarKPIs() {
                 });
                 seccion.appendChild(shareRow);
 
-                // Gráfico de barras apiladas: SKUs 1p + SKUs 3p
+                // Fila: SKUs (apiladas, tamaño share) + Sellers (barras) + Ticket Promedio (línea)
+                const filaSegunda = document.createElement('div');
+                filaSegunda.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+
+                const renders2 = [];
+
+                // SKUs 1P + 3P (barras apiladas, tamaño tarjeta = share)
                 const kpiSkus1p = kpis.find(k => k.nombre === '# skus 1p');
                 const kpiSkus3p = kpis.find(k => k.nombre === '# skus 3p');
-
                 if (kpiSkus1p && kpiSkus3p) {
-                    const vSkus1p = kpiSkus1p.valores.slice(desde, finVentana).map(v => v != null && v !== 0 ? Math.round(v/1000) : null);
-                    const vSkus3p = kpiSkus3p.valores.slice(desde, finVentana).map(v => v != null && v !== 0 ? Math.round(v/1000) : null);
+                    const vSkus1p = serieKPI(kpiSkus1p, desde, finVentana, v => Math.round(v/1000));
+                    const vSkus3p = serieKPI(kpiSkus3p, desde, finVentana, v => Math.round(v/1000));
+                    const totSkus = vSkus1p.map((v,i) => (v||0) + (vSkus3p[i]||0));
+                    const { ultimo: ultSkus } = ultimoYAnterior(totSkus);
 
-                    const skusWrapper = document.createElement('div');
-                    skusWrapper.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4 mb-4';
-                    skusWrapper.innerHTML = `
-                        <div class="flex items-center justify-between mb-3">
-                            <div>
-                                <p class="text-sm font-bold text-slate-700">SKUs Activos (1P + 3P)</p>
-                                <p class="text-xs text-slate-400">Miles de SKUs · últimos ${mesesVisibles.length} meses</p>
-                            </div>
-                            <div class="flex gap-4 text-xs">
-                                <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#2563eb;"></span>1P</span>
-                                <span class="flex items-center gap-1"><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#10b981;"></span>3P</span>
-                            </div>
-                        </div>
-                        <div style="height:200px;"><canvas id="kpi_skus_comercial"></canvas></div>`;
-                    seccion.appendChild(skusWrapper);
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+                    card.innerHTML = `
+                        <p class="text-xs font-semibold text-slate-500 mb-1">SKUs Activos (1P+3P)</p>
+                        <p class="text-xl font-extrabold text-slate-800">${ultSkus != null ? ultSkus + 'K' : '—'}</p>
+                        <p class="text-[11px] font-semibold mb-2 text-slate-400">1P + 3P</p>
+                        <div style="height:100px;"><canvas id="kpi_skus_comercial"></canvas></div>`;
+                    filaSegunda.appendChild(card);
 
-                    setTimeout(() => {
+                    renders2.push(() => {
                         const ctx = document.getElementById('kpi_skus_comercial');
+                        if (!ctx) return null;
+                        return new Chart(ctx, {
+                            type: 'bar',
+                            data: { labels: mesesVisibles, datasets: [
+                                { label: '1P', data: vSkus1p, backgroundColor: '#2563eb', borderRadius: 2, stack: 's' },
+                                { label: '3P', data: vSkus3p, backgroundColor: '#10b981', borderRadius: 2, stack: 's' }
+                            ]},
+                            options: {
+                                responsive: true, maintainAspectRatio: false, animation: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => `${i.dataset.label}: ${i.raw}K` } } },
+                                scales: {
+                                    x: { stacked: true, display: true, ticks: { font: { size: 9 }, color: '#94a3b8', autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
+                                    y: { stacked: true, display: true, ticks: { font: { size: 9 }, color: '#94a3b8', callback: v => v + 'K' }, grid: { color: '#f1f5f9' } }
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // # Sellers c/vta (barras)
+                const kpiSellers = kpis.find(k => k.nombre === '# Sellers c/vta');
+                if (kpiSellers) {
+                    const vSellers = serieKPI(kpiSellers, desde, finVentana);
+                    const { ultimo, anterior } = ultimoYAnterior(vSellers);
+                    let varText = '—', varColor = '#94a3b8';
+                    if (ultimo != null && anterior != null && anterior !== 0) {
+                        const diff = ultimo - anterior;
+                        varColor = diff >= 0 ? '#16a34a' : '#dc2626';
+                        varText = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff);
+                    }
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+                    card.innerHTML = `
+                        <p class="text-xs font-semibold text-slate-500 mb-1"># Sellers c/vta</p>
+                        <p class="text-xl font-extrabold text-slate-800">${ultimo ?? '—'}</p>
+                        <p class="text-[11px] font-semibold mb-2" style="color:${varColor}">${varText}</p>
+                        <div style="height:100px;"><canvas id="kpi_sellers_comercial"></canvas></div>`;
+                    filaSegunda.appendChild(card);
+
+                    renders2.push(() => {
+                        const ctx = document.getElementById('kpi_sellers_comercial');
+                        if (!ctx) return null;
+                        return new Chart(ctx, {
+                            type: 'bar',
+                            data: { labels: mesesVisibles, datasets: [{ data: vSellers, backgroundColor: '#8b5cf6', borderRadius: 2 }] },
+                            options: {
+                                responsive: true, maintainAspectRatio: false, animation: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => `Sellers: ${i.raw}` } } },
+                                scales: {
+                                    x: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8', autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
+                                    y: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+                                }
+                            }
+                        });
+                    });
+                }
+
+                // Ticket Promedio (línea)
+                const kpiTicket = kpis.find(k => k.nombre === 'Ticket Promedio');
+                if (kpiTicket) {
+                    const vTicket = serieKPI(kpiTicket, desde, finVentana);
+                    const t = crearTarjetaLinea({
+                        label: 'Ticket Promedio', color: '#f59e0b', canvasId: 'kpi_ticket_comercial',
+                        vals: vTicket, mesesVisibles, formato: formatoMonto, sufijo: ''
+                    });
+                    filaSegunda.appendChild(t.card);
+                    renders2.push(() => t.render());
+                }
+
+                seccion.appendChild(filaSegunda);
+                renders2.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
+
+                // Margen (línea) con Vta Ecom en otro eje
+                const kpiMargen = kpis.find(k => k.nombre === 'Margen');
+                if (kpiMargen && kpiTot) {
+                    const vMargen = serieKPI(kpiMargen, desde, finVentana, v => parseFloat((v*100).toFixed(1)));
+                    const vVentaEcomB = serieKPI(kpiTot, desde, finVentana, v => Math.round(v/1000000));
+                    const wrapperMargen = crearWrapperGrafico({
+                        titulo: 'Margen vs Venta Ecommerce',
+                        subtitulo: `% margen y $M venta · últimos ${mesesVisibles.length} meses`,
+                        leyendaHTML: leyendaItem('#f59e0b', 'Margen %', true) + leyendaItem('#94a3b8', 'Vta Ecom', false),
+                        canvasId: 'kpi_margen_comercial'
+                    });
+                    seccion.appendChild(wrapperMargen);
+                    setTimeout(() => {
+                        const ctx = document.getElementById('kpi_margen_comercial');
                         if (!ctx) return;
                         const ch = new Chart(ctx, {
-                            type: 'bar',
                             data: {
                                 labels: mesesVisibles,
                                 datasets: [
-                                    { label: 'SKUs 1P', data: vSkus1p, backgroundColor: '#2563eb', borderRadius: 3, stack: 'skus' },
-                                    { label: 'SKUs 3P', data: vSkus3p, backgroundColor: '#10b981', borderRadius: 3, stack: 'skus' }
+                                    { type: 'bar', label: 'Vta Ecom', data: vVentaEcomB, backgroundColor: '#e2e8f0', borderRadius: 3, yAxisID: 'yMonto', order: 1 },
+                                    { type: 'line', label: 'Margen %', data: vMargen, borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct', order: 0 }
                                 ]
                             },
                             options: {
                                 responsive: true, maintainAspectRatio: false,
-                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: item => `${item.dataset.label}: ${item.raw}K SKUs` } } },
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label === 'Margen %' ? `Margen: ${i.raw}%` : `Vta Ecom: $${i.raw}M` } } },
                                 scales: {
-                                    x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
-                                    y: { stacked: true, ticks: { font: { size: 10 }, callback: v => v + 'K' } }
+                                    x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                    yMonto: { position: 'left', ticks: { font: { size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'B' } },
+                                    yPct: { position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#f59e0b', callback: v => v + '%' } }
                                 }
                             }
                         });
@@ -1335,94 +1604,243 @@ function renderizarKPIs() {
                     }, 0);
                 }
 
-                setTimeout(() => {
-                    const ctx = document.getElementById(canvasId);
-                    if (!ctx) return;
-                    const datasetsVentas = [
-                        {
-                            label: 'Vta 1P ($M)',
-                            data: vals1p,
-                            backgroundColor: '#2563eb',
-                            borderRadius: 3,
-                            stack: 'venta',
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: 'Vta 3P ($M)',
-                            data: vals3p,
-                            backgroundColor: '#10b981',
-                            borderRadius: 3,
-                            stack: 'venta',
-                            yAxisID: 'y'
-                        }
-                    ];
-                    if (hayDatosYoY) {
-                        datasetsVentas.push({
-                            type: 'line',
-                            label: 'Crecimiento YoY (%)',
-                            data: valsYoY,
-                            borderColor: '#dc2626',
-                            backgroundColor: '#dc2626',
-                            borderWidth: 2,
-                            pointRadius: 3,
-                            pointHoverRadius: 5,
-                            pointBackgroundColor: '#dc2626',
-                            tension: 0.3,
-                            fill: false,
-                            spanGaps: true,
-                            yAxisID: 'yYoY',
-                            order: 0
+                // Comisión MKP: monto en barras + % en otro eje
+                const kpiComisionMKP = kpis.find(k => k.nombre === 'Comisión MKP');
+                const kpiPctComisionMKP = kpis.find(k => k.nombre === '% Comisión MKP');
+                if (kpiComisionMKP) {
+                    const vComMonto = serieKPI(kpiComisionMKP, desde, finVentana, v => Math.round(v/1000000));
+                    const vComPct = kpiPctComisionMKP ? serieKPI(kpiPctComisionMKP, desde, finVentana, v => parseFloat((v*100).toFixed(1))) : [];
+                    const wrapperCom = crearWrapperGrafico({
+                        titulo: 'Comisión Marketplace',
+                        subtitulo: `Monto ($M) y % sobre venta · últimos ${mesesVisibles.length} meses`,
+                        leyendaHTML: leyendaItem('#10b981', 'Comisión $M', false) + (kpiPctComisionMKP ? leyendaItem('#dc2626', '% Comisión', true) : ''),
+                        canvasId: 'kpi_comision_comercial'
+                    });
+                    seccion.appendChild(wrapperCom);
+                    setTimeout(() => {
+                        const ctx = document.getElementById('kpi_comision_comercial');
+                        if (!ctx) return;
+                        const datasets = [{ type: 'bar', label: 'Comisión $M', data: vComMonto, backgroundColor: '#10b981', borderRadius: 3, yAxisID: 'yMonto' }];
+                        if (kpiPctComisionMKP) datasets.push({ type: 'line', label: '% Comisión', data: vComPct, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct' });
+                        const ch = new Chart(ctx, {
+                            data: { labels: mesesVisibles, datasets },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label === '% Comisión' ? `% Comisión: ${i.raw}%` : `Comisión: $${i.raw}M` } } },
+                                scales: {
+                                    x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                    yMonto: { position: 'left', ticks: { font: { size: 10 }, callback: v => '$' + v + 'M' } },
+                                    yPct: { display: !!kpiPctComisionMKP, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#dc2626', callback: v => v + '%' } }
+                                }
+                            }
                         });
-                    }
+                        kpisCharts.push(ch);
+                    }, 0);
+                }
+            }
+        }
+
+        // ============================================================
+        // MARKETING: Sesiones (barras) + Tasa conv (línea, otro eje) | Inversión PDM (línea)
+        // ============================================================
+        if (categoria === 'Marketing') {
+            const kpiSesiones = kpis.find(k => k.nombre === 'Sesiones');
+            const kpiTasaConv = kpis.find(k => k.nombre === 'Tasa conv');
+            if (kpiSesiones) {
+                const vSesiones = serieKPI(kpiSesiones, desde, finVentana, v => Math.round(v/1000));
+                const vTasaConv = kpiTasaConv ? serieKPI(kpiTasaConv, desde, finVentana, v => parseFloat((v*100).toFixed(2))) : [];
+                const wrapperSes = crearWrapperGrafico({
+                    titulo: 'Sesiones y Tasa de Conversión',
+                    subtitulo: `Miles de sesiones · últimos ${mesesVisibles.length} meses`,
+                    leyendaHTML: leyendaItem('#2563eb', 'Sesiones (K)', false) + (kpiTasaConv ? leyendaItem('#dc2626', 'Tasa Conv %', true) : ''),
+                    canvasId: 'kpi_sesiones_marketing'
+                });
+                seccion.appendChild(wrapperSes);
+                setTimeout(() => {
+                    const ctx = document.getElementById('kpi_sesiones_marketing');
+                    if (!ctx) return;
+                    const datasets = [{ type: 'bar', label: 'Sesiones (K)', data: vSesiones, backgroundColor: '#2563eb', borderRadius: 3, yAxisID: 'yMonto' }];
+                    if (kpiTasaConv) datasets.push({ type: 'line', label: 'Tasa Conv %', data: vTasaConv, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct' });
+                    const ch = new Chart(ctx, {
+                        data: { labels: mesesVisibles, datasets },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label === 'Tasa Conv %' ? `Tasa Conv: ${i.raw}%` : `Sesiones: ${i.raw}K` } } },
+                            scales: {
+                                x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                yMonto: { position: 'left', ticks: { font: { size: 10 }, callback: v => v + 'K' } },
+                                yPct: { display: !!kpiTasaConv, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#dc2626', callback: v => v + '%' } }
+                            }
+                        }
+                    });
+                    kpisCharts.push(ch);
+                }, 0);
+            }
+
+            const kpiInvPDM = kpis.find(k => k.nombre === 'Inversión PDM');
+            if (kpiInvPDM) {
+                const vInv = serieKPI(kpiInvPDM, desde, finVentana);
+                const filaInv = document.createElement('div');
+                filaInv.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+                const t = crearTarjetaLinea({ label: 'Inversión PDM', color: '#8b5cf6', canvasId: 'kpi_invpdm_marketing', vals: vInv, mesesVisibles, formato: formatoMonto });
+                filaInv.appendChild(t.card);
+                seccion.appendChild(filaInv);
+                setTimeout(() => kpisCharts.push(t.render()), 0);
+            }
+        }
+
+        // ============================================================
+        // OPERACIONES: distribución métodos despacho (100% apilado) + Vta Kiosco (barras+YoY) + % Rechazo (línea)
+        // ============================================================
+        if (categoria === 'Operaciones') {
+            const metodosDespacho = [
+                { nombre: '$ Vta DAD CD', label: 'DAD CD', color: '#2563eb' },
+                { nombre: '$ Vta VeV',    label: 'VeV',    color: '#10b981' },
+                { nombre: '$ Vta RET',    label: 'RET',    color: '#f59e0b' },
+                { nombre: '$ Vta STS',    label: 'STS',    color: '#8b5cf6' },
+                { nombre: '$ Vta SFS',    label: 'SFS',    color: '#ec4899' },
+                { nombre: '$ Vta PUP',    label: 'PUP',    color: '#06b6d4' }
+            ];
+            const presentes = metodosDespacho.filter(m => kpis.find(k => k.nombre === m.nombre));
+            if (presentes.length > 0) {
+                const seriesPorMetodo = presentes.map(m => ({
+                    ...m, vals: serieKPI(kpis.find(k => k.nombre === m.nombre), desde, finVentana)
+                }));
+                // % sobre el total de cada mes
+                const totalesPorMes = mesesVisibles.map((_, i) =>
+                    seriesPorMetodo.reduce((acc, s) => acc + (s.vals[i] || 0), 0));
+                const seriesPct = seriesPorMetodo.map(s => ({
+                    ...s, valsPct: s.vals.map((v, i) => totalesPorMes[i] > 0 && v != null ? parseFloat(((v/totalesPorMes[i])*100).toFixed(1)) : null)
+                }));
+
+                const wrapperDesp = crearWrapperGrafico({
+                    titulo: 'Distribución por Método de Despacho',
+                    subtitulo: `% del total mensual · últimos ${mesesVisibles.length} meses`,
+                    leyendaHTML: seriesPct.map(s => leyendaItem(s.color, s.label, false)).join(''),
+                    canvasId: 'kpi_despacho_operaciones',
+                    alturaPx: 260
+                });
+                seccion.appendChild(wrapperDesp);
+                setTimeout(() => {
+                    const ctx = document.getElementById('kpi_despacho_operaciones');
+                    if (!ctx) return;
                     const ch = new Chart(ctx, {
                         type: 'bar',
                         data: {
                             labels: mesesVisibles,
-                            datasets: datasetsVentas
+                            datasets: seriesPct.map(s => ({ label: s.label, data: s.valsPct, backgroundColor: s.color, stack: 'd' }))
                         },
                         options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    mode: 'index',
-                                    intersect: false,
-                                    callbacks: {
-                                        label: (item) => {
-                                            if (item.dataset.label === 'Crecimiento YoY (%)') {
-                                                return item.raw != null ? `Crecimiento YoY: ${item.raw > 0 ? '+' : ''}${item.raw}%` : null;
-                                            }
-                                            return `${item.dataset.label}: $${item.raw}M`;
-                                        },
-                                        afterBody: (items) => {
-                                            const idx = items[0]?.dataIndex;
-                                            const tot = valsTot[idx];
-                                            return tot ? [`Total: $${tot}M`] : [];
-                                        }
-                                    }
-                                }
-                            },
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => `${i.dataset.label}: ${i.raw}%` } } },
                             scales: {
                                 x: { stacked: true, ticks: { font: { size: 10 } }, grid: { display: false } },
-                                y: {
-                                    stacked: true,
-                                    position: 'left',
-                                    ticks: {
-                                        font: { size: 10 },
-                                        callback: v => '$' + (v/1000).toFixed(0) + 'B'
-                                    }
-                                },
-                                yYoY: {
-                                    display: hayDatosYoY,
-                                    position: 'right',
-                                    grid: { drawOnChartArea: false },
-                                    ticks: {
-                                        font: { size: 10 },
-                                        color: '#dc2626',
-                                        callback: v => v + '%'
-                                    }
-                                }
+                                y: { stacked: true, max: 100, ticks: { font: { size: 10 }, callback: v => v + '%' } }
+                            }
+                        }
+                    });
+                    kpisCharts.push(ch);
+                }, 0);
+            }
+
+            const filaOps2 = document.createElement('div');
+            filaOps2.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+            const rendersOps2 = [];
+
+            const kpiKiosco = kpis.find(k => k.nombre === '$ Vta Kiosco (1p)');
+            if (kpiKiosco) {
+                const vKiosco = serieKPI(kpiKiosco, desde, finVentana, v => Math.round(v/1000000));
+                let vYoYKiosco = [];
+                for (let i = desde; i < finVentana; i++) {
+                    const act = kpiKiosco.valores[i], ant = kpiKiosco.valores[i-12];
+                    vYoYKiosco.push((act != null && act !== 0 && ant != null && ant !== 0) ? parseFloat((((act-ant)/Math.abs(ant))*100).toFixed(1)) : null);
+                }
+                const hayYoY = vYoYKiosco.some(v => v !== null);
+                const card = document.createElement('div');
+                card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
+                const { ultimo } = ultimoYAnterior(vKiosco);
+                card.innerHTML = `
+                    <p class="text-xs font-semibold text-slate-500 mb-1">Vta Kiosco (1P)</p>
+                    <p class="text-xl font-extrabold text-slate-800">${ultimo != null ? '$'+ultimo+'M' : '—'}</p>
+                    <p class="text-[11px] font-semibold mb-2 text-slate-400">${hayYoY ? 'vs año anterior' : ''}</p>
+                    <div style="height:100px;"><canvas id="kpi_kiosco_operaciones"></canvas></div>`;
+                filaOps2.appendChild(card);
+                rendersOps2.push(() => {
+                    const ctx = document.getElementById('kpi_kiosco_operaciones');
+                    if (!ctx) return null;
+                    const datasets = [{ type: 'bar', label: 'Vta Kiosco', data: vKiosco, backgroundColor: '#06b6d4', borderRadius: 2, yAxisID: 'yMonto' }];
+                    if (hayYoY) datasets.push({ type: 'line', label: 'YoY %', data: vYoYKiosco, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 1.5, pointRadius: 2, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct' });
+                    return new Chart(ctx, {
+                        data: { labels: mesesVisibles, datasets },
+                        options: {
+                            responsive: true, maintainAspectRatio: false, animation: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label==='YoY %' ? `YoY: ${i.raw}%` : `$${i.raw}M` } } },
+                            scales: {
+                                x: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8', autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
+                                yMonto: { display: true, position: 'left', ticks: { font: { size: 9 }, color: '#94a3b8', callback: v => '$'+v+'M' } },
+                                yPct: { display: hayYoY, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 9 }, color: '#dc2626', callback: v => v+'%' } }
+                            }
+                        }
+                    });
+                });
+            }
+
+            const kpiRechazo = kpis.find(k => k.nombre === '% Rechazo RET');
+            if (kpiRechazo) {
+                const vRechazo = serieKPI(kpiRechazo, desde, finVentana);
+                const t = crearTarjetaLinea({ label: '% Rechazo RET', color: '#dc2626', canvasId: 'kpi_rechazo_operaciones', vals: vRechazo, mesesVisibles });
+                filaOps2.appendChild(t.card);
+                rendersOps2.push(() => t.render());
+            }
+
+            if (rendersOps2.length > 0) {
+                seccion.appendChild(filaOps2);
+                rendersOps2.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
+            }
+        }
+
+        // ============================================================
+        // TARJETA HITES: % Part TH (barras) + crecimiento YoY de $ Vta Contado (línea, otro eje)
+        // ============================================================
+        if (categoria === 'Tarjeta Hites') {
+            const kpiPartTH = kpis.find(k => k.nombre === '% Part TH');
+            const kpiVtaContado = kpis.find(k => k.nombre === '$ Vta Contado');
+            if (kpiPartTH) {
+                const vPartTH = serieKPI(kpiPartTH, desde, finVentana, v => parseFloat((v*100).toFixed(1)));
+                let vYoYContado = [];
+                if (kpiVtaContado) {
+                    for (let i = desde; i < finVentana; i++) {
+                        const act = kpiVtaContado.valores[i], ant = kpiVtaContado.valores[i-12];
+                        vYoYContado.push((act != null && act !== 0 && ant != null && ant !== 0) ? parseFloat((((act-ant)/Math.abs(ant))*100).toFixed(1)) : null);
+                    }
+                }
+                const hayYoYContado = vYoYContado.some(v => v !== null);
+                const wrapperTH = crearWrapperGrafico({
+                    titulo: '% Participación Tarjeta Hites',
+                    subtitulo: `% del total · últimos ${mesesVisibles.length} meses`,
+                    leyendaHTML: leyendaItem('#ec4899', '% Part TH', false) + (hayYoYContado ? leyendaItem('#2563eb', 'Vta Contado YoY', true) : ''),
+                    canvasId: 'kpi_partth_tarjeta'
+                });
+                seccion.appendChild(wrapperTH);
+                setTimeout(() => {
+                    const ctx = document.getElementById('kpi_partth_tarjeta');
+                    if (!ctx) return;
+                    const datasets = [{ type: 'bar', label: '% Part TH', data: vPartTH, backgroundColor: '#ec4899', borderRadius: 3, yAxisID: 'yPct' }];
+                    if (hayYoYContado) datasets.push({ type: 'line', label: 'Vta Contado YoY', data: vYoYContado, borderColor: '#2563eb', backgroundColor: '#2563eb', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yYoY' });
+                    const ch = new Chart(ctx, {
+                        data: { labels: mesesVisibles, datasets },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label==='Vta Contado YoY' ? `YoY: ${i.raw}%` : `% Part TH: ${i.raw}%` } } },
+                            scales: {
+                                x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                yPct: { position: 'left', ticks: { font: { size: 10 }, callback: v => v+'%' } },
+                                yYoY: { display: hayYoYContado, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#2563eb', callback: v => v+'%' } }
                             }
                         }
                     });
@@ -1431,9 +1849,74 @@ function renderizarKPIs() {
             }
         }
 
+        // ============================================================
+        // FINANCIEROS: GAV/VTA + EBITDA (línea, uno junto al otro)
+        // ============================================================
+        if (categoria === 'Financieros') {
+            const filaFin = document.createElement('div');
+            filaFin.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+            const rendersFin = [];
+
+            const kpiGAV = kpis.find(k => k.nombre === 'GAV / VTA' || k.nombre === 'GAV/VTA');
+            if (kpiGAV) {
+                const vGAV = serieKPI(kpiGAV, desde, finVentana, v => Math.abs(v) <= 1 ? parseFloat((v*100).toFixed(1)) : v);
+                const t = crearTarjetaLinea({ label: 'GAV / Vta', color: '#0ea5e9', canvasId: 'kpi_gav_financieros', vals: vGAV, mesesVisibles, formato: v => v + '%' });
+                filaFin.appendChild(t.card);
+                rendersFin.push(() => t.render());
+            }
+            const kpiEBITDA = kpis.find(k => k.nombre === 'EBITDA');
+            if (kpiEBITDA) {
+                const vEBITDA = serieKPI(kpiEBITDA, desde, finVentana);
+                const esPct = Math.abs(vEBITDA.find(v => v != null) || 0) <= 1;
+                const t = crearTarjetaLinea({ label: 'EBITDA', color: '#16a34a', canvasId: 'kpi_ebitda_financieros', vals: esPct ? vEBITDA.map(v => v!=null?parseFloat((v*100).toFixed(1)):null) : vEBITDA, mesesVisibles, formato: esPct ? (v => v+'%') : formatoMonto });
+                filaFin.appendChild(t.card);
+                rendersFin.push(() => t.render());
+            }
+            if (rendersFin.length > 0) {
+                seccion.appendChild(filaFin);
+                rendersFin.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
+            }
+        }
+
+        // ============================================================
+        // CX: todos los KPIs en tarjetas de línea individuales (NPS primero, luego NS)
+        // ============================================================
+        if (categoria === 'CX') {
+            const ordenNPS = ['NPS Total', 'NPS Despachos', 'NPS RET'];
+            const ordenNS = ['NS Total', 'NS MKP', 'NS DAD', 'NS SD', 'NS RET', 'NS VeV', 'NS STS', 'NS SFS', 'NS PUP'];
+            const colorPalette = ['#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#dc2626', '#0ea5e9', '#16a34a'];
+
+            function filaParaGrupo(nombres) {
+                const presentes = nombres.filter(n => kpis.find(k => k.nombre === n));
+                if (presentes.length === 0) return;
+                const fila = document.createElement('div');
+                fila.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+                const renders = [];
+                presentes.forEach((nombre, idx) => {
+                    const kpi = kpis.find(k => k.nombre === nombre);
+                    const vals = serieKPI(kpi, desde, finVentana);
+                    const canvasId = 'kpi_cx_' + nombre.replace(/[^a-zA-Z0-9]/g, '');
+                    const t = crearTarjetaLinea({ label: nombre, color: colorPalette[idx % colorPalette.length], canvasId, vals, mesesVisibles });
+                    fila.appendChild(t.card);
+                    renders.push(() => t.render());
+                });
+                seccion.appendChild(fila);
+                renders.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
+            }
+
+            filaParaGrupo(ordenNPS);
+            filaParaGrupo(ordenNS);
+        }
+
+
         kpis.forEach((kpi, kIdx) => {
-            // Saltar los KPIs que ya están en el gráfico apilado
+            // Saltar los KPIs que ya están graficados en bloques especiales por categoría
             if (categoria === 'Comercial' && KPI_EXCLUIR_COMERCIAL.includes(kpi.nombre)) return;
+            if (categoria === 'Marketing' && KPI_EXCLUIR_MARKETING.includes(kpi.nombre)) return;
+            if (categoria === 'Operaciones' && KPI_EXCLUIR_OPERACIONES.includes(kpi.nombre)) return;
+            if (categoria === 'Tarjeta Hites' && KPI_EXCLUIR_TARJETA_HITES.includes(kpi.nombre)) return;
+            if (categoria === 'Financieros' && KPI_EXCLUIR_FINANCIEROS.includes(kpi.nombre)) return;
+            if (categoria === 'CX' && KPI_EXCLUIR_CX.includes(kpi.nombre)) return;
             const valoresVentana = kpi.valores.slice(desde, finVentana);
 
             // Encontrar índices con valor válido (no null). Cero SÍ es válido salvo que sea relleno final.
