@@ -1284,7 +1284,7 @@ function renderizarKPIs() {
 
         const KPI_EXCLUIR_TARJETA_HITES = ['% Part TH', '$ Vta Contado', '$ Vta TH', 'Vta TH Cadena'];
 
-        const KPI_EXCLUIR_FINANCIEROS = ['GAV / VTA', 'GAV/VTA', 'EBITDA'];
+        const KPI_EXCLUIR_FINANCIEROS = ['GAV / VTA', 'GAV/VTA', 'EBITDA', 'EBITDA / VTA', 'EBITDA/VTA'];
 
         const KPI_EXCLUIR_CX = ['NPS Total', 'NPS Despachos', 'NPS RET',
             'NS Total', 'NS MKP', 'NS DAD', 'NS SD', 'NS RET', 'NS VeV', 'NS STS', 'NS SFS', 'NS PUP'];
@@ -1471,9 +1471,9 @@ function renderizarKPIs() {
                 });
                 seccion.appendChild(shareRow);
 
-                // Fila: SKUs (apiladas, tamaño share) + Sellers (barras) + Ticket Promedio (línea)
+                // Fila: SKUs (apiladas, tamaño share) + Ticket Promedio (línea)
                 const filaSegunda = document.createElement('div');
-                filaSegunda.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4';
+                filaSegunda.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4';
 
                 const renders2 = [];
 
@@ -1517,45 +1517,6 @@ function renderizarKPIs() {
                     });
                 }
 
-                // # Sellers c/vta (barras)
-                const kpiSellers = kpis.find(k => k.nombre === '# Sellers c/vta');
-                if (kpiSellers) {
-                    const vSellers = serieKPI(kpiSellers, desde, finVentana);
-                    const { ultimo, anterior } = ultimoYAnterior(vSellers);
-                    let varText = '—', varColor = '#94a3b8';
-                    if (ultimo != null && anterior != null && anterior !== 0) {
-                        const diff = ultimo - anterior;
-                        varColor = diff >= 0 ? '#16a34a' : '#dc2626';
-                        varText = (diff >= 0 ? '▲ ' : '▼ ') + Math.abs(diff);
-                    }
-                    const card = document.createElement('div');
-                    card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm p-4';
-                    card.innerHTML = `
-                        <p class="text-xs font-semibold text-slate-500 mb-1"># Sellers c/vta</p>
-                        <p class="text-xl font-extrabold text-slate-800">${ultimo ?? '—'}</p>
-                        <p class="text-[11px] font-semibold mb-2" style="color:${varColor}">${varText}</p>
-                        <div style="height:100px;"><canvas id="kpi_sellers_comercial"></canvas></div>`;
-                    filaSegunda.appendChild(card);
-
-                    renders2.push(() => {
-                        const ctx = document.getElementById('kpi_sellers_comercial');
-                        if (!ctx) return null;
-                        return new Chart(ctx, {
-                            type: 'bar',
-                            data: { labels: mesesVisibles, datasets: [{ data: vSellers, backgroundColor: '#8b5cf6', borderRadius: 2 }] },
-                            options: {
-                                responsive: true, maintainAspectRatio: false, animation: false,
-                                interaction: { mode: 'index', intersect: false },
-                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => `Sellers: ${i.raw}` } } },
-                                scales: {
-                                    x: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8', autoSkip: true, maxTicksLimit: 6 }, grid: { display: false } },
-                                    y: { display: true, ticks: { font: { size: 9 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
-                                }
-                            }
-                        });
-                    });
-                }
-
                 // Ticket Promedio (línea)
                 const kpiTicket = kpis.find(k => k.nombre === 'Ticket Promedio');
                 if (kpiTicket) {
@@ -1571,12 +1532,61 @@ function renderizarKPIs() {
                 seccion.appendChild(filaSegunda);
                 renders2.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
 
-                // Fila: Margen vs Venta Ecommerce + Comisión Marketplace (lado a lado)
+                // Fila: Sellers c/vta + Venta promedio/seller | Margen y Contribución | Comisión Marketplace
                 const filaMargenComision = document.createElement('div');
-                filaMargenComision.className = 'grid grid-cols-1 lg:grid-cols-2 gap-3 mb-4';
+                filaMargenComision.className = 'grid grid-cols-1 lg:grid-cols-3 gap-3 mb-4';
                 const rendersMC = [];
 
-                // Margen (línea) con Vta Ecom en otro eje — barras en azul
+                // # Sellers c/vta (barras) + Venta promedio por seller = Vta 3P / # Sellers (línea, eje secundario)
+                const kpiSellers = kpis.find(k => k.nombre === '# Sellers c/vta');
+                const kpiVta3p = kpis.find(k => k.nombre === 'Vta 3p');
+                if (kpiSellers) {
+                    const vSellers = serieKPI(kpiSellers, desde, finVentana);
+                    let vVentaProm = [];
+                    if (kpiVta3p) {
+                        for (let i = desde; i < finVentana; i++) {
+                            const v3p = kpiVta3p.valores[i];
+                            const sellers = kpiSellers.valores[i];
+                            vVentaProm.push((v3p != null && v3p !== 0 && sellers != null && sellers !== 0)
+                                ? Math.round(v3p / sellers / 1000) // en miles ($K) para legibilidad
+                                : null);
+                        }
+                    }
+                    const hayVentaProm = vVentaProm.some(v => v !== null);
+                    const wrapperSellers = crearWrapperGrafico({
+                        titulo: 'Sellers y Venta Promedio',
+                        subtitulo: `# sellers c/vta y venta prom. 3P por seller · últimos ${mesesVisibles.length} meses`,
+                        leyendaHTML: leyendaItem('#8b5cf6', '# Sellers', false) + (hayVentaProm ? leyendaItem('#dc2626', 'Vta Prom/Seller', true) : ''),
+                        canvasId: 'kpi_sellers_comercial'
+                    });
+                    filaMargenComision.appendChild(wrapperSellers);
+                    rendersMC.push(() => {
+                        const ctx = document.getElementById('kpi_sellers_comercial');
+                        if (!ctx) return null;
+                        const datasets = [{ type: 'bar', label: '# Sellers', data: vSellers, backgroundColor: '#8b5cf6', borderRadius: 3, yAxisID: 'yCount', order: 2 }];
+                        if (hayVentaProm) datasets.push({ type: 'line', label: 'Vta Prom/Seller', data: vVentaProm, borderColor: '#dc2626', backgroundColor: '#dc2626', borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yMonto', order: 0 });
+                        return new Chart(ctx, {
+                            data: { labels: mesesVisibles, datasets },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label === 'Vta Prom/Seller' ? `Vta Prom/Seller: $${i.raw}K` : `Sellers: ${i.raw}` } } },
+                                scales: {
+                                    x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                    yCount: { position: 'left', ticks: { font: { size: 10 } } },
+                                    yMonto: { display: hayVentaProm, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#dc2626', callback: v => '$' + v + 'K' } }
+                                }
+                            }
+                        });
+                    });
+                }
+
+                if (rendersMC.length > 0) {
+                    seccion.appendChild(filaMargenComision);
+                    rendersMC.forEach(r => setTimeout(() => kpisCharts.push(r()), 0));
+                }
+
+                // Fila aparte: Margen vs Venta Ecommerce (full width)
                 const kpiMargen = kpis.find(k => k.nombre === 'Margen');
                 if (kpiMargen && kpiTot) {
                     const vMargen = serieKPI(kpiMargen, desde, finVentana, v => parseFloat((v*100).toFixed(1)));
@@ -1587,11 +1597,11 @@ function renderizarKPIs() {
                         leyendaHTML: leyendaItem('#2563eb', 'Vta Ecom', false) + leyendaItem('#f59e0b', 'Margen %', true),
                         canvasId: 'kpi_margen_comercial'
                     });
-                    filaMargenComision.appendChild(wrapperMargen);
-                    rendersMC.push(() => {
+                    seccion.appendChild(wrapperMargen);
+                    setTimeout(() => {
                         const ctx = document.getElementById('kpi_margen_comercial');
-                        if (!ctx) return null;
-                        return new Chart(ctx, {
+                        if (!ctx) return;
+                        const ch = new Chart(ctx, {
                             data: {
                                 labels: mesesVisibles,
                                 datasets: [
@@ -1607,6 +1617,42 @@ function renderizarKPIs() {
                                     x: { ticks: { font: { size: 10 } }, grid: { display: false } },
                                     yMonto: { position: 'left', ticks: { font: { size: 10 }, callback: v => '$' + (v/1000).toFixed(0) + 'B' } },
                                     yPct: { position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#f59e0b', callback: v => v + '%' } }
+                                }
+                            }
+                        });
+                        kpisCharts.push(ch);
+                    }, 0);
+                }
+
+                // Margen Total (línea) + Contribución Total (barra) — nuevo gráfico combo
+                const kpiMargenTotal = kpis.find(k => k.nombre === 'Margen Total' || k.nombre === 'Margen total' || k.nombre === 'Margen');
+                const kpiContriTotal = kpis.find(k => k.nombre === 'Contri total' || k.nombre === 'Contribución Total' || k.nombre === 'Contribución (+ Rebate)');
+                if (kpiMargenTotal || kpiContriTotal) {
+                    const vMargenT = kpiMargenTotal ? serieKPI(kpiMargenTotal, desde, finVentana, v => Math.abs(v) <= 1 ? parseFloat((v*100).toFixed(1)) : v) : [];
+                    const vContriT = kpiContriTotal ? serieKPI(kpiContriTotal, desde, finVentana, v => Math.round(v/1000000)) : [];
+                    const wrapperMargenContri = crearWrapperGrafico({
+                        titulo: 'Margen y Contribución Total',
+                        subtitulo: `% margen y $M contribución · últimos ${mesesVisibles.length} meses`,
+                        leyendaHTML: (kpiContriTotal ? leyendaItem('#10b981', 'Contribución $M', false) : '') + (kpiMargenTotal ? leyendaItem('#2563eb', 'Margen %', true) : ''),
+                        canvasId: 'kpi_margencontri_comercial'
+                    });
+                    filaMargenComision.appendChild(wrapperMargenContri);
+                    rendersMC.push(() => {
+                        const ctx = document.getElementById('kpi_margencontri_comercial');
+                        if (!ctx) return null;
+                        const datasets = [];
+                        if (kpiContriTotal) datasets.push({ type: 'bar', label: 'Contribución $M', data: vContriT, backgroundColor: '#10b981', borderRadius: 3, yAxisID: 'yMonto', order: 2 });
+                        if (kpiMargenTotal) datasets.push({ type: 'line', label: 'Margen %', data: vMargenT, borderColor: '#2563eb', backgroundColor: '#2563eb', borderWidth: 2, pointRadius: 3, pointHoverRadius: 5, tension: 0.3, fill: false, spanGaps: true, yAxisID: 'yPct', order: 0 });
+                        return new Chart(ctx, {
+                            data: { labels: mesesVisibles, datasets },
+                            options: {
+                                responsive: true, maintainAspectRatio: false,
+                                interaction: { mode: 'index', intersect: false },
+                                plugins: { legend: { display: false }, tooltip: { callbacks: { label: i => i.dataset.label === 'Margen %' ? `Margen: ${i.raw}%` : `Contribución: $${i.raw}M` } } },
+                                scales: {
+                                    x: { ticks: { font: { size: 10 } }, grid: { display: false } },
+                                    yMonto: { display: !!kpiContriTotal, position: 'left', ticks: { font: { size: 10 }, callback: v => '$' + v + 'M' } },
+                                    yPct: { display: !!kpiMargenTotal, position: 'right', grid: { drawOnChartArea: false }, ticks: { font: { size: 10 }, color: '#2563eb', callback: v => v + '%' } }
                                 }
                             }
                         });
@@ -1877,11 +1923,10 @@ function renderizarKPIs() {
                 filaFin.appendChild(t.card);
                 rendersFin.push(() => t.render());
             }
-            const kpiEBITDA = kpis.find(k => k.nombre === 'EBITDA');
+            const kpiEBITDA = kpis.find(k => k.nombre === 'EBITDA / VTA' || k.nombre === 'EBITDA/VTA' || k.nombre === 'EBITDA');
             if (kpiEBITDA) {
-                const vEBITDA = serieKPI(kpiEBITDA, desde, finVentana);
-                const esPct = Math.abs(vEBITDA.find(v => v != null) || 0) <= 1;
-                const t = crearTarjetaLinea({ label: 'EBITDA', color: '#16a34a', canvasId: 'kpi_ebitda_financieros', vals: esPct ? vEBITDA.map(v => v!=null?parseFloat((v*100).toFixed(1)):null) : vEBITDA, mesesVisibles, formato: esPct ? (v => v+'%') : formatoMonto });
+                const vEBITDA = serieKPI(kpiEBITDA, desde, finVentana, v => Math.abs(v) <= 1 ? parseFloat((v*100).toFixed(1)) : v);
+                const t = crearTarjetaLinea({ label: 'EBITDA / Vta', color: '#16a34a', canvasId: 'kpi_ebitda_financieros', vals: vEBITDA, mesesVisibles, formato: v => v + '%' });
                 filaFin.appendChild(t.card);
                 rendersFin.push(() => t.render());
             }
