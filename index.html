@@ -748,9 +748,17 @@ function construirChipsFiltros() {
 
         // Calcular qué valores tienen resultados dado los filtros ACTUALES (excluyendo el propio tipo)
         const otrosFiltros = Object.entries(filtrosActivos).filter(([k]) => k !== tipo);
+        // Mapa de impacto por iniciativa (preferir fila padre si existe, sino cualquier fila)
+        const impactoPorIniciativa = {};
+        cacheDatosRaw.forEach(p => {
+            if (!p.iniciativa) return;
+            if (!(p.iniciativa in impactoPorIniciativa) || !p.tarea) {
+                impactoPorIniciativa[p.iniciativa] = p.impacto;
+            }
+        });
         // Pre-calcular el set de iniciativas que cumplen el filtro de impacto (a nivel iniciativa)
         const iniciativasConImpactoActivo = filtrosActivos.impacto.size > 0
-            ? new Set(cacheDatosRaw.filter(p => !p.tarea && filtrosActivos.impacto.has(p.impacto)).map(p => p.iniciativa))
+            ? new Set(Object.entries(impactoPorIniciativa).filter(([_, imp]) => filtrosActivos.impacto.has(imp)).map(([ini]) => ini))
             : null;
         const datosConOtrosFiltros = cacheDatosRaw.filter(p => {
             return otrosFiltros.every(([k, s]) => {
@@ -765,7 +773,7 @@ function construirChipsFiltros() {
         });
         const valoresDisponibles = new Set(datosConOtrosFiltros.map(p => {
             if (tipo === 'estado') return p.estado;
-            if (tipo === 'impacto') return !p.tarea ? p.impacto : null; // solo impacto de iniciativas, no de tareas
+            if (tipo === 'impacto') return impactoPorIniciativa[p.iniciativa]; // impacto de la iniciativa, no de la tarea
             if (tipo === 'responsable') return [p.responsable, p.respiniciativa];
             if (tipo === 'iniciativa') return p.iniciativa;
             if (tipo === 'area') return [p.areainiciativa, p.tema];
@@ -895,22 +903,22 @@ function renderizarTodo() {
     let datosFiltrados = cacheDatosRaw;
     if (filtrosActivos.estado.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.estado.has(p.estado));
     if (filtrosActivos.impacto.size > 0) {
-        // DIAGNÓSTICO TEMPORAL — para entender por qué se filtra incorrectamente
-        const padres = cacheDatosRaw.filter(p => !p.tarea);
-        console.log('🔍 Total filas SIN tarea (deberían ser iniciativas):', padres.length);
-        console.log('🔍 Impactos únicos en filas SIN tarea:', [...new Set(padres.map(p => `"${p.impacto}"`))]);
-        console.log('🔍 Iniciativas únicas en cacheDatosRaw:', new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean)).size);
-        console.log('🔍 Filtros activos de impacto:', [...filtrosActivos.impacto]);
-
-        // El impacto filtra a nivel de INICIATIVA: se determina qué iniciativas tienen
-        // ese impacto (mirando su fila padre, sin tarea), y se incluyen todas sus filas
-        // (iniciativa + todas sus tareas), sin filtrar las tareas por su propio impacto.
+        // El impacto filtra a nivel de INICIATIVA. Como no todas las iniciativas tienen
+        // una "fila padre" sin tarea, tomamos el impacto de cualquier fila representativa
+        // de cada iniciativa (preferimos la fila padre si existe, sino la primera fila).
+        const impactoPorIniciativa = {};
+        cacheDatosRaw.forEach(p => {
+            if (!p.iniciativa) return;
+            // Preferir la fila padre (sin tarea), sino mantener la primera que aparezca
+            if (!(p.iniciativa in impactoPorIniciativa) || !p.tarea) {
+                impactoPorIniciativa[p.iniciativa] = p.impacto;
+            }
+        });
         const iniciativasConImpacto = new Set(
-            cacheDatosRaw
-                .filter(p => !p.tarea && filtrosActivos.impacto.has(p.impacto))
-                .map(p => p.iniciativa)
+            Object.entries(impactoPorIniciativa)
+                .filter(([_, imp]) => filtrosActivos.impacto.has(imp))
+                .map(([ini]) => ini)
         );
-        console.log('🔍 Iniciativas que pasan el filtro de impacto:', [...iniciativasConImpacto]);
         datosFiltrados = datosFiltrados.filter(p => iniciativasConImpacto.has(p.iniciativa));
     }
     if (filtrosActivos.responsable.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.responsable.has(p.responsable) || filtrosActivos.responsable.has(p.respiniciativa));
