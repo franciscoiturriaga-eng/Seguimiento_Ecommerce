@@ -895,6 +895,13 @@ function renderizarTodo() {
     let datosFiltrados = cacheDatosRaw;
     if (filtrosActivos.estado.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.estado.has(p.estado));
     if (filtrosActivos.impacto.size > 0) {
+        // DIAGNÓSTICO TEMPORAL — para entender por qué se filtra incorrectamente
+        const padres = cacheDatosRaw.filter(p => !p.tarea);
+        console.log('🔍 Total filas SIN tarea (deberían ser iniciativas):', padres.length);
+        console.log('🔍 Impactos únicos en filas SIN tarea:', [...new Set(padres.map(p => `"${p.impacto}"`))]);
+        console.log('🔍 Iniciativas únicas en cacheDatosRaw:', new Set(cacheDatosRaw.map(p => p.iniciativa).filter(Boolean)).size);
+        console.log('🔍 Filtros activos de impacto:', [...filtrosActivos.impacto]);
+
         // El impacto filtra a nivel de INICIATIVA: se determina qué iniciativas tienen
         // ese impacto (mirando su fila padre, sin tarea), y se incluyen todas sus filas
         // (iniciativa + todas sus tareas), sin filtrar las tareas por su propio impacto.
@@ -903,6 +910,7 @@ function renderizarTodo() {
                 .filter(p => !p.tarea && filtrosActivos.impacto.has(p.impacto))
                 .map(p => p.iniciativa)
         );
+        console.log('🔍 Iniciativas que pasan el filtro de impacto:', [...iniciativasConImpacto]);
         datosFiltrados = datosFiltrados.filter(p => iniciativasConImpacto.has(p.iniciativa));
     }
     if (filtrosActivos.responsable.size > 0) datosFiltrados = datosFiltrados.filter(p => filtrosActivos.responsable.has(p.responsable) || filtrosActivos.responsable.has(p.respiniciativa));
