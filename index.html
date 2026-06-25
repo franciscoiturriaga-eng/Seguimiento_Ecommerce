@@ -2113,17 +2113,31 @@ function inicializarStickyHeaderTabla() {
         }
         const theadOriginal = tablaOriginal.querySelector('thead');
         if (!theadOriginal) return;
+
+        // Calcular el offset superior: header del sitio + panel de Filtros (si está visible)
+        let offsetTop = 0;
+        const headerSitio = document.querySelector('header');
+        if (headerSitio) {
+            const rectHeader = headerSitio.getBoundingClientRect();
+            // Si el header del sitio está fijo arriba o visible, sumamos su altura
+            if (rectHeader.bottom > 0) offsetTop = Math.max(offsetTop, rectHeader.bottom);
+        }
+        const panelFiltros = document.getElementById('panelFiltros');
+        if (panelFiltros && !panelFiltros.classList.contains('hidden')) {
+            const rectFiltros = panelFiltros.getBoundingClientRect();
+            if (rectFiltros.bottom > 0) offsetTop = Math.max(offsetTop, rectFiltros.bottom);
+        }
+
         const rectThead = theadOriginal.getBoundingClientRect();
         const rectTabla = tablaOriginal.getBoundingClientRect();
 
-        // Mostrar clon solo si el header original salió por arriba Y la tabla sigue visible
-        const debeFlotar = rectThead.top < 0 && rectTabla.bottom > 40;
+        // Mostrar clon solo si el header original salió por arriba del offsetTop Y la tabla sigue visible
+        const debeFlotar = rectThead.top < offsetTop && rectTabla.bottom > offsetTop + 40;
 
         if (debeFlotar) {
             if (!stickyHeaderClone) {
                 stickyHeaderClone = document.createElement('div');
                 stickyHeaderClone.style.position = 'fixed';
-                stickyHeaderClone.style.top = '0';
                 stickyHeaderClone.style.zIndex = '40';
                 stickyHeaderClone.style.overflow = 'hidden';
                 stickyHeaderClone.style.background = '#f1f5f9';
@@ -2131,6 +2145,7 @@ function inicializarStickyHeaderTabla() {
                 document.body.appendChild(stickyHeaderClone);
                 wrapperScroll.addEventListener('scroll', onScrollStickyHeaderX);
             }
+            stickyHeaderClone.style.top = offsetTop + 'px';
             const rectWrapper = wrapperScroll.getBoundingClientRect();
             stickyHeaderClone.style.left = rectWrapper.left + 'px';
             stickyHeaderClone.style.width = rectWrapper.width + 'px';
