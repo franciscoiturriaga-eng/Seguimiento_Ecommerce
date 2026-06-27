@@ -50,6 +50,54 @@
         .dark .hover\:bg-slate-50\/80:hover { background:#334155 !important; }
         .dark .hover\:bg-slate-50:hover { background:#334155 !important; }
         .dark #pantallaLogin { background:#0f172a; }
+
+        /* DARK MODE — modales */
+        .dark #modalFormulario > div > div,
+        .dark #modalDetalleTarea > div,
+        .dark #modalAlerta > div,
+        .dark #modalConfig > div { background:#1e293b !important; border-color:#334155 !important; }
+        .dark #modalFormulario, .dark #modalDetalleTarea,
+        .dark #modalAlerta, .dark #modalConfig { background:rgba(2,8,23,0.75) !important; }
+        .dark .dark-modal { background:#1e293b !important; border-color:#334155 !important; }
+
+        /* DARK MODE — formularios dentro de modales */
+        .dark input[type="text"], .dark input[type="date"], .dark input[type="email"],
+        .dark textarea, .dark select {
+            background:#0f172a !important; color:#e2e8f0 !important;
+            border-color:#334155 !important;
+        }
+        .dark input::placeholder, .dark textarea::placeholder { color:#475569 !important; }
+
+        /* DARK MODE — bloques de detalle tarea */
+        .dark #detalleDescripcion { background:#0f172a !important; color:#cbd5e1 !important; }
+        .dark #detalleComentarios { background:#1c1a0e !important; border-color:#44380a !important; color:#fde68a !important; }
+        .dark #detalleSubtareasBloque .bg-slate-50 { background:#0f172a !important; }
+
+        /* DARK MODE — tabla */
+        .dark #cuerpoTabla tr.bg-slate-100\/70 { background:#1e293b !important; }
+        .dark #cuerpoTabla tr:hover td { background:#334155 !important; }
+        .dark .fila-tarea-clickable:hover td { background:#334155 !important; }
+
+        /* DARK MODE — tarjetas responsables (generadas con inline styles) */
+        .dark #tarjetasResponsables .resp-card { background:#1e293b !important; border-color:#334155 !important; }
+        .dark #tarjetasResponsables .resp-card .resp-name { color:#e2e8f0 !important; }
+        .dark #tarjetasResponsables .resp-card .resp-sub  { color:#64748b !important; }
+
+        /* DARK MODE — panel filtros y chips */
+        .dark #cuerpoPanelFiltros { background:#1e293b !important; }
+        .dark .filter-chip { border-color:#334155; }
+
+        /* DARK MODE — gantt sticky col */
+        .dark #ganttContenido [style*="background:#ffffff"],
+        .dark #ganttContenido [style*="background:#f8fafc"] { background:#1e293b !important; color:#e2e8f0 !important; }
+        .dark #ganttContenido [style*="background:#f8fafc;border-radius:6px"] { background:#0f172a !important; }
+
+        /* DARK MODE — skeleton */
+        .dark .skeleton { background:linear-gradient(90deg,#1e293b 25%,#334155 50%,#1e293b 75%); background-size:200% 100%; }
+
+        /* Variables para celdas sticky que usan inline style */
+        :root { --sticky-bg: #ffffff; --sticky-bg-alt: #f8fafc; --sticky-text: #334155; --sticky-shadow: rgba(0,0,0,0.06); }
+        .dark { --sticky-bg: #1e293b; --sticky-bg-alt: #0f172a; --sticky-text: #cbd5e1; --sticky-shadow: rgba(0,0,0,0.3); }
         .gantt-bar { transition: opacity 0.2s; }
         .gantt-bar:hover { opacity: 0.85; filter: brightness(1.05); }
         .filter-chip { cursor: pointer; transition: all 0.15s; user-select: none; }
@@ -246,6 +294,73 @@
                 <p class="text-[10px] font-bold uppercase tracking-wider text-amber-500">Vencen esta semana</p>
                 <p id="resumenVencenNum" class="text-3xl font-extrabold text-amber-500">—</p>
                 <p class="text-[11px] text-amber-300">Clic para ver</p>
+            </div>
+        </div>
+
+        <!-- ECOSISTEMA TECNOLÓGICO -->
+        <div id="contenedorEcosistema" class="hidden mb-4">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <button onclick="window.toggleEcosistema()" class="w-full flex justify-between items-center px-4 py-3 hover:bg-slate-50 transition text-left">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-700">🛠️ Ecosistema del Proyecto</span>
+                        <span class="text-[10px] text-slate-400 font-normal">Stack tecnológico utilizado</span>
+                    </div>
+                    <span id="iconToggleEcosistema" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
+                </button>
+                <div id="cuerpoEcosistema" class="hidden border-t border-slate-100 px-4 py-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <!-- GitHub -->
+                        <a href="https://github.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">GitHub</p>
+                                <p class="text-[10px] text-slate-400">Control de versiones</p>
+                            </div>
+                        </a>
+                        <!-- Vercel -->
+                        <a href="https://vercel.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M24 22.525H0l12-21.05 12 21.05z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Vercel</p>
+                                <p class="text-[10px] text-slate-400">Deploy & hosting</p>
+                            </div>
+                        </a>
+                        <!-- Firebase -->
+                        <a href="https://firebase.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3.89 15.672L6.255.461A.542.542 0 017.27.288l2.543 4.771zm16.794 3.692l-2.25-14a.54.54 0 00-.919-.295L3.316 19.365l7.856 4.427a1.621 1.621 0 001.588 0zM14.3 7.147l-1.818-3.482a.542.542 0 00-.96 0L3.53 17.984z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Firebase</p>
+                                <p class="text-[10px] text-slate-400">Base de datos & auth</p>
+                            </div>
+                        </a>
+                        <!-- Google Sheets -->
+                        <a href="https://sheets.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-green-200 hover:bg-green-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M19.786 0H4.214A.214.214 0 000 .214V23.786c0 .118.096.214.214.214H19.786c.118 0 .214-.096.214-.214V.214A.214.214 0 0019.786 0zM6 17.143H4.286V15.43H6v1.714zm0-3.429H4.286V12h1.714v1.714zm0-3.428H4.286V8.571H6v1.714zm3.429 6.857H7.714V15.43h1.715v1.714zm0-3.429H7.714V12h1.715v1.714zm0-3.428H7.714V8.571h1.715v1.714zm3.428 6.857h-1.714V15.43h1.714v1.714zm0-3.429h-1.714V12h1.714v1.714zm0-3.428h-1.714V8.571h1.714v1.714zm3.429 6.857h-1.715V15.43h1.715v1.714zm0-3.429h-1.715V12h1.715v1.714zm0-3.428h-1.715V8.571h1.715v1.714zM17.571 6H6.43A.429.429 0 016 5.571V3.43C6 3.192 6.192 3 6.429 3H17.57C17.808 3 18 3.192 18 3.429V5.57A.429.429 0 0117.571 6z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Google Sheets</p>
+                                <p class="text-[10px] text-slate-400">Datos & KPIs</p>
+                            </div>
+                        </a>
+                        <!-- Google Workspace -->
+                        <a href="https://workspace.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 11.55C9.64 9.35 6.48 8 3 8c-1.1 0-2.18.1-3.22.3L0 12h3c2.56 0 4.9.9 6.73 2.38zm0 0c2.36-2.2 5.52-3.55 9-3.55 1.1 0 2.18.1 3.22.3L24 12h-3c-2.56 0-4.9.9-6.73 2.38zM12 4C9.33 4 7 5.1 5.28 6.9 7.43 7.67 9.33 8.84 11 10.3V4zm0 0c2.67 0 5 1.1 6.72 2.9A14.44 14.44 0 0013 10.3V4zM5.5 18.5C6.96 17.14 8.88 16.25 11 16.06V19l-5.5-.5zm13 0C17.04 17.14 15.12 16.25 13 16.06V19l5.5-.5z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Google Workspace</p>
+                                <p class="text-[10px] text-slate-400">Suite corporativa</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -465,6 +580,10 @@
             <div id="detalleComentariosBloque" class="hidden">
                 <p class="text-xs text-slate-400 mb-1 font-semibold uppercase tracking-wider">Comentarios</p>
                 <p id="detalleComentarios" class="text-slate-700 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed"></p>
+            </div>
+            <div id="detalleSubtareasBloque" class="hidden">
+                <p class="text-xs text-slate-400 mb-2 font-semibold uppercase tracking-wider">Subtareas</p>
+                <div id="detalleSubtareasList" class="space-y-1.5"></div>
             </div>
         </div>
         <div class="mt-5 flex justify-between items-center">
@@ -713,6 +832,7 @@ function iniciarEscuchaFirestore() {
         document.getElementById('txtCargando').classList.add('hidden');
         document.getElementById('contenedorGraficas').classList.remove('hidden');
         document.getElementById('contenedorResumen').classList.remove('hidden');
+        document.getElementById('contenedorEcosistema').classList.remove('hidden');
         document.getElementById('contenedorGantt').classList.remove('hidden');
         document.getElementById('contenedorResponsables').classList.remove('hidden');
         document.getElementById('contenedorTabla').classList.remove('hidden');
@@ -820,6 +940,14 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     construirChipsFiltros();
     renderizarTodo();
 });
+
+window.toggleEcosistema = function() {
+    const cuerpo = document.getElementById('cuerpoEcosistema');
+    const icon = document.getElementById('iconToggleEcosistema');
+    const abierto = !cuerpo.classList.contains('hidden');
+    cuerpo.classList.toggle('hidden', abierto);
+    icon.style.transform = abierto ? '' : 'rotate(180deg)';
+};
 
 window.togglePanelFiltros = function() {
     const cuerpo = document.getElementById('cuerpoPanelFiltros');
@@ -2456,7 +2584,7 @@ function renderizarTarjetasResponsables(datos) {
         const avatarBg = avatarColors[colorIdx % avatarColors.length] || '#3b82f6';
 
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
+        card.className = 'resp-card bg-white rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-150';
         card.style = 'min-width:190px;max-width:220px;flex-shrink:0;';
         card.onclick = () => window.filtrarPorClick('responsable', resp, false);
         card.innerHTML = `
@@ -2464,8 +2592,8 @@ function renderizarTarjetasResponsables(datos) {
                 <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
                     <div style="width:32px;height:32px;border-radius:50%;background:${avatarBg};color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${resp[0]}</div>
                     <div style="flex:1;min-width:0;">
-                        <div style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${resp}</div>
-                        <div style="font-size:10px;color:#94a3b8;">${misIniciativas.length} iniciativa${misIniciativas.length!==1?'s':''}</div>
+                        <div class="resp-name" style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${resp}</div>
+                        <div class="resp-sub" style="font-size:10px;color:#94a3b8;">${misIniciativas.length} iniciativa${misIniciativas.length!==1?'s':''}</div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
                         <div style="font-size:18px;font-weight:800;color:${barColor};line-height:1;">${avanceProm}%</div>
@@ -2823,8 +2951,8 @@ function renderizarGantt(proyectosFiltrados) {
 
         filasHTML += `
         <div style="display:flex;align-items:center;margin-bottom:6px;height:${ROW_H - 8}px;">
-            <div style="width:${anchoNombre}px;flex-shrink:0;padding-right:12px;overflow:hidden;position:sticky;left:0;background:#ffffff;z-index:10;box-shadow:2px 0 4px rgba(0,0,0,0.04);">
-                <div style="font-size:11px;font-weight:600;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${iniciativa}">${resaltarTexto(iniciativa, terminoBusqueda)}</div>
+            <div style="width:${anchoNombre}px;flex-shrink:0;padding-right:12px;overflow:hidden;position:sticky;left:0;background:var(--sticky-bg);z-index:10;box-shadow:2px 0 4px var(--sticky-shadow);">
+                <div style="font-size:11px;font-weight:600;color:var(--sticky-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${iniciativa}">${resaltarTexto(iniciativa, terminoBusqueda)}</div>
                 <div style="font-size:10px;color:#94a3b8;margin-top:1px;">${avance}% · ${numTareas} tarea${numTareas!==1?'s':''} · ${fmtInicio}→${fmtMeta}</div>
             </div>
             <div style="position:relative;height:26px;width:${anchoTotal}px;flex-shrink:0;background:#f8fafc;border-radius:6px;border:1px solid #e2e8f0;">
@@ -2983,7 +3111,7 @@ function renderizarTablaJerarquica(proyectos) {
         const filaPadre = document.createElement('tr');
         filaPadre.className = "bg-slate-100/70 font-bold text-slate-800 border-t border-slate-300 transition";
         filaPadre.innerHTML = `
-            <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:#f8fafc;min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px rgba(0,0,0,0.06);">
+            <td onclick="window.toggleColapso('${iniciativa.replace(/'/g,"\\'")}')" style="position:sticky;left:0;z-index:20;background:var(--sticky-bg-alt);min-width:200px;padding:10px 8px 10px 16px;color:#1d4ed8;font-weight:600;cursor:pointer;user-select:none;box-shadow:2px 0 4px var(--sticky-shadow);">
                 <span class="text-xs text-slate-400 w-4">${colapso ? '▶' : '▼'}</span>
                 📂 ${iniciativa}
                 <span class="ml-1.5 text-[10px] font-semibold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full">${grupo.hijos.filter(h=>h.tarea).length} tarea${grupo.hijos.filter(h=>h.tarea).length !== 1 ? 's' : ''}</span>
@@ -3041,7 +3169,7 @@ function renderizarTablaJerarquica(proyectos) {
                 });
                 filaHijo.addEventListener('dragend', () => { filaHijo.style.opacity = '1'; });
                 filaHijo.innerHTML = `
-                    <td style="position:sticky;left:0;z-index:20;background:#ffffff;min-width:200px;padding:8px 8px 8px 24px;color:#475569;font-weight:500;box-shadow:2px 0 4px rgba(0,0,0,0.04);">↳ <span style="cursor:pointer;" class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
+                    <td style="position:sticky;left:0;z-index:20;background:var(--sticky-bg);min-width:200px;padding:8px 8px 8px 24px;color:var(--sticky-text);font-weight:500;box-shadow:2px 0 4px var(--sticky-shadow);">↳ <span style="cursor:pointer;" class="hover:text-blue-600 hover:underline">${t.tarea}</span></td>
                     <td class="p-2 text-slate-600 text-xs cursor-pointer hover:text-blue-600 hover:underline" onclick="event.stopPropagation(); window.filtrarPorClick('responsable','${t.responsable || ''}')">${t.responsable || '-'}</td>
                     <td class="p-2">${badgeEstado(t.estado)}</td>
                     <td class="p-2">${badgeImpacto(t.impacto) || '<span class="text-slate-300 text-xs">—</span>'}</td>
@@ -3098,6 +3226,30 @@ window.abrirDetalleTarea = function(id) {
     const comBlq = document.getElementById('detalleComentariosBloque');
     if (item.descripcion) { descBlq.classList.remove('hidden'); document.getElementById('detalleDescripcion').textContent = item.descripcion; } else { descBlq.classList.add('hidden'); }
     if (item.comentarios) { comBlq.classList.remove('hidden'); document.getElementById('detalleComentarios').textContent = item.comentarios; } else { comBlq.classList.add('hidden'); }
+
+    // Subtareas
+    const subBlq = document.getElementById('detalleSubtareasBloque');
+    const subList = document.getElementById('detalleSubtareasList');
+    const subtareas = Array.isArray(item.subtareas) ? item.subtareas.filter(s => s.nombre) : [];
+    if (subtareas.length > 0) {
+        subBlq.classList.remove('hidden');
+        subList.innerHTML = subtareas.map(s => {
+            const pct = Number(s.avance) || 0;
+            const color = pct === 100 ? '#10b981' : pct >= 50 ? '#3b82f6' : '#f59e0b';
+            return `<div class="flex items-center gap-2 bg-slate-50 rounded-lg px-3 py-2">
+                <div class="flex-1 min-w-0">
+                    <span class="text-xs font-medium text-slate-700 truncate block">${s.nombre}</span>
+                    ${s.responsable ? `<span class="text-[10px] text-slate-400">${s.responsable}</span>` : ''}
+                </div>
+                <div class="flex items-center gap-1.5 flex-shrink-0">
+                    <div class="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden"><div style="width:${pct}%;background:${color}" class="h-full rounded-full"></div></div>
+                    <span class="text-[10px] font-semibold text-slate-500 w-7 text-right">${pct}%</span>
+                </div>
+            </div>`;
+        }).join('');
+    } else {
+        subBlq.classList.add('hidden');
+    }
     document.getElementById('btnEditarDesdDetalle').onclick = () => {
         document.getElementById('modalDetalleTarea').classList.add('hidden');
         window.abrirModalEdicion(id, 'TAREA');
@@ -3456,8 +3608,93 @@ window.abrirModalEdicion = function(idFila, tipo) {
     document.getElementById('modalFormulario').classList.remove('hidden');
 };
 
-window.crearAlerta = function() {
-    alert("Módulo de alertas en construcción. Próximamente podrás suscribirte a notificaciones.");
+window.crearAlerta = function(idIniciativa) {
+    const ref = cacheDatosRaw.find(p => p.id === idIniciativa);
+    if (!ref) return;
+    const nombreIni = ref.iniciativa || '';
+    const tareas = cacheDatosRaw.filter(p => p.iniciativa === nombreIni && p.tarea);
+
+    document.getElementById('alertaNombreIniciativa').textContent = nombreIni;
+
+    const posiblesDestinatarios = [...new Set([
+        ref.respiniciativa,
+        ...tareas.map(t => t.responsable)
+    ].filter(Boolean))];
+
+    const selectDest = document.getElementById('alertaDestinatario');
+    selectDest.innerHTML = '<option value="">— Seleccionar destinatario —</option>';
+    posiblesDestinatarios.forEach(r => {
+        const email = CONFIG.emails?.[r] || '';
+        const opt = document.createElement('option');
+        opt.value = r;
+        opt.textContent = email ? `${r} (${email})` : `${r} — sin email`;
+        opt.disabled = !email;
+        selectDest.appendChild(opt);
+    });
+
+    const fEntrega = ref.fechaentregainiciativa
+        ? new Date(ref.fechaentregainiciativa).toLocaleDateString('es-CL') : '(sin fecha)';
+    document.getElementById('alertaMensaje').value =
+        `Hola,\n\nTe escribo para comentarte el estado de la iniciativa "${nombreIni}".\n\nFecha de entrega: ${fEntrega}\n\n`;
+
+    document.getElementById('alertaFeedback').textContent = '';
+    document.getElementById('alertaFeedback').className = 'text-xs mt-2 min-h-[18px]';
+    document.getElementById('modalAlerta').classList.remove('hidden');
+};
+
+window.enviarAlerta = function() {
+    const responsable = document.getElementById('alertaDestinatario').value;
+    const mensaje = document.getElementById('alertaMensaje').value.trim();
+    const feedback = document.getElementById('alertaFeedback');
+    const btn = document.getElementById('btnEnviarAlerta');
+
+    if (!responsable) { feedback.textContent = '⚠️ Selecciona un destinatario.'; feedback.className = 'text-xs mt-2 text-amber-600 min-h-[18px]'; return; }
+    if (!mensaje) { feedback.textContent = '⚠️ El mensaje no puede estar vacío.'; feedback.className = 'text-xs mt-2 text-amber-600 min-h-[18px]'; return; }
+
+    const email = CONFIG.emails?.[responsable];
+    if (!email) { feedback.textContent = '❌ Sin email configurado para este responsable.'; feedback.className = 'text-xs mt-2 text-red-600 min-h-[18px]'; return; }
+
+    if (NOTIF_EMAIL_URL === "PEGAR_URL_WEBAPP_NOTIF_AQUI") {
+        feedback.textContent = '❌ URL del Web App no configurada.';
+        feedback.className = 'text-xs mt-2 text-red-600 min-h-[18px]';
+        return;
+    }
+
+    btn.textContent = 'Enviando...'; btn.disabled = true;
+    feedback.textContent = ''; feedback.className = 'text-xs mt-2 min-h-[18px]';
+
+    const params = new URLSearchParams({
+        accion: 'alerta',
+        email,
+        responsable,
+        mensaje,
+        remitente: currentUserEmail
+    });
+    const cb = 'alertaCb_' + Date.now();
+    window[cb] = function(resp) {
+        btn.textContent = '📧 Enviar'; btn.disabled = false;
+        delete window[cb];
+        const s = document.getElementById(cb); if (s) s.remove();
+        if (resp && resp.ok) {
+            feedback.textContent = `✅ Notificación enviada a ${email}`;
+            feedback.className = 'text-xs mt-2 text-green-600 min-h-[18px]';
+            registrarAuditoria('Alerta enviada', `A: ${responsable} (${email})`);
+            setTimeout(() => document.getElementById('modalAlerta').classList.add('hidden'), 1800);
+        } else {
+            feedback.textContent = '❌ Error al enviar: ' + (resp?.error || 'sin detalle');
+            feedback.className = 'text-xs mt-2 text-red-600 min-h-[18px]';
+        }
+    };
+    const script = document.createElement('script');
+    script.id = cb;
+    script.src = NOTIF_EMAIL_URL + '?' + params.toString() + '&callback=' + cb;
+    script.onerror = () => {
+        btn.textContent = '📧 Enviar'; btn.disabled = false;
+        feedback.textContent = '❌ No se pudo conectar con el servidor de notificaciones.';
+        feedback.className = 'text-xs mt-2 text-red-600 min-h-[18px]';
+        delete window[cb]; const s = document.getElementById(cb); if (s) s.remove();
+    };
+    document.body.appendChild(script);
 };
 
 function leerSubtareasDeFila(filaUi) {
@@ -3821,6 +4058,35 @@ document.getElementById('formIniciativa').addEventListener('submit', async (e) =
     }
 });
 </script>
+<!-- MODAL ALERTA / NOTIFICACIÓN -->
+<div id="modalAlerta" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark-modal rounded-2xl shadow-xl border border-slate-200 max-w-lg w-full p-6">
+        <div class="flex justify-between items-start mb-4">
+            <div>
+                <h2 class="text-base font-bold text-slate-800">🔔 Enviar Notificación</h2>
+                <p class="text-xs text-slate-400 mt-0.5 font-semibold" id="alertaNombreIniciativa"></p>
+            </div>
+            <button onclick="document.getElementById('modalAlerta').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-xl font-bold leading-none">✕</button>
+        </div>
+        <div class="space-y-3">
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Destinatario</label>
+                <select id="alertaDestinatario" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 bg-white"></select>
+                <p class="text-[10px] text-slate-400 mt-1">Solo aparecen responsables con email configurado en ⚙️ Configuración.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-600 mb-1">Mensaje</label>
+                <textarea id="alertaMensaje" rows="6" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none font-mono"></textarea>
+            </div>
+            <p id="alertaFeedback" class="text-xs mt-2 min-h-[18px]"></p>
+        </div>
+        <div class="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
+            <button onclick="document.getElementById('modalAlerta').classList.add('hidden')" class="bg-slate-100 text-slate-600 px-4 py-2 rounded-lg hover:bg-slate-200 transition text-sm font-medium">Cancelar</button>
+            <button id="btnEnviarAlerta" onclick="window.enviarAlerta()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-semibold">📧 Enviar</button>
+        </div>
+    </div>
+</div>
+
 <!-- MODAL CONFIGURACIÓN ADMIN -->
 <div id="modalConfig" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-white rounded-2xl shadow-xl border border-slate-200 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
