@@ -297,6 +297,73 @@
             </div>
         </div>
 
+        <!-- ECOSISTEMA TECNOLÓGICO -->
+        <div id="contenedorEcosistema" class="hidden mb-4">
+            <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <button onclick="window.toggleEcosistema()" class="w-full flex justify-between items-center px-4 py-3 hover:bg-slate-50 transition text-left">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-semibold text-slate-700">🛠️ Ecosistema del Proyecto</span>
+                        <span class="text-[10px] text-slate-400 font-normal">Stack tecnológico utilizado</span>
+                    </div>
+                    <span id="iconToggleEcosistema" class="text-slate-400 text-xs font-bold transition-transform duration-200">▼</span>
+                </button>
+                <div id="cuerpoEcosistema" class="hidden border-t border-slate-100 px-4 py-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                        <!-- GitHub -->
+                        <a href="https://github.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-slate-900 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">GitHub</p>
+                                <p class="text-[10px] text-slate-400">Control de versiones</p>
+                            </div>
+                        </a>
+                        <!-- Vercel -->
+                        <a href="https://vercel.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-slate-300 hover:bg-slate-50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-black flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M24 22.525H0l12-21.05 12 21.05z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Vercel</p>
+                                <p class="text-[10px] text-slate-400">Deploy & hosting</p>
+                            </div>
+                        </a>
+                        <!-- Firebase -->
+                        <a href="https://firebase.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-orange-200 hover:bg-orange-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M3.89 15.672L6.255.461A.542.542 0 017.27.288l2.543 4.771zm16.794 3.692l-2.25-14a.54.54 0 00-.919-.295L3.316 19.365l7.856 4.427a1.621 1.621 0 001.588 0zM14.3 7.147l-1.818-3.482a.542.542 0 00-.96 0L3.53 17.984z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Firebase</p>
+                                <p class="text-[10px] text-slate-400">Base de datos & auth</p>
+                            </div>
+                        </a>
+                        <!-- Google Sheets -->
+                        <a href="https://sheets.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-green-200 hover:bg-green-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-green-600 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M19.786 0H4.214A.214.214 0 000 .214V23.786c0 .118.096.214.214.214H19.786c.118 0 .214-.096.214-.214V.214A.214.214 0 0019.786 0zM6 17.143H4.286V15.43H6v1.714zm0-3.429H4.286V12h1.714v1.714zm0-3.428H4.286V8.571H6v1.714zm3.429 6.857H7.714V15.43h1.715v1.714zm0-3.429H7.714V12h1.715v1.714zm0-3.428H7.714V8.571h1.715v1.714zm3.428 6.857h-1.714V15.43h1.714v1.714zm0-3.429h-1.714V12h1.714v1.714zm0-3.428h-1.714V8.571h1.714v1.714zm3.429 6.857h-1.715V15.43h1.715v1.714zm0-3.429h-1.715V12h1.715v1.714zm0-3.428h-1.715V8.571h1.715v1.714zM17.571 6H6.43A.429.429 0 016 5.571V3.43C6 3.192 6.192 3 6.429 3H17.57C17.808 3 18 3.192 18 3.429V5.57A.429.429 0 0117.571 6z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Google Sheets</p>
+                                <p class="text-[10px] text-slate-400">Datos & KPIs</p>
+                            </div>
+                        </a>
+                        <!-- Google Workspace -->
+                        <a href="https://workspace.google.com" target="_blank" rel="noopener" class="group flex flex-col items-center gap-2 p-3 rounded-xl border border-slate-100 hover:border-blue-200 hover:bg-blue-50/50 transition cursor-pointer text-center">
+                            <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+                                <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 11.55C9.64 9.35 6.48 8 3 8c-1.1 0-2.18.1-3.22.3L0 12h3c2.56 0 4.9.9 6.73 2.38zm0 0c2.36-2.2 5.52-3.55 9-3.55 1.1 0 2.18.1 3.22.3L24 12h-3c-2.56 0-4.9.9-6.73 2.38zM12 4C9.33 4 7 5.1 5.28 6.9 7.43 7.67 9.33 8.84 11 10.3V4zm0 0c2.67 0 5 1.1 6.72 2.9A14.44 14.44 0 0013 10.3V4zM5.5 18.5C6.96 17.14 8.88 16.25 11 16.06V19l-5.5-.5zm13 0C17.04 17.14 15.12 16.25 13 16.06V19l5.5-.5z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-700">Google Workspace</p>
+                                <p class="text-[10px] text-slate-400">Suite corporativa</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- VISTA RESPONSABLES -->
         <div id="contenedorResponsables" class="hidden mb-4">
             <div class="flex items-center justify-between mb-3">
@@ -765,6 +832,7 @@ function iniciarEscuchaFirestore() {
         document.getElementById('txtCargando').classList.add('hidden');
         document.getElementById('contenedorGraficas').classList.remove('hidden');
         document.getElementById('contenedorResumen').classList.remove('hidden');
+        document.getElementById('contenedorEcosistema').classList.remove('hidden');
         document.getElementById('contenedorGantt').classList.remove('hidden');
         document.getElementById('contenedorResponsables').classList.remove('hidden');
         document.getElementById('contenedorTabla').classList.remove('hidden');
@@ -872,6 +940,14 @@ document.getElementById('btnLimpiarFiltros').addEventListener('click', () => {
     construirChipsFiltros();
     renderizarTodo();
 });
+
+window.toggleEcosistema = function() {
+    const cuerpo = document.getElementById('cuerpoEcosistema');
+    const icon = document.getElementById('iconToggleEcosistema');
+    const abierto = !cuerpo.classList.contains('hidden');
+    cuerpo.classList.toggle('hidden', abierto);
+    icon.style.transform = abierto ? '' : 'rotate(180deg)';
+};
 
 window.togglePanelFiltros = function() {
     const cuerpo = document.getElementById('cuerpoPanelFiltros');
@@ -3112,12 +3188,41 @@ function renderizarTablaJerarquica(proyectos) {
                 });
                 cuerpo.appendChild(filaHijo);
 
+                // Drop zone: soltar una subtarea sobre esta tarea la mueve aquí (misma iniciativa)
+                filaHijo.addEventListener('dragover', (e) => {
+                    if (!e.dataTransfer.types.includes('application/x-subtarea')) return;
+                    e.preventDefault();
+                    filaHijo.style.background = '#dcfce7';
+                });
+                filaHijo.addEventListener('dragleave', () => { filaHijo.style.background = ''; });
+                filaHijo.addEventListener('drop', async (e) => {
+                    if (!e.dataTransfer.types.includes('application/x-subtarea')) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    filaHijo.style.background = '';
+                    const raw = e.dataTransfer.getData('application/x-subtarea');
+                    if (!raw) return;
+                    try {
+                        const { tareaId, subIndex } = JSON.parse(raw);
+                        await window.moverSubtareaATarea(tareaId, subIndex, t.id);
+                    } catch(err) {}
+                });
+
                 // Subtareas
                 if (Array.isArray(t.subtareas) && t.subtareas.length > 0) {
-                    t.subtareas.forEach(st => {
+                    t.subtareas.forEach((st, subIdx) => {
                         const avSub = Number(st.avance) || 0;
                         const filaSub = document.createElement('tr');
                         filaSub.className = "bg-slate-50/40 text-xs";
+                        filaSub.setAttribute('draggable', 'true');
+                        filaSub.style.cursor = 'grab';
+                        filaSub.addEventListener('dragstart', (e) => {
+                            e.stopPropagation();
+                            e.dataTransfer.setData('application/x-subtarea', JSON.stringify({ tareaId: t.id, subIndex: subIdx }));
+                            e.dataTransfer.effectAllowed = 'move';
+                            filaSub.style.opacity = '0.4';
+                        });
+                        filaSub.addEventListener('dragend', () => { filaSub.style.opacity = '1'; });
                         filaSub.innerHTML = `
                             <td style="position:sticky;left:0;z-index:20;background:#fafbfc;min-width:200px;padding:5px 8px 5px 44px;color:#64748b;box-shadow:2px 0 4px rgba(0,0,0,0.03);">↳ <span style="opacity:0.85;">${st.nombre}</span></td>
                             <td class="p-1.5 text-slate-500 text-xs">${st.responsable || '-'}</td>
@@ -3203,6 +3308,34 @@ window.moverTareaAIniciativa = async function(tareaId, nuevaIniciativa) {
         registrarAuditoria("Movió Tarea", `Tarea: [${tarea.tarea}] de [${tarea.iniciativa}] → [${nuevaIniciativa}]`);
     } catch(e) {
         alert("Error al mover la tarea: " + e.message);
+    }
+};
+
+// MOVER SUBTAREA A OTRA TAREA (dentro de la misma iniciativa)
+window.moverSubtareaATarea = async function(origenTareaId, subIndex, destinoTareaId) {
+    if (!origenTareaId || !destinoTareaId || origenTareaId === destinoTareaId) return false;
+    const origen = cacheDatosRaw.find(p => p.id === origenTareaId);
+    const destino = cacheDatosRaw.find(p => p.id === destinoTareaId);
+    if (!origen || !destino) return false;
+    if (origen.iniciativa !== destino.iniciativa) {
+        alert("Solo puedes mover subtareas entre tareas de la misma iniciativa.");
+        return false;
+    }
+    const subsOrigen = Array.isArray(origen.subtareas) ? [...origen.subtareas] : [];
+    subIndex = Number(subIndex);
+    if (isNaN(subIndex) || subIndex < 0 || subIndex >= subsOrigen.length) return false;
+    const [subtarea] = subsOrigen.splice(subIndex, 1);
+    if (!subtarea) return false;
+    const subsDestino = Array.isArray(destino.subtareas) ? [...destino.subtareas, subtarea] : [subtarea];
+    try {
+        await promesaConLimite(updateDoc(doc(db, "actividades", origenTareaId), { subtareas: subsOrigen }), 8000);
+        await promesaConLimite(updateDoc(doc(db, "actividades", destinoTareaId), { subtareas: subsDestino }), 8000);
+        registrarAuditoria("Movió Subtarea", `Subtarea: [${subtarea.nombre}] de [${origen.tarea}] → [${destino.tarea}]`);
+        showToast(`Subtarea movida a "${destino.tarea}"`);
+        return true;
+    } catch(e) {
+        alert("Error al mover la subtarea: " + e.message);
+        return false;
     }
 };
 
@@ -3470,6 +3603,8 @@ window.abrirModalEdicion = function(idFila, tipo) {
     document.getElementById('inputIdRegistro').value = item.id;
     document.getElementById('contenedorListaTareas').innerHTML = "";
     if (tipo === 'INICIATIVA') {
+        // Limpiar selector de "mover a otra iniciativa" que pudiera haber quedado de una edición de Tarea anterior
+        document.querySelectorAll('.wrapper-cambio-iniciativa').forEach(el => el.remove());
         document.getElementById('tituloModal').innerText = "Editar Iniciativa Padre";
         document.getElementById('inputOldIniciativaNombre').value = item.iniciativa;
         document.getElementById('inputIniciativa').value = item.iniciativa || '';
@@ -3635,11 +3770,12 @@ function leerSubtareasDeFila(filaUi) {
     return subs;
 }
 
-function agregarFilaSubtarea(contenedor, vals = null) {
+function agregarFilaSubtarea(contenedor, vals = null, subIndex = null) {
     const jefe = obtenerJefeActualModal();
     const respValidos = jefe ? responsablesDeTarea(jefe) : (CONFIG.responsablesTarea || CONFIG.responsables);
     const fila = document.createElement('div');
     fila.className = 'subtarea-fila flex items-center gap-2 bg-slate-50 rounded-md p-2';
+    if (subIndex !== null) fila.dataset.subIndex = subIndex;
     fila.innerHTML = `
         <input type="text" class="sub-nombre flex-1 text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500" placeholder="Nombre subtarea" value="${vals?.nombre ? vals.nombre.replace(/"/g,'&quot;') : ''}">
         <select class="sub-resp text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500" style="max-width:110px;">
@@ -3649,9 +3785,45 @@ function agregarFilaSubtarea(contenedor, vals = null) {
         <select class="sub-avance text-xs border border-slate-300 rounded px-2 py-1.5 focus:outline-none focus:border-blue-500">
             ${[0,25,50,75,100].map(v => `<option value="${v}" ${Number(vals?.avance||0)===v?'selected':''}>${v}%</option>`).join('')}
         </select>
+        ${subIndex !== null ? `<select class="sub-mover-tarea text-xs border border-amber-300 rounded px-2 py-1.5 bg-amber-50 text-amber-700 focus:outline-none focus:border-amber-500" style="max-width:130px;" title="Mover a otra tarea (misma iniciativa)">
+            <option value="">🔀 Mover a...</option>
+        </select>` : ''}
         <button type="button" class="sub-quitar text-slate-400 hover:text-red-500 font-bold text-xs px-1">✕</button>
     `;
     fila.querySelector('.sub-quitar').addEventListener('click', () => fila.remove());
+
+    // Selector de "mover a otra tarea": solo aplica a subtareas que ya existen en Firestore (subIndex conocido)
+    if (subIndex !== null) {
+        const selMover = fila.querySelector('.sub-mover-tarea');
+        const idRegistro = document.getElementById('inputIdRegistro').value;
+        const tareaActual = cacheDatosRaw.find(p => p.id === idRegistro);
+        if (tareaActual) {
+            const hermanas = cacheDatosRaw
+                .filter(p => p.tarea && p.iniciativa === tareaActual.iniciativa && p.id !== idRegistro)
+                .sort((a, b) => (a.tarea || '').localeCompare(b.tarea || ''));
+            hermanas.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h.id;
+                opt.textContent = h.tarea;
+                selMover.appendChild(opt);
+            });
+        }
+        selMover.addEventListener('change', async () => {
+            const destinoId = selMover.value;
+            if (!destinoId) return;
+            const idRegistroActual = document.getElementById('inputIdRegistro').value;
+            const idx = fila.dataset.subIndex;
+            selMover.disabled = true;
+            const ok = await window.moverSubtareaATarea(idRegistroActual, idx, destinoId);
+            if (ok) {
+                fila.remove();
+            } else {
+                selMover.disabled = false;
+                selMover.value = '';
+            }
+        });
+    }
+
     contenedor.appendChild(fila);
 }
 
@@ -3807,7 +3979,7 @@ function agregarFilaTareaEstructura(vals = null) {
         if (div.querySelector('.input-tarea-impacto')) div.querySelector('.input-tarea-impacto').value = vals.impacto || '';
         // Cargar subtareas existentes
         if (Array.isArray(vals.subtareas)) {
-            vals.subtareas.forEach(st => agregarFilaSubtarea(listaSub, st));
+            vals.subtareas.forEach((st, idx) => agregarFilaSubtarea(listaSub, st, idx));
         }
         if (vals.fechainicio) {
             const di = new Date(vals.fechainicio);
